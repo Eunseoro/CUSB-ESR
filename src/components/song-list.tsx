@@ -42,6 +42,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
   const [sliderDragging, setSliderDragging] = useState<{[id: string]: boolean}>({})
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isUpdatingLike, setIsUpdatingLike] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   // localStorage에서 좋아요 상태 안전하게 로드
   const loadLikedSongsFromStorage = () => {
@@ -68,15 +69,22 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
   // 곡 목록을 서버에서 가져오는 함수
   const fetchSongs = async (pageNum: number, reset = false) => {
     try {
-      setLoading(true)
+      if (reset) {
+        setLoading(true)
+      } else {
+        setLoadingMore(true)
+      }
+      
       const data = await fetchSongsApi({
         category,
         search: debouncedSearch,
         pageNum,
-        limit: 50  // 한 번에 50곡 로드
+        limit: 30  // 한 번에 30곡 로드
       })
       if (!data.songs || !data.pagination) {
-        setSongs([])
+        if (reset) {
+          setSongs([])
+        }
         setHasMore(false)
         setPage(1)
         return
@@ -90,11 +98,18 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
       setPage(pageNum)
     } catch (error) {
       console.error('Error fetching songs:', error)
-      setSongs([])
+      // 무한스크롤 시 에러가 발생해도 기존 목록은 유지
+      if (reset) {
+        setSongs([])
+      }
       setHasMore(false)
       setPage(1)
     } finally {
-      setLoading(false)
+      if (reset) {
+        setLoading(false)
+      } else {
+        setLoadingMore(false)
+      }
     }
   }
 
@@ -114,10 +129,24 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
     loadLikedSongsFromStorage()
   }, [])
 
-  // 곡 목록이 바뀔 때만 좋아요 상태 fetch (최초 1회 또는 곡 목록 변경 시, 하지만 좋아요 클릭 후에는 제외)
+  // 초기 로드 시에만 전체 좋아요 상태 fetch
   useEffect(() => {
     if (songs && songs.length > 0 && !isUpdatingLike) {
       fetchInitialLikedSongs()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // 빈 의존성 배열로 최초 1회만 실행
+
+  // 곡 목록이 바뀔 때만 좋아요 상태 fetch (무한스크롤 시 새로 추가된 곡들만)
+  useEffect(() => {
+    if (songs && songs.length > 0 && !isUpdatingLike && songs.length > 30) {
+      // 무한스크롤 시에는 새로 추가된 곡들만 좋아요 상태를 fetch
+      const existingLikedSongIds = Array.from(likedSongs)
+      const newSongs = songs.filter(song => !existingLikedSongIds.includes(song.id))
+      
+      if (newSongs.length > 0) {
+        fetchLikedSongsForNewSongs(newSongs)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [songs, isUpdatingLike])
@@ -131,7 +160,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
       
       // 스크롤이 하단 80% 지점에 도달했을 때 다음 페이지 로드
       if (scrollTop + windowHeight >= documentHeight * 0.8) {
-        if (!loading && hasMore) {
+        if (!loading && !loadingMore && hasMore) {
           fetchSongs(page + 1)
         }
       }
@@ -139,12 +168,15 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [loading, hasMore, page, category, debouncedSearch])
+  }, [loading, loadingMore, hasMore, page, category, debouncedSearch])
 
   // 이벤트 리스너 등록 및 정리
   useEffect(() => {
     const refreshCleanup = onSongListRefresh(() => {
-      window.location.reload()
+      // 무한스크롤 중이 아닐 때만 목록 새로고침 (첫 페이지 로드 시에만)
+      if (page === 1) {
+        fetchSongs(1, true)
+      }
     })
     const updateCleanup = onSongUpdate((songId, updatedSong) => {
       setSongs(prev => prev.map(song => song.id === songId ? (updatedSong as Song) : song))
@@ -157,7 +189,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
       updateCleanup()
       deleteCleanup()
     }
-  }, [setSongs])
+  }, [setSongs, page])
 
   useEffect(() => {
     const cleanup = onAdminAuthChange((auth) => {
@@ -185,6 +217,25 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
       setLikedSongs(new Set(Object.keys(likedStates).filter(id => likedStates[id])))
     } catch (error) {
       console.error('Error fetching liked songs:', error)
+    }
+  }
+
+  // 새로 추가된 곡들만 좋아요 상태를 fetch하는 함수
+  const fetchLikedSongsForNewSongs = async (newSongs: Song[]) => {
+    try {
+      if (!newSongs || newSongs.length === 0) return
+      const likedStates = await fetchLikedSongsApi(newSongs)
+      setLikedSongs(prev => {
+        const newSet = new Set(prev)
+        Object.keys(likedStates).forEach(id => {
+          if (likedStates[id]) {
+            newSet.add(id)
+          }
+        })
+        return newSet
+      })
+    } catch (error) {
+      console.error('Error fetching liked songs for new songs:', error)
     }
   }
 
@@ -458,144 +509,149 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
             <p className="text-gray-500">노래가 없습니다.</p>
           </div>
         ) : (
-          sortedSongs.map((song, idx) => {
-            // 그룹 구분선 표시 조건: 정렬 기준별로 다르게 처리
-            let showDivider = false;
-            let dividerLabel = '';
-            if (sort === 'title' || sort === 'artist') {
-              const getInitial = (str: string) => {
-                // 한글 초성 추출
-                const ch = str.trim().charAt(0);
-                const code = ch.charCodeAt(0) - 44032;
-                if (code >= 0 && code < 11172) {
-                  const cho = Math.floor(code / 588);
-                  return 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'[cho];
+          <>
+            {sortedSongs.map((song, idx) => {
+              // 그룹 구분선 표시 조건: 정렬 기준별로 다르게 처리
+              let showDivider = false;
+              let dividerLabel = '';
+              if (sort === 'title' || sort === 'artist') {
+                const getInitial = (str: string) => {
+                  // 한글 초성 추출
+                  const ch = str.trim().charAt(0);
+                  const code = ch.charCodeAt(0) - 44032;
+                  if (code >= 0 && code < 11172) {
+                    const cho = Math.floor(code / 588);
+                    return 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'[cho];
+                  }
+                  // 알파벳 대문자/숫자/기타
+                  return ch.toUpperCase();
+                };
+                const currInitial = getInitial(sort === 'title' ? song.title : song.artist);
+                const prevInitial = idx > 0 ? getInitial(sort === 'title' ? sortedSongs[idx-1].title : sortedSongs[idx-1].artist) : null;
+                if (idx === 0 || currInitial !== prevInitial) {
+                  showDivider = true;
+                  dividerLabel = currInitial;
                 }
-                // 알파벳 대문자/숫자/기타
-                return ch.toUpperCase();
-              };
-              const currInitial = getInitial(sort === 'title' ? song.title : song.artist);
-              const prevInitial = idx > 0 ? getInitial(sort === 'title' ? sortedSongs[idx-1].title : sortedSongs[idx-1].artist) : null;
-              if (idx === 0 || currInitial !== prevInitial) {
-                showDivider = true;
-                dividerLabel = currInitial;
+              } else if (sort === 'latest' || sort === 'oldest') {
+                const getMonth = (dateString: string) => {
+                  const d = new Date(dateString);
+                  return `${d.getFullYear()}.${(d.getMonth()+1).toString().padStart(2,'0')}`;
+                };
+                const currMonth = getMonth(song.createdAt);
+                const prevMonth = idx > 0 ? getMonth(sortedSongs[idx-1].createdAt) : null;
+                if (idx === 0 || currMonth !== prevMonth) {
+                  showDivider = true;
+                  dividerLabel = currMonth;
+                }
+              } else if (sort === 'popular') {
+                const getLikeGroup = (likeCount: number) => {
+                  const base = Math.floor((likeCount || 0) / 10) * 10;
+                  return `${base}~${base+9}`;
+                };
+                const currGroup = getLikeGroup(song.likeCount || 0);
+                const prevGroup = idx > 0 ? getLikeGroup(sortedSongs[idx-1].likeCount || 0) : null;
+                if (idx === 0 || currGroup !== prevGroup) {
+                  showDivider = true;
+                  dividerLabel = currGroup;
+                }
               }
-            } else if (sort === 'latest' || sort === 'oldest') {
-              const getMonth = (dateString: string) => {
-                const d = new Date(dateString);
-                return `${d.getFullYear()}.${(d.getMonth()+1).toString().padStart(2,'0')}`;
-              };
-              const currMonth = getMonth(song.createdAt);
-              const prevMonth = idx > 0 ? getMonth(sortedSongs[idx-1].createdAt) : null;
-              if (idx === 0 || currMonth !== prevMonth) {
-                showDivider = true;
-                dividerLabel = currMonth;
-              }
-            } else if (sort === 'popular') {
-              const getLikeGroup = (likeCount: number) => {
-                const base = Math.floor((likeCount || 0) / 10) * 10;
-                return `${base}~${base+9}`;
-              };
-              const currGroup = getLikeGroup(song.likeCount || 0);
-              const prevGroup = idx > 0 ? getLikeGroup(sortedSongs[idx-1].likeCount || 0) : null;
-              if (idx === 0 || currGroup !== prevGroup) {
-                showDivider = true;
-                dividerLabel = currGroup;
-              }
-            }
-            return (
-              <div key={song.id}>
-                {showDivider && <GroupDivider label={dividerLabel} />}
-                <Card
-                  className={`cursor-pointer hover:shadow-md transition-all ${
-                    selectedSong?.id === song.id ? 'bg-primary/5 border-primary/20' : ''
-                  } mt-2`}
-                  onClick={() => onSongSelect(song)}
-                >
-                  <CardHeader className="pb-0 pt-2 -my-5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg leading-tight flex items-center gap-1">
-                          {/* 특별 조건 아이콘 렌더링 */}
-                          {song.isFirstVerseOnly && <FirstVerseIcon />}
-                          {song.isHighDifficulty && <HighDifficultyIcon />}
-                          {song.isLoopStation && <LoopStationIcon />}
-                          {song.title}
-                        </CardTitle>
-                        <p className="text-muted-foreground mt-0">
-                          {song.artist}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {/* 복사 버튼: 좋아요 버튼의 좌측 */}
-                        <button
-                          onClick={(e) => handleCopy(song.artist, song.title, e, song.id)}
-                          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          {copiedId === song.id ? (
-                            <span className="font-bold text-xs text-black dark:text-white">Copy!</span>
-                          ) : (
-                            <Copy className="h-4 w-5" />
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleLike(song.id)
-                          }}
-                          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          {likedSongs.has(song.id) ? (
-                            <Heart className="h-4 w-4 fill-current text-red-500" />
-                          ) : (
-                            <Heart className="h-4 w-4" />
-                          )}
-                          <span>{song.likeCount || 0}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  {category === 'MISSION' && (
-                    <div className={`px-4 ${isAdmin ? 'pt-2 pb-0' : 'pt-2 pb-2'} mt-0 mb-[-8px]`}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">진행도</span>
-                        <div className="flex-1 flex items-center gap-2">
-                          <div className="w-full h-3 rounded bg-gray-200 relative">
-                            <div
-                              className={`h-3 rounded ${getProgressColor(song.progress ?? 0)}`}
-                              style={{ width: `${song.progress ?? 0}%`, transition: 'width 0.3s' }}
-                            />
-                          </div>
-                          <span className="text-xs font-bold w-10 text-right">{song.progress ?? 0}%</span>
+              return (
+                <div key={song.id}>
+                  {showDivider && <GroupDivider label={dividerLabel} />}
+                  <Card
+                    className={`cursor-pointer hover:shadow-md transition-all ${
+                      selectedSong?.id === song.id ? 'bg-primary/5 border-primary/20' : ''
+                    } mt-2`}
+                    onClick={() => onSongSelect(song)}
+                  >
+                    <CardHeader className="pb-0 pt-2 -my-5">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg leading-tight flex items-center gap-1">
+                            {/* 특별 조건 아이콘 렌더링 */}
+                            {song.isFirstVerseOnly && <FirstVerseIcon />}
+                            {song.isHighDifficulty && <HighDifficultyIcon />}
+                            {song.isLoopStation && <LoopStationIcon />}
+                            {song.title}
+                          </CardTitle>
+                          <p className="text-muted-foreground mt-0">
+                            {song.artist}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {/* 복사 버튼: 좋아요 버튼의 좌측 */}
+                          <button
+                            onClick={(e) => handleCopy(song.artist, song.title, e, song.id)}
+                            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                          >
+                            {copiedId === song.id ? (
+                              <span className="font-bold text-xs text-black dark:text-white">Copy!</span>
+                            ) : (
+                              <Copy className="h-4 w-5" />
+                            )}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleLike(song.id)
+                            }}
+                            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                          >
+                            {likedSongs.has(song.id) ? (
+                              <Heart className="h-4 w-4 fill-current text-red-500" />
+                            ) : (
+                              <Heart className="h-4 w-4" />
+                            )}
+                            <span>{song.likeCount || 0}</span>
+                          </button>
                         </div>
                       </div>
-                      {isAdmin && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-500 mr-1">수정</span>
+                    </CardHeader>
+                    {category === 'MISSION' && (
+                      <div className={`px-4 ${isAdmin ? 'pt-2 pb-0' : 'pt-2 pb-2'} mt-0 mb-[-8px]`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">진행도</span>
                           <div className="flex-1 flex items-center gap-2">
-                            <input
-                              type="range"
-                              min={0}
-                              max={100}
-                              step={10}
-                              value={localProgress[song.id] ?? song.progress ?? 0}
-                              onChange={e => handleSliderChange(song, Number(e.target.value))}
-                              onMouseUp={() => handleSliderCommit(song)}
-                              onTouchEnd={() => handleSliderCommit(song)}
-                              className="w-full accent-blue-500"
-                              onClick={e => e.stopPropagation()}
-                              style={{ touchAction: 'none' }}
-                            />
-                            <span className="text-xs font-bold text-blue-600 min-w-[2.5rem] text-right">{localProgress[song.id] ?? song.progress ?? 0}%</span>
+                            <div className="w-full h-3 rounded bg-gray-200 relative">
+                              <div
+                                className={`h-3 rounded ${getProgressColor(song.progress ?? 0)}`}
+                                style={{ width: `${song.progress ?? 0}%`, transition: 'width 0.3s' }}
+                              />
+                            </div>
+                            <span className="text-xs font-bold w-10 text-right">{song.progress ?? 0}%</span>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </Card>
-              </div>
-            )
-          })
+                        {isAdmin && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-gray-500 mr-1">수정</span>
+                            <div className="flex-1 flex items-center gap-2">
+                              <input
+                                type="range"
+                                min={0}
+                                max={100}
+                                step={10}
+                                value={localProgress[song.id] ?? song.progress ?? 0}
+                                onChange={e => handleSliderChange(song, Number(e.target.value))}
+                                onMouseUp={() => handleSliderCommit(song)}
+                                onTouchEnd={() => handleSliderCommit(song)}
+                                className="w-full accent-blue-500"
+                                onClick={e => e.stopPropagation()}
+                                style={{ touchAction: 'none' }}
+                              />
+                              <span className="text-xs font-bold text-blue-600 min-w-[2.5rem] text-right">{localProgress[song.id] ?? song.progress ?? 0}%</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Card>
+                </div>
+              )
+            })}
+            {loadingMore && (
+              <div className="w-full text-center py-4 text-gray-500 text-sm">노래를 불러오는 중...</div>
+            )}
+          </>
         )}
       </div>
     </div>
