@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Song {
+  id          String   @id @default(cuid())
+  title       String
+  artist      String
+  category    Category
+  videoUrl    String?
+  videoUrl2   String?
+  description String?
+  lyrics      String?  @db.Text
+  isPublic    Boolean  @default(true)
+  likeCount   Int      @default(0)
+  isFirstVerseOnly Boolean @default(false)
+  isHighDifficulty Boolean @default(false)
+  isLoopStation Boolean @default(false)
+  progress    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  likes       SongLike[]
+
+  @@index([category])
+  @@index([createdAt])
+}
+
+model SongLike {
+  id        String   @id @default(cuid())
+  userId    String
+  songId    String
+  createdAt DateTime @default(now())
+
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, songId])
+  @@index([userId])
+  @@index([songId])
+}
+
+enum Category {
+  KPOP
+  POP
+  MISSION
+  NEWSONG
+}
+
+model Notice {
+  id        Int      @id @default(1)
+  content   String   @db.Text
+  isVisible Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
+
+model Guestbook {
+  id        String   @id @default(cuid())
+  author    String
+  content   String   @db.Text
+  userKey   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 방문자 집계(날짜별 카운트) 테이블
+model VisitorCount {
+  date   DateTime @id
+  count  Int      @default(0)
+}
