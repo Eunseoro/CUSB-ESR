@@ -12,7 +12,7 @@ interface SplitLayoutProps {
 
 export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayoutProps) {
   return (
-    // 모바일: flex-col-reverse (상단: 비디오 30%, 하단: 목록 70%), PC: flex-row (왼쪽: 목록 50%, 오른쪽: 비디오 50%)
+    // 모바일: PC
     <div className={`w-full split-layout-height flex flex-col-reverse lg:flex-row ${className}`}>
       {/* 모바일: 하단(노래 목록 70%), PC: 왼쪽(노래 목록 50%) */}
       <div className="w-full split-bottom-70 lg:h-full lg:w-1/2 border-t lg:border-t-0 lg:border-r border-gray-200 dark:border-gray-700">

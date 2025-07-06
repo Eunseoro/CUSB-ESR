@@ -49,7 +49,6 @@ export function SongPageLayout({ category }: SongPageLayoutProps) {
               song={selectedSong}
               onSongUpdate={handleSongUpdate}
               onSongDelete={handleSongDelete}
-              isOverlay={false}
             />
           </div>
         )}
