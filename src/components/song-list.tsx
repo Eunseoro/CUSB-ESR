@@ -1,7 +1,7 @@
 // 이 파일은 노래 목록을 보여주는 컴포넌트입니다. songList 상태를 songs로 통합하고, useEffect 중복 호출 및 불필요한 상태/함수를 정리하여 메모리 누수와 비효율을 방지합니다.
 'use client'
 
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
+import { useState, useEffect, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +14,7 @@ import { onSongListRefresh, onSongUpdate, onSongDelete } from '@/lib/song-events
 import { isAdminAuthenticated, onAdminAuthChange } from '@/lib/auth'
 // song 관련 API/유틸 함수, 아이콘 컴포넌트 import
 import { fetchSongsApi, fetchLikedSongsApi, handleLikeApi, handleProgressChangeApi } from '@/lib/song-api'
-import { formatDate, getCategoryColor, getCategoryLabel, getProgressColor, FirstVerseIcon, HighDifficultyIcon, LoopStationIcon } from '@/lib/song-utils'
+import { formatDate, getCategoryColor, getCategoryLabel, getProgressColor, FirstVerseIcon, HighDifficultyIcon, LoopStationIcon, getKoreanSortKey } from '@/lib/song-utils'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 
 interface SongListProps {
@@ -36,7 +36,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const [sort, setSort] = useState<'artist' | 'title' | 'popular' | 'latest' | 'oldest'>(category === 'MISSION' ? 'oldest' : 'artist')
+  const [sort, setSort] = useState<'artist' | 'title' | 'popular' | 'latest' | 'oldest' | 'first-verse' | 'high-difficulty' | 'loop-station'>(category === 'MISSION' ? 'oldest' : 'artist')
   const [likedSongs, setLikedSongs] = useState<Set<string>>(new Set())
   const [localProgress, setLocalProgress] = useState<{[id: string]: number}>({})
   const [sliderDragging, setSliderDragging] = useState<{[id: string]: boolean}>({})
@@ -67,7 +67,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
   }
 
   // 곡 목록을 서버에서 가져오는 함수
-  const fetchSongs = async (pageNum: number, reset = false) => {
+  const fetchSongs = useCallback(async (pageNum: number, reset = false) => {
     try {
       if (reset) {
         setLoading(true)
@@ -79,7 +79,8 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
         category,
         search: debouncedSearch,
         pageNum,
-        limit: 30  // 한 번에 30곡 로드
+        limit: 50,  // 50곡씩 로드로 증가하여 DB 쿼리 수 최적화
+        sort // 정렬 파라미터 추가
       })
       if (!data.songs || !data.pagination) {
         if (reset) {
@@ -111,18 +112,20 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
         setLoadingMore(false)
       }
     }
-  }
+  }, [category, debouncedSearch, sort, setSongs])
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     fetchSongs(1, true)
-  }
+  }, [fetchSongs])
 
   useImperativeHandle(ref, () => ({ refresh }))
 
-  // 곡 목록, 검색, 카테고리 변경 시 fetch
+  // 곡 목록, 검색, 카테고리, 정렬 변경 시 fetch
   useEffect(() => {
+    setPage(1) // 정렬 변경 시 페이지 리셋
+    setHasMore(true) // 정렬 변경 시 hasMore 리셋
     fetchSongs(1, true)
-  }, [category, debouncedSearch])
+  }, [category, debouncedSearch, sort, fetchSongs])
 
   // 최초 마운트 시 localStorage에서 좋아요 상태 로드
   useEffect(() => {
@@ -139,7 +142,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
 
   // 곡 목록이 바뀔 때만 좋아요 상태 fetch (무한스크롤 시 새로 추가된 곡들만)
   useEffect(() => {
-    if (songs && songs.length > 0 && !isUpdatingLike && songs.length > 30) {
+    if (songs && songs.length > 0 && !isUpdatingLike && songs.length > 50) {
       // 무한스크롤 시에는 새로 추가된 곡들만 좋아요 상태를 fetch
       const existingLikedSongIds = Array.from(likedSongs)
       const newSongs = songs.filter(song => !existingLikedSongIds.includes(song.id))
@@ -168,7 +171,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [loading, loadingMore, hasMore, page, category, debouncedSearch])
+  }, [loading, loadingMore, hasMore, page, fetchSongs])
 
   // 이벤트 리스너 등록 및 정리
   useEffect(() => {
@@ -189,7 +192,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
       updateCleanup()
       deleteCleanup()
     }
-  }, [setSongs, page])
+  }, [setSongs, page, fetchSongs])
 
   useEffect(() => {
     const cleanup = onAdminAuthChange((auth) => {
@@ -245,22 +248,53 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
     return `${d.getFullYear()}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getDate().toString().padStart(2,'0')}`;
   }
 
-  const sortedSongs = [...(songs || [])].sort((a, b) => {
-    if (sort === 'latest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    if (sort === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    if (sort === 'popular') return (b.likeCount ?? 0) - (a.likeCount ?? 0)
-    if (sort === 'title') {
-      // 제목순 정렬 시 2차 정렬로 아티스트순 적용
-      const titleCompare = a.title.localeCompare(b.title)
-      return titleCompare !== 0 ? titleCompare : a.artist.localeCompare(b.artist)
+  // 서버에서 정렬된 데이터를 클라이언트에서 추가 정렬하여 사용
+  const displaySongs = useMemo(() => {
+    if (!songs || songs.length === 0) return []
+    
+    // 특별 조건 필터인 경우 클라이언트 사이드 정렬 적용
+    if (sort === 'first-verse' || sort === 'high-difficulty' || sort === 'loop-station') {
+      return [...songs].sort((a, b) => {
+        // 해당 조건이 체크된 곡을 우선적으로 정렬
+        const aHasCondition = sort === 'first-verse' ? a.isFirstVerseOnly : 
+                             sort === 'high-difficulty' ? a.isHighDifficulty : 
+                             a.isLoopStation
+        const bHasCondition = sort === 'first-verse' ? b.isFirstVerseOnly : 
+                             sort === 'high-difficulty' ? b.isHighDifficulty : 
+                             b.isLoopStation
+        
+        // 조건이 다르면 조건이 체크된 곡을 앞으로
+        if (aHasCondition !== bHasCondition) {
+          return aHasCondition ? -1 : 1
+        }
+        
+        // 조건이 같으면 아티스트순으로 2차 정렬
+        const aKey = getKoreanSortKey(a.artist)
+        const bKey = getKoreanSortKey(b.artist)
+        return aKey.localeCompare(bKey)
+      })
     }
-    if (sort === 'artist') {
-      // 아티스트순 정렬 시 2차 정렬로 제목순 적용
-      const artistCompare = a.artist.localeCompare(b.artist)
-      return artistCompare !== 0 ? artistCompare : a.title.localeCompare(b.title)
+    
+    // 아티스트순이나 제목순인 경우에만 클라이언트 사이드 정렬 적용
+    if (sort === 'artist' || sort === 'title') {
+      return [...songs].sort((a, b) => {
+        const aKey = getKoreanSortKey(sort === 'artist' ? a.artist : a.title)
+        const bKey = getKoreanSortKey(sort === 'artist' ? b.artist : b.title)
+        
+        if (aKey !== bKey) {
+          return aKey.localeCompare(bKey)
+        }
+        
+        // 첫 번째 기준이 같으면 두 번째 기준으로 정렬
+        const aKey2 = getKoreanSortKey(sort === 'artist' ? a.title : a.artist)
+        const bKey2 = getKoreanSortKey(sort === 'artist' ? b.title : b.artist)
+        return aKey2.localeCompare(bKey2)
+      })
     }
-    return 0
-  })
+    
+    // 다른 정렬은 서버에서 받은 순서 그대로 사용
+    return songs
+  }, [songs, sort])
 
   // 곡 좋아요 상태를 서버에 반영하는 함수
   const handleLike = async (songId: string) => {
@@ -467,13 +501,22 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
     </div>
   );
 
-  // 검색어 디바운스 적용 (500ms)
+  // 검색어 디바운스 적용 (300ms)
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
     }, 300);
     return () => clearTimeout(handler);
   }, [search]);
+
+  // 정렬 변경 시 즉시 반영
+  const handleSortChange = (value: 'artist' | 'title' | 'popular' | 'latest' | 'oldest' | 'first-verse' | 'high-difficulty' | 'loop-station') => {
+    setSort(value);
+    // 정렬 변경 시 즉시 페이지 리셋 및 데이터 새로고침
+    setPage(1);
+    setHasMore(true);
+    setSongs([]); // 기존 목록 초기화
+  };
 
   return (
     <div className="w-full p-4 flex flex-col min-w-0">
@@ -487,8 +530,8 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
             className="pl-10"
           />
         </div>
-        <Select value={sort} onValueChange={(value: 'artist' | 'title' | 'popular' | 'latest' | 'oldest') => setSort(value)}>
-          <SelectTrigger className="w-[140px]">
+        <Select value={sort} onValueChange={handleSortChange}>
+          <SelectTrigger className="w-[160px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -497,6 +540,12 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
             <SelectItem value="popular">인기순</SelectItem>
             <SelectItem value="latest">최신순</SelectItem>
             <SelectItem value="oldest">과거순</SelectItem>
+            <SelectItem value="first-verse" className="flex items-center gap-2">
+              <img src="/icons/1st-verse.png" alt="1절만 아이콘" className="h-4 w-4" />
+              1절만
+            </SelectItem>
+            <SelectItem value="high-difficulty">🔥 고난이도</SelectItem>
+            <SelectItem value="loop-station">⚡ 루프 스테이션</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -504,13 +553,13 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
       <div className="flex-1 overflow-y-auto space-y-2">
         {loading && page === 1 ? (
           <div className="w-full text-center py-8 text-gray-500 text-sm">로딩 중...</div>
-        ) : sortedSongs.length === 0 ? (
+        ) : displaySongs.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-500">노래가 없습니다.</p>
           </div>
         ) : (
           <>
-            {sortedSongs.map((song, idx) => {
+            {displaySongs.map((song, idx) => {
               // 그룹 구분선 표시 조건: 정렬 기준별로 다르게 처리
               let showDivider = false;
               let dividerLabel = '';
@@ -527,7 +576,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
                   return ch.toUpperCase();
                 };
                 const currInitial = getInitial(sort === 'title' ? song.title : song.artist);
-                const prevInitial = idx > 0 ? getInitial(sort === 'title' ? sortedSongs[idx-1].title : sortedSongs[idx-1].artist) : null;
+                const prevInitial = idx > 0 ? getInitial(sort === 'title' ? displaySongs[idx-1].title : displaySongs[idx-1].artist) : null;
                 if (idx === 0 || currInitial !== prevInitial) {
                   showDivider = true;
                   dividerLabel = currInitial;
@@ -538,7 +587,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
                   return `${d.getFullYear()}.${(d.getMonth()+1).toString().padStart(2,'0')}`;
                 };
                 const currMonth = getMonth(song.createdAt);
-                const prevMonth = idx > 0 ? getMonth(sortedSongs[idx-1].createdAt) : null;
+                const prevMonth = idx > 0 ? getMonth(displaySongs[idx-1].createdAt) : null;
                 if (idx === 0 || currMonth !== prevMonth) {
                   showDivider = true;
                   dividerLabel = currMonth;
@@ -549,10 +598,23 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
                   return `${base}~${base+9}`;
                 };
                 const currGroup = getLikeGroup(song.likeCount || 0);
-                const prevGroup = idx > 0 ? getLikeGroup(sortedSongs[idx-1].likeCount || 0) : null;
+                const prevGroup = idx > 0 ? getLikeGroup(displaySongs[idx-1].likeCount || 0) : null;
                 if (idx === 0 || currGroup !== prevGroup) {
                   showDivider = true;
                   dividerLabel = currGroup;
+                }
+              } else if (sort === 'first-verse' || sort === 'high-difficulty' || sort === 'loop-station') {
+                // 특별 조건 필터의 경우 조건이 체크된 곡과 안된 곡을 구분
+                const getConditionStatus = (song: Song) => {
+                  if (sort === 'first-verse') return song.isFirstVerseOnly ? '1절만' : '일반'
+                  if (sort === 'high-difficulty') return song.isHighDifficulty ? '🔥' : '일반'
+                  return song.isLoopStation ? '⚡' : '일반'
+                };
+                const currStatus = getConditionStatus(song);
+                const prevStatus = idx > 0 ? getConditionStatus(displaySongs[idx-1]) : null;
+                if (idx === 0 || currStatus !== prevStatus) {
+                  showDivider = true;
+                  dividerLabel = currStatus;
                 }
               }
               return (

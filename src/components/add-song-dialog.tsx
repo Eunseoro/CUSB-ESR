@@ -268,9 +268,8 @@ export function AddSongDialog({
           </div>
 
           {/* 특별 조건 체크박스들 */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium">특이사항</Label>
-            <div className="space-y-1">
+          <div>
+            <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -278,7 +277,7 @@ export function AddSongDialog({
                   checked={formData.isFirstVerseOnly}
                   onChange={(e) => handleInputChange('isFirstVerseOnly', e.target.checked)}
                   disabled={loading}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <Label htmlFor="isFirstVerseOnly" className="text-sm font-normal flex items-center gap-1">
                   <FirstVerseIcon /> 1절만
@@ -291,7 +290,7 @@ export function AddSongDialog({
                   checked={formData.isHighDifficulty}
                   onChange={(e) => handleInputChange('isHighDifficulty', e.target.checked)}
                   disabled={loading}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <Label htmlFor="isHighDifficulty" className="text-sm font-normal flex items-center gap-1">
                   <HighDifficultyIcon /> 고난이도
@@ -304,7 +303,7 @@ export function AddSongDialog({
                   checked={formData.isLoopStation}
                   onChange={(e) => handleInputChange('isLoopStation', e.target.checked)}
                   disabled={loading}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <Label htmlFor="isLoopStation" className="text-sm font-normal flex items-center gap-1">
                   <LoopStationIcon /> 루프 스테이션

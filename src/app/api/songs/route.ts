@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
+    const sort = searchParams.get('sort') || 'latest'
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {
@@ -27,12 +28,43 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    let orderBy: any[] = []
+    switch (sort) {
+      case 'latest':
+        orderBy = [{ createdAt: 'desc' }]
+        break
+      case 'oldest':
+        orderBy = [{ createdAt: 'asc' }]
+        break
+      case 'popular':
+        orderBy = [{ likeCount: 'desc' }, { createdAt: 'desc' }]
+        break
+      case 'title':
+        orderBy = [{ title: 'asc' }, { artist: 'asc' }]
+        break
+      case 'artist':
+        orderBy = [{ artist: 'asc' }, { title: 'asc' }]
+        break
+      case 'first-verse':
+        // 1절만 곡을 우선적으로 정렬 (서버에서 기본 정렬만, 클라이언트에서 세부 정렬)
+        orderBy = [{ isFirstVerseOnly: 'desc' }, { artist: 'asc' }]
+        break
+      case 'high-difficulty':
+        // 고난이도 곡을 우선적으로 정렬
+        orderBy = [{ isHighDifficulty: 'desc' }, { artist: 'asc' }]
+        break
+      case 'loop-station':
+        // 루프 스테이션 곡을 우선적으로 정렬
+        orderBy = [{ isLoopStation: 'desc' }, { artist: 'asc' }]
+        break
+      default:
+        orderBy = [{ createdAt: 'desc' }]
+    }
+
     const [songs, total] = await Promise.all([
       prisma.song.findMany({
         where,
-        orderBy: [
-          { createdAt: 'desc' },
-        ],
+        orderBy,
         skip,
         take: limit,
       }),
@@ -75,7 +107,7 @@ export async function POST(request: NextRequest) {
     // 입력 검증
     if (!title || !artist || !category) {
       return NextResponse.json(
-        { error: 'Title, artist, and category are required' },
+        { error: '제목, 아티스트, 카테고리를 선택해 주세요.' },
         { status: 400 }
       )
     }
