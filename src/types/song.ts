@@ -13,5 +13,5 @@ export interface Song {
   isHighDifficulty?: boolean
   isLoopStation?: boolean
   createdAt: string
-  progress?: number // 진행도(게이지) 0~100
+  progress?: number 
 } 

@@ -4,6 +4,7 @@
 import { useState, useRef } from 'react'
 import { SongList, SongListRef } from '@/components/song-list'
 import { VideoPlayer } from '@/components/video-player'
+import { SplitLayout } from '@/components/split-layout'
 import { Song } from '@/types/song'
 
 export default function KpopPage() {
@@ -25,9 +26,8 @@ export default function KpopPage() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row w-full">
-      {/* 모바일/태블릿에서는 비디오 플레이어가 상단에, 데스크톱에서는 우측에 */}
-      <div className="order-2 lg:order-1 lg:flex-1">
+    <SplitLayout
+      leftPanel={
         <SongList
           ref={songListRef}
           category="KPOP"
@@ -36,14 +36,14 @@ export default function KpopPage() {
           songs={songs}
           setSongs={setSongs}
         />
-      </div>
-      <div className="order-1 lg:order-2 lg:flex-1">
+      }
+      rightPanel={
         <VideoPlayer
           song={selectedSong}
           onSongUpdate={handleSongUpdate}
           onSongDelete={handleSongDelete}
         />
-      </div>
-    </div>
+      }
+    />
   )
 } 

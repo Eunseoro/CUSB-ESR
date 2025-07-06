@@ -41,22 +41,22 @@ export function getProgressColor(progress: number): string {
 export function getKoreanSortKey(text: string): string {
   const firstChar = text.trim().charAt(0)
   
-  // 숫자(0-9)는 가장 앞으로
+
   if (/^[0-9]/.test(firstChar)) {
     return '1' + text
   }
   
-  // 한글은 중간으로
+
   if (/^[가-힣]/.test(firstChar)) {
     return '2' + text
   }
   
-  // 알파벳은 마지막으로
+
   if (/^[a-zA-Z]/.test(firstChar)) {
     return '3' + text
   }
   
-  // 기타 문자는 가장 마지막으로
+
   return '4' + text
 }
 

@@ -149,3 +149,76 @@
 - border-width: 테두리 두께 조절
 - border-radius: 테두리 둥글기 조절
 */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* 분할 레이아웃을 위한 높이 계산 */
+  .split-layout-height {
+    height: calc(100vh - 4rem); /* 헤더 높이 제외 */
+  }
+  
+  @media (min-width: 1024px) {
+    .split-layout-height {
+      height: calc(100vh - 4rem); /* 헤더 높이 제외 */
+    }
+  }
+
+  /* 모바일 30/70 비율 분할 */
+  .split-top-30 {
+    height: 30%;
+  }
+  .split-bottom-70 {
+    height: 70%;
+  }
+  @media (min-width: 1024px) {
+    .split-top-30, .split-bottom-70 {
+      height: 100%;
+    }
+  }
+
+  /* 스크롤바 색상 커스텀 (다크/라이트) */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: #bbb #222;
+  }
+  .dark .scrollbar-custom {
+    scrollbar-color: #444 #111;
+  }
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    background: #222;
+  }
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 8px;
+  }
+  .dark .scrollbar-custom::-webkit-scrollbar {
+    background: #111;
+  }
+  .dark .scrollbar-custom::-webkit-scrollbar-thumb {
+    background: #444;
+  }
+
+  /* 스크롤바 완전 숨기기 (크로스 브라우저, !important) */
+  .scrollbar-hide {
+    -ms-overflow-style: none !important;  /* IE and Edge */
+    scrollbar-width: none !important;      /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
+    background: transparent !important;
+  }
+  .scrollbar-hide::-webkit-scrollbar-thumb {
+    background: transparent !important;
+    display: none !important;
+  }
+  .scrollbar-hide::-webkit-scrollbar-track {
+    background: transparent !important;
+    display: none !important;
+  }
+}

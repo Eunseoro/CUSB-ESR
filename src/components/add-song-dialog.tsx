@@ -201,7 +201,7 @@ export function AddSongDialog({
 
           <div className="grid grid-cols-2 gap-4">          
           <div className="space-y-2">
-              <Label htmlFor="title">제목</Label>
+              <Label htmlFor="title">제목 *</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -212,7 +212,7 @@ export function AddSongDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="artist">아티스트</Label>
+              <Label htmlFor="artist">아티스트 *</Label>
               <Input
                 id="artist"
                 value={formData.artist}

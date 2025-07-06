@@ -5,6 +5,7 @@ import { useState, useRef } from 'react'
 import { Song } from '@/types/song'
 import { SongList, SongListRef } from '@/components/song-list'
 import { VideoPlayer } from '@/components/video-player'
+import { SplitLayout } from '@/components/split-layout'
 
 export default function MissionPage() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
@@ -22,9 +23,8 @@ export default function MissionPage() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row w-full">
-      {/* 모바일/태블릿에서는 비디오 플레이어가 상단에, 데스크톱에서는 우측에 */}
-      <div className="order-2 lg:order-1 lg:flex-1">
+    <SplitLayout
+      leftPanel={
         <SongList
           ref={songListRef}
           category="MISSION"
@@ -33,14 +33,14 @@ export default function MissionPage() {
           songs={songs}
           setSongs={setSongs}
         />
-      </div>
-      <div className="order-1 lg:order-2 lg:flex-1">
+      }
+      rightPanel={
         <VideoPlayer
           song={selectedSong}
           onSongUpdate={handleSongUpdate}
           onSongDelete={handleSongDelete}
         />
-      </div>
-    </div>
+      }
+    />
   )
 } 

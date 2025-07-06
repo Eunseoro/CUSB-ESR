@@ -1,11 +1,11 @@
 // 이 파일은 노래 목록을 보여주는 컴포넌트입니다. songList 상태를 songs로 통합하고, useEffect 중복 호출 및 불필요한 상태/함수를 정리하여 메모리 누수와 비효율을 방지합니다.
 'use client'
 
-import { useState, useEffect, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react'
+import { useState, useEffect, forwardRef, useImperativeHandle, useCallback, useMemo, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Heart, Copy } from 'lucide-react'
+import { Search, Heart, Copy, ArrowUp } from 'lucide-react'
 import { AddSongDialog } from './add-song-dialog'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { Song } from '@/types/song'
@@ -29,7 +29,7 @@ export interface SongListRef {
   refresh: () => void
 }
 
-export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSongSelect, selectedSong, songs, setSongs }, ref) => {
+export const SongList = forwardRef<SongListRef, SongListProps>(function SongListImpl({ category, onSongSelect, selectedSong, songs, setSongs }, ref) {
   const { isAdmin } = useAdminAuth();
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -43,6 +43,8 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isUpdatingLike, setIsUpdatingLike] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
+  const listRef = useRef<HTMLDivElement>(null)
+  const [showTopBtn, setShowTopBtn] = useState(false)
 
   // localStorage에서 좋아요 상태 안전하게 로드
   const loadLikedSongsFromStorage = () => {
@@ -154,23 +156,23 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [songs, isUpdatingLike])
 
-  // 무한스크롤: 스크롤 이벤트 리스너
+  // 무한스크롤: 분할 영역 내 스크롤 이벤트 리스너
   useEffect(() => {
+    const el = listRef.current
+    if (!el) return
     const handleScroll = () => {
-      const scrollTop = window.scrollY || document.documentElement.scrollTop
-      const windowHeight = window.innerHeight
-      const documentHeight = document.documentElement.scrollHeight
-      
+      const scrollTop = el.scrollTop
+      const clientHeight = el.clientHeight
+      const scrollHeight = el.scrollHeight
       // 스크롤이 하단 80% 지점에 도달했을 때 다음 페이지 로드
-      if (scrollTop + windowHeight >= documentHeight * 0.8) {
+      if (scrollTop + clientHeight >= scrollHeight * 0.8) {
         if (!loading && !loadingMore && hasMore) {
           fetchSongs(page + 1)
         }
       }
     }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    el.addEventListener('scroll', handleScroll)
+    return () => el.removeEventListener('scroll', handleScroll)
   }, [loading, loadingMore, hasMore, page, fetchSongs])
 
   // 이벤트 리스너 등록 및 정리
@@ -518,8 +520,25 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
     setSongs([]); // 기존 목록 초기화
   };
 
+  // TOP 버튼 노출 여부 (스크롤 200px 이상 시 노출)
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const onScroll = () => {
+      setShowTopBtn(el.scrollTop > 200)
+    }
+    el.addEventListener('scroll', onScroll)
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // TOP 버튼 클릭 시 스크롤 최상단 이동
+  const handleScrollTop = () => {
+    const el = listRef.current
+    if (el) el.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
-    <div className="w-full p-4 flex flex-col min-w-0">
+    <div className="w-full h-full p-4 flex flex-col min-w-0" style={{ position: 'relative' }}>
       <div className="flex gap-2 mb-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -550,7 +569,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
         </Select>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2">
+      <div ref={listRef} className="flex-1 overflow-y-auto space-y-2">
         {loading && page === 1 ? (
           <div className="w-full text-center py-8 text-gray-500 text-sm">로딩 중...</div>
         ) : displaySongs.length === 0 ? (
@@ -716,6 +735,17 @@ export const SongList = forwardRef<SongListRef, SongListProps>(({ category, onSo
           </>
         )}
       </div>
+      {/* TOP 버튼 */}
+      {showTopBtn && (
+        <button
+          onClick={handleScrollTop}
+          className="fixed right-6 bottom-6 z-30 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white shadow-md transition-all duration-200"
+          style={{ width: 36, height: 36, fontSize: 18, opacity: 0.7 }}
+          aria-label="맨 위로"
+        >
+          <ArrowUp className="w-5 h-5 mx-auto" />
+        </button>
+      )}
     </div>
   )
 })

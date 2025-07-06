@@ -76,7 +76,7 @@ export default function BoardPage() {
       <h1 className="text-2xl font-bold mb-1">쥐수게시판</h1>
       <div className="text-muted-foreground mb-6">
         <p>방명록 & 수다 & 버그신고 & 건의사항 등 자유롭게 사용하는 게시판입니다.</p>
-        <p>눈살 찌푸려질 내용과 불필요한 도배는 삼가주세요 :)</p>
+        <p>타인에게 불쾌감을 주는 내용과 도배는 삼가주세요 :)</p>
       </div>
       <Card className="mb-6">
         <CardContent className="flex flex-col gap-2">

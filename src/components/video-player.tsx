@@ -91,8 +91,8 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
   useEffect(() => { setUseAltUrl(false) }, [song])
 
   return (
-    <div className="w-full p-4 flex flex-col">
-      <div className="flex-1 space-y-4">
+    <div className="w-full h-full p-4 flex flex-col">
+      <div className="flex-1 space-y-4 overflow-y-auto">
         {/* 비디오 플레이어 */}
         <Card className="py-0">
           <CardContent className="p-0">

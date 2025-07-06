@@ -15,7 +15,7 @@ export async function fetchSongsApi({ category, search, pageNum, limit = 50, sor
   return response.json()
 }
 
-// 곡별 좋아요 상태를 서버에서 가져오는 함수 (최적화: 일괄 조회)
+// 곡별 좋아요 상태를 서버에서 가져오는 함수
 export async function fetchLikedSongsApi(songs: Song[]) {
   const likedStates: { [id: string]: boolean } = {}
   if (!songs || songs.length === 0) return likedStates
@@ -49,7 +49,7 @@ export async function handleLikeApi(songId: string, liked: boolean) {
   return response.json()
 }
 
-// 곡 진행도를 서버에 반영하는 함수 (관리자만)
+// 곡 진행도를 서버에 반영하는 함수
 export async function handleProgressChangeApi(songId: string, value: number) {
   const response = await fetch(`/api/songs/${songId}`, {
     method: 'PUT',
@@ -62,7 +62,7 @@ export async function handleProgressChangeApi(songId: string, value: number) {
   return response.json()
 }
 
-// 곡을 서버에 추가하는 함수 (관리자만)
+// 곡을 서버에 추가하는 함수
 export async function addSongApi(formData: Record<string, unknown>) {
   const response = await fetch('/api/songs', {
     method: 'POST',
@@ -78,7 +78,7 @@ export async function addSongApi(formData: Record<string, unknown>) {
   return response.json()
 }
 
-// 곡을 서버에 수정하는 함수 (관리자만)
+// 곡을 서버에 수정하는 함수
 export async function updateSongApi(songId: string, formData: Record<string, unknown>) {
   const response = await fetch(`/api/songs/${songId}`, {
     method: 'PUT',
@@ -94,7 +94,7 @@ export async function updateSongApi(songId: string, formData: Record<string, unk
   return response.json()
 }
 
-// 곡을 서버에서 삭제하는 함수 (관리자만)
+// 곡을 서버에서 삭제하는 함수
 export async function deleteSongApi(songId: string) {
   const response = await fetch(`/api/songs/${songId}`, {
     method: 'DELETE',
