@@ -182,14 +182,14 @@
   /* 스크롤바 색상 커스텀 (다크/라이트) */
   .scrollbar-custom {
     scrollbar-width: thin;
-    scrollbar-color: #bbb #222;
+    scrollbar-color: #bbb #f3f4f6;
   }
   .dark .scrollbar-custom {
     scrollbar-color: #444 #111;
   }
   .scrollbar-custom::-webkit-scrollbar {
     width: 8px;
-    background: #222;
+    background: #f3f4f6;
   }
   .scrollbar-custom::-webkit-scrollbar-thumb {
     background: #bbb;
