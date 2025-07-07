@@ -20,12 +20,12 @@ export default function HomePage() {
     <div className="w-full p-6 max-w-4xl mx-auto">
       <div className="space-y-6">
         <div className="relative flex items-center justify-center text-center">
-          <img src="/heder_r.png" className="hidden sm:block absolute left-1/8 top-1/2 -translate-y-1/2 w-30 h-30" />
+          <img src="/heder_r.png" className="hidden sm:block absolute left-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" />
           <div className="w-full">
             <h1 className="text-3xl font-bold mb-2">유할매 노래책 이용안내</h1>
             <p className="text-muted-foreground">이용 시 꼭 확인해주세요</p>
           </div>
-          <img src="/heder_l.png" className="hidden sm:block absolute right-1/8 top-1/2 -translate-y-1/2 w-30 h-30" />
+          <img src="/heder_l.png" className="hidden sm:block absolute right-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" />
         </div>
         <NoticeBox />
 

@@ -75,13 +75,7 @@ export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayo
 
   useEffect(() => {
     const check = () => {
-      if (!layoutRef.current) {
-        setIsPc(false);
-      } else if (window.innerWidth >= 1024 && layoutRef.current.offsetWidth >= 1024) {
-        setIsPc(true);
-      } else {
-        setIsPc(false);
-      }
+      setIsPc(window.innerWidth >= 1024);
     };
     check();
     window.addEventListener('resize', check);
