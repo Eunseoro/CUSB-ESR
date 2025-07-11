@@ -103,12 +103,12 @@ export default function RoulettePage() {
     // rollingList를 항상 5곡(중앙이 선택)으로 유지, 시작은 랜덤 5곡
     let rollingArr: Song[] = Array(5).fill(null).map(() => getRandomSong(songs) || fallbackSong)
     setRollingList([...rollingArr])
-    const totalStep = 36 + Math.floor(Math.random() * 8)
+    const totalStep = 24 + Math.floor(Math.random() * 6)
     let step = 0
     function animate() {
       const progress = step / totalStep
       const minDelay = 20
-      const maxDelay = 400
+      const maxDelay = 320
       const delay = minDelay + (maxDelay - minDelay) * Math.pow(progress, 2.2)
       // 맨 위에 새 곡 추가, 아래로 밀기
       const s = getRandomSong(songs) || fallbackSong

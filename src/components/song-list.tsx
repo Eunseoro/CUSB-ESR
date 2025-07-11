@@ -556,7 +556,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
           <SelectContent>
             <SelectItem value="artist">아티스트순</SelectItem>
             <SelectItem value="title">제목순</SelectItem>
-            <SelectItem value="popular">인기순</SelectItem>
+            <SelectItem value="popular">💖 인기순</SelectItem>
             <SelectItem value="latest">최신순</SelectItem>
             <SelectItem value="oldest">과거순</SelectItem>
             <SelectItem value="first-verse" className="flex items-center gap-2">

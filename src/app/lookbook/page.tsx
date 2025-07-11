@@ -79,7 +79,7 @@ export default function LookBookPage() {
         </div>
       ) : (
         <>
-          <div>이미지가 없습니다.</div>
+          <div>로딩 중...</div>
           {isAdmin && (
             <div className="flex gap-2 mt-4 justify-center w-full">
               <input
