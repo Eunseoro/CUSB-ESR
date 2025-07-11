@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from '@/lib/prisma';
+import { put } from '@vercel/blob';
 
 export async function GET() {
   const images = await prisma.lookBookImage.findMany({
@@ -9,9 +10,18 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { imageUrl } = await req.json();
+  // FormData에서 파일 추출
+  const formData = await req.formData();
+  const file = formData.get('file');
+  if (!file || !(file instanceof File)) {
+    return NextResponse.json({ error: '파일이 필요합니다.' }, { status: 400 });
+  }
+  // Blob 업로드
+  const filename = `${Date.now()}-${file.name}`;
+  const blob = await put(filename, file, { access: 'public' });
+  // DB 저장
   const created = await prisma.lookBookImage.create({
-    data: { imageUrl: imageUrl, uploader: "" },
+    data: { imageUrl: blob.url, uploader: '' },
   });
   return NextResponse.json(created);
 }

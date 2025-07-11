@@ -34,24 +34,14 @@ export default function LookBookPage() {
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Vercel Blob 업로드
     const formData = new FormData();
     formData.append('file', file);
-    const blobRes = await fetch('https://blob.vercel-storage.com/upload', {
+    // 서버 라우트에 파일 업로드 요청
+    const res = await fetch('/api/lookbook', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${BLOB_TOKEN}`,
-      },
       body: formData,
     });
-    const blobData = await blobRes.json();
-    if (!blobData.url) return alert('업로드 실패');
-    // DB에 Blob URL 저장
-    await fetch("/api/lookbook", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageUrl: blobData.url }),
-    });
+    if (!res.ok) return alert('업로드 실패');
     location.reload();
   };
 
