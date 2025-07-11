@@ -24,7 +24,7 @@ interface VideoPlayerProps {
 export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerProps) {
   const { isAdmin } = useAdminAuth();
   const [embedUrl, setEmbedUrl] = useState<string | null>(null)
-  const [showLyrics, setShowLyrics] = useState(false)
+  const [showLyrics, setShowLyrics] = useState(true)
   const [isDeleting, setIsDeleting] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [useAltUrl, setUseAltUrl] = useState(false)
@@ -87,8 +87,10 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
     setEditOpen(false)
   }
 
-  // 스위치 상태 초기화: 노래가 바뀔 때마다 항상 원곡버전으로 초기화
-  useEffect(() => { setUseAltUrl(false) }, [song])
+  // 스위치 상태 초기화: 노래가 바뀔 때마다 URL2가 있으면 true, 없으면 false로 초기화
+  useEffect(() => {
+    setUseAltUrl(!!song?.videoUrl2)
+  }, [song])
 
   return (
     <div className="w-full h-full p-4 flex flex-col">
@@ -162,7 +164,7 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
               
               {song.lyrics && (
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-4 mb-2">
                     <h4 className="font-medium">가사</h4>
                     <button
                       onClick={() => setShowLyrics(!showLyrics)}
@@ -172,7 +174,7 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
                     </button>
                   </div>
                   {showLyrics && (
-                    <ScrollArea className="h-40 border rounded-md p-3">
+                    <ScrollArea className="h-60 border rounded-md p-3">
                       <p className="text-sm whitespace-pre-wrap">{song.lyrics}</p>
                     </ScrollArea>
                   )}

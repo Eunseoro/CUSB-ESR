@@ -150,6 +150,21 @@
 - border-radius: 테두리 둥글기 조절
 */
 
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 2px 1px rgba(169, 171, 245, 0.7), 0 0 0 0 rgba(169, 171, 245, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 2px 1px rgba(169, 171, 245, 0.7), 0 0 0 0 rgba(169, 171, 245, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 2px 1px rgba(169, 171, 245, 0.7), 0 0 0 0 rgba(169, 171, 245, 0.7);
+  }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

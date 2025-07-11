@@ -1,0 +1,1 @@
+export const BLOB_TOKEN = process.env.NEXT_PUBLIC_BLOB_READ_WRITE_TOKEN; 

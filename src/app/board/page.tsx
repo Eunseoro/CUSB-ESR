@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Board } from '@/types/board'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { fetchBoardList, addBoard, deleteBoard } from '@/lib/board-api'
+import { fetchBoardList, addBoard, deleteBoard, getPinnedGuestbookId, setPinnedGuestbookId } from '@/lib/board-api'
 import { formatDate } from '@/lib/song-utils'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 
@@ -35,10 +35,12 @@ export default function BoardPage() {
   const [author, setAuthor] = useState('')
   const [content, setContent] = useState('')
   const [userKey, setUserKey] = useState('')
+  const [pinnedId, setPinnedId] = useState<string | null>(null)
 
   useEffect(() => {
     setUserKey(getUserKey())
     fetchList()
+    fetchPinned()
   }, [])
 
   async function fetchList() {
@@ -47,6 +49,21 @@ export default function BoardPage() {
       setList(data)
     } catch (e) {
       // 에러 처리 필요시 추가
+    }
+  }
+
+  async function fetchPinned() {
+    const id = await getPinnedGuestbookId()
+    setPinnedId(id)
+  }
+
+  async function handlePin(id: string, checked: boolean) {
+    if (checked) {
+      await setPinnedGuestbookId(id)
+      setPinnedId(id)
+    } else {
+      await setPinnedGuestbookId('')
+      setPinnedId(null)
     }
   }
 
@@ -98,20 +115,76 @@ export default function BoardPage() {
         </CardContent>
       </Card>
       <div className="space-y-4 w-full">
-        {list.length === 0 && <div className="text-center text-muted-foreground">아직 게시글이 없습니다.</div>}
-        {list.map((item, idx) => {
+        {list.length === 0 && <div className="text-center text-muted-foreground">로딩 중...</div>}
+        {/* 고정된 게시글 먼저 렌더링 */}
+        {pinnedId && (() => {
+          const pinned = list.find(item => item.id === pinnedId)
+          if (!pinned) return null
+          return (
+            <div key={pinned.id}>
+              <GroupDivider label={"고정됨"} />
+              <Card
+                className="w-full overflow-hidden animate-pulse-glow border-2 border-indigo-400 shadow-lg"
+              >
+                <CardHeader className="pb-0 pt-2 -my-5">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base leading-tight flex items-center gap-1">
+                      {pinned.author}
+                    </CardTitle>
+                    <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap">{formatDate(pinned.createdAt)}</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-2 px-6 pb-0 my-[-6px]">
+                  <div className="flex w-full items-center">
+                    <div className="flex-1 text-sm whitespace-pre-line mb-0 flex items-center min-h-[32px]">
+                      {pinned.content}
+                    </div>
+                    {/* 고정 체크박스 (관리자만) */}
+                    {isAdmin && (
+                      <input
+                        type="checkbox"
+                        checked={true}
+                        onChange={e => handlePin(pinned.id, e.target.checked)}
+                        className="accent-purple-500 cursor-pointer ml-2"
+                        style={{ width: '22px', height: '22px' }}
+                        title="상단 고정 해제"
+                      />
+                    )}
+                    {(isAdmin || pinned.userKey === userKey) && (
+                      <div className="flex items-center">
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="rounded-full px-4 ml-2"
+                          title="삭제"
+                          onClick={e => {e.stopPropagation(); handleDelete(pinned.id)}}
+                        >
+                          삭제
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )
+        })()}
+        {/* 나머지 게시글 */}
+        {list.filter(item => item.id !== pinnedId).map((item, idx, arr) => {
           // 일별 구분선 표시
           const getDay = (dateString: string) => {
             const d = new Date(dateString)
             return `${d.getFullYear()}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getDate().toString().padStart(2,'0')}`
           }
           const currDay = getDay(item.createdAt)
-          const prevDay = idx > 0 ? getDay(list[idx-1].createdAt) : null
+          const prevDay = idx > 0 ? getDay(arr[idx-1].createdAt) : null
           const showDivider = idx === 0 || currDay !== prevDay
           return (
             <div key={item.id}>
               {showDivider && <GroupDivider label={currDay} />}
-              <Card className="w-full overflow-hidden">
+              <Card
+                className="w-full overflow-hidden"
+              >
                 <CardHeader className="pb-0 pt-2 -my-5">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base leading-tight flex items-center gap-1">
@@ -121,20 +194,33 @@ export default function BoardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-2 px-6 pb-0 my-[-6px]">
-                  <div className="flex w-full">
+                  <div className="flex w-full items-center">
+                    
                     <div className="flex-1 text-sm whitespace-pre-line mb-0 flex items-center min-h-[32px]">
                       {item.content}
                     </div>
                     {(isAdmin || item.userKey === userKey) && (
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="rounded-full px-4 ml-2"
-                        title="삭제"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        삭제
-                      </Button>
+                      <div className="flex items-center">
+                        {isAdmin && (
+                          <input
+                            type="checkbox"
+                            checked={pinnedId === item.id}
+                            onChange={e => handlePin(item.id, e.target.checked)}
+                            className="accent-purple-500 cursor-pointer mr-4"
+                            style={{ width: '20px', height: '20px' }}
+                            title="상단 고정"
+                          />
+                        )}
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="rounded-full px-4"
+                          title="삭제"
+                          onClick={e => {e.stopPropagation(); handleDelete(item.id)}}
+                        >
+                          삭제
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </CardContent>

@@ -28,4 +28,22 @@ export async function deleteBoard(id: string, userKey: string) {
   })
   if (!res.ok) throw new Error('게시글 삭제 실패')
   return res.json()
+}
+
+// 상단 고정 Guestbook id 조회
+export async function getPinnedGuestbookId(): Promise<string | null> {
+  const res = await fetch('/api/board/pinned')
+  if (!res.ok) return null
+  const data = await res.json()
+  return data.guestbookId || null
+}
+
+// 상단 고정 Guestbook id 설정 (관리자만)
+export async function setPinnedGuestbookId(guestbookId: string): Promise<boolean> {
+  const res = await fetch('/api/board/pinned', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ guestbookId })
+  })
+  return res.ok
 } 

@@ -130,7 +130,7 @@ export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayo
           {rightPanel}
         </div>
         {isPc && (
-          <img src="/video_player_org.png" className="absolute right-4 bottom-0 w-70 h-70 opacity-70 pointer-events-none z-10" />
+          <img src="/video_player_org.png" className="absolute right-4 bottom-0 w-70 h-70 opacity-60 pointer-events-none z-10" />
         )}
       </div>
     </div>

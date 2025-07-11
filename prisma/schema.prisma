@@ -78,3 +78,18 @@ model VisitorCount {
   date   DateTime @id
   count  Int      @default(0)
 }
+
+// 상단 고정 Guestbook id 저장용 테이블
+model PinnedGuestbook {
+  id        Int      @id @default(1)
+  guestbookId String
+  updatedAt DateTime @updatedAt
+}
+
+model LookBookImage {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  uploader  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

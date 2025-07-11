@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Music, Music2, Star, Info, Menu, Trophy, SquarePen, ChartNoAxesColumn } from 'lucide-react'
+import { Music, Music2, Star, Info, Menu, Trophy, SquarePen, ChartNoAxesColumn, Shirt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -18,7 +18,8 @@ const menuItems = [
   { href: '/mission', label: getCategoryLabel('MISSION'), icon: Trophy, category: 'MISSION' },
   { href: '/newsong', label: getCategoryLabel('NEWSONG'), icon: Star, category: 'NEWSONG' },
   { href: '/board', label: '쥐수게시판', icon: SquarePen },
-]
+  // LookBook 탭은 아래에서 조건부로 추가
+];
 
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -134,7 +135,23 @@ export function Sidebar() {
                   </Link>
                 )
               })}
-              {/* 관리자 인증 시에만 '관리' 탭 노출 */}
+              {/* LookBook 탭: 관리자 인증 시에만 노출 */}
+              {isAdmin && (
+                <Link
+                  href="/lookbook"
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors relative text-muted-foreground hover:bg-accent hover:text-accent-foreground md:flex"
+                  )}
+                  onClick={() => setIsOpen(false)}
+                  style={{ minHeight: 40 }}
+                >
+                  <Shirt className="h-5 w-5 shrink-0" />
+                  <span className="whitespace-nowrap transition-opacity md:opacity-0 md:group-hover/sidebar:opacity-100">
+                    LookBook
+                  </span>
+                </Link>
+              )}
+              {/* 관리자 인증 시에만 '통계' 탭 노출 */}
               {isAdmin && (
                 <Link
                   href="/admin/statistics"
