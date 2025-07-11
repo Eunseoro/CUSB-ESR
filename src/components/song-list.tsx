@@ -36,7 +36,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const [sort, setSort] = useState<'artist' | 'title' | 'popular' | 'latest' | 'oldest' | 'first-verse' | 'high-difficulty' | 'loop-station'>(category === 'MISSION' ? 'oldest' : 'artist')
+  const [sort, setSort] = useState<'artist' | 'title' | 'popular' | 'latest' | 'oldest' | 'first-verse' | 'high-difficulty' | 'loop-station'>(category === 'NEWSONG' ? 'latest' : (category === 'MISSION' ? 'oldest' : 'artist'))
   const [likedSongs, setLikedSongs] = useState<Set<string>>(new Set())
   const [localProgress, setLocalProgress] = useState<{[id: string]: number}>({})
   const [sliderDragging, setSliderDragging] = useState<{[id: string]: boolean}>({})

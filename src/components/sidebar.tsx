@@ -17,9 +17,8 @@ const menuItems = [
   { href: '/pop', label: getCategoryLabel('POP'), icon: Music, category: 'POP' },
   { href: '/mission', label: getCategoryLabel('MISSION'), icon: Trophy, category: 'MISSION' },
   { href: '/newsong', label: getCategoryLabel('NEWSONG'), icon: Star, category: 'NEWSONG' },
-  // 룰렛 탭 추가
-  { href: '/roulette', label: '룰렛', icon: Trophy },
   { href: '/board', label: '쥐수게시판', icon: SquarePen },
+  { href: '/roulette', label: '룰렛', icon: Trophy },
   // LookBook 탭은 아래에서 조건부로 추가
 ];
 
