@@ -14,6 +14,11 @@ export async function POST(req: NextRequest) {
   const cookie = req.cookies.get('admin_session')
   const isAdmin = cookie && cookie.value === '1'
   if (!isAdmin) return NextResponse.json({ error: '권한 없음' }, { status: 403 })
+  if (guestbookId === '') {
+    // 고정 해제: row 삭제
+    await prisma.pinnedGuestbook.delete({ where: { id: 1 } }).catch(() => {})
+    return NextResponse.json({ ok: true })
+  }
   if (!guestbookId) return NextResponse.json({ error: 'guestbookId 필수' }, { status: 400 })
   await prisma.pinnedGuestbook.upsert({
     where: { id: 1 },
