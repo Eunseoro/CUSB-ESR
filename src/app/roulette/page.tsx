@@ -11,8 +11,7 @@ const CATEGORY_LIST = [
 ]
 
 const SECONDARY_FILTERS = [
-  { key: 'difficulty', label: '🔥고난이도', field: 'isHighDifficulty' },
-  { key: 'loop', label: '⚡루프스테이션', field: 'isLoopStation' },
+  { key: 'advanced', label: '🔥 고급신청 ⚡', field: 'isAdvanced' },
 ]
 
 function getRandomSong(songs: Song[]): Song | null {
@@ -38,7 +37,7 @@ export default function RoulettePage() {
   const [rollingList, setRollingList] = useState<Song[]>([])
   const rollingRef = useRef<NodeJS.Timeout | null>(null)
   const [showResultAnim, setShowResultAnim] = useState(false)
-  const [secondary, setSecondary] = useState<{ [key: string]: boolean }>({ difficulty: false, loop: false })
+  const [secondary, setSecondary] = useState<{ [key: string]: boolean }>({ advanced: false })
   const [copied, setCopied] = useState(false)
 
   // 카테고리 선택
@@ -74,9 +73,8 @@ export default function RoulettePage() {
         })
       })
       let filtered = Object.values(merged)
-      // 2차 필터 적용
-      if (secondary.difficulty) filtered = filtered.filter(s => s.isHighDifficulty)
-      if (secondary.loop) filtered = filtered.filter(s => s.isLoopStation)
+      // 고급신청 필터 적용 (고난이도 또는 루프스테이션 중 하나만 만족해도 표시)
+      if (secondary.advanced) filtered = filtered.filter(s => s.isHighDifficulty || s.isLoopStation)
       setSongs(filtered)
       setLoading(false)
     })
@@ -176,14 +174,14 @@ export default function RoulettePage() {
     <div className="w-full max-w-3xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6"></h1>
       {/* 카테고리 + 2차 필터 + 복사 버튼 영역 */}
-      <div className="flex w-full items-center gap-2 mb-6 flex-wrap">
+      <div className="flex w-full items-center gap-2 mb-4 flex-wrap">
         <div className="flex gap-2 flex-wrap">
           {CATEGORY_LIST.map(cat => {
             const selectedCat = selected.includes(cat.key)
             return (
               <button
                 key={cat.key}
-                className={`px-2 py-2 rounded-full font-semibold border min-w-[56px] text-xs transition-colors duration-150
+                className={`px-3 py-2 rounded-full font-semibold border min-w-[56px] text-xs transition-colors duration-150
                   ${selectedCat
                     ? getCategoryColor(cat.key) + ' border-primary shadow-md'
                     : getCategoryColor(cat.key) + ' opacity-50 border-gray-300 text-gray-400 dark:text-gray-500'}
@@ -199,9 +197,9 @@ export default function RoulettePage() {
           {SECONDARY_FILTERS.map(f => (
             <button
               key={f.key}
-              className={`px-2 py-2 rounded-full font-semibold border min-w-[56px] text-xs transition-colors duration-150
+              className={`px-3 py-2 rounded-full font-semibold border min-w-[56px] text-xs transition-colors duration-150
                 ${secondary[f.key]
-                  ? 'bg-gray-200 text-gray-700 border-primary shadow-md dark:bg-zinc-700 dark:text-zinc-200'
+                  ? 'bg-yellow-200 text-yellow-800 border-yellow-400 shadow-md dark:bg-yellow-500 dark:text-yellow-100'
                   : 'bg-gray-100 text-gray-400 border-gray-300 dark:bg-zinc-800 dark:text-gray-500'}
               `}
               style={{ opacity: secondary[f.key] ? 1 : 0.5 }}
@@ -214,7 +212,7 @@ export default function RoulettePage() {
         </div>
         <div className="flex-1 flex justify-end min-w-[40px]">
           <button
-            className={`p-2 rounded-full bg-transparent border-none shadow-none flex items-center justify-center transition-colors duration-150
+            className={`p-1 rounded-full bg-transparent border-none shadow-none flex items-center justify-center transition-colors duration-150
               ${result ? 'text-primary hover:text-primary-700' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}
             `}
             onClick={handleCopyResult}

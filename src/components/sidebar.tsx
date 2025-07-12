@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Music, Music2, Star, Info, Menu, Trophy, SquarePen, ChartNoAxesColumn, Shirt } from 'lucide-react'
+import { Music, Music2, Star, Info, Menu, Trophy, SquarePen, ChartNoAxesColumn, Shirt, Shuffle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -18,7 +18,7 @@ const menuItems = [
   { href: '/mission', label: getCategoryLabel('MISSION'), icon: Trophy, category: 'MISSION' },
   { href: '/newsong', label: getCategoryLabel('NEWSONG'), icon: Star, category: 'NEWSONG' },
   { href: '/board', label: '쥐수게시판', icon: SquarePen },
-  { href: '/roulette', label: '룰렛', icon: Trophy },
+  { href: '/roulette', label: '룰렛', icon: Shuffle },
   // LookBook 탭은 아래에서 조건부로 추가
 ];
 
