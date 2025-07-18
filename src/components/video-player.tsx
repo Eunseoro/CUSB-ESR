@@ -89,7 +89,7 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
 
   // 스위치 상태 초기화: 노래가 바뀔 때마다 URL2가 있으면 true, 없으면 false로 초기화
   useEffect(() => {
-    setUseAltUrl(!!song?.videoUrl2)
+    setUseAltUrl(false);
   }, [song])
 
   return (

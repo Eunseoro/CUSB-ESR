@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Music, Music2, Star, Info, Menu, Trophy, SquarePen, ChartNoAxesColumn, Shirt, Shuffle } from 'lucide-react'
+import { Music, Music2, Star, Info, Menu, Trophy, SquarePen, ChartNoAxesColumn, Shirt, Shuffle, CircleDashed } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -18,8 +18,9 @@ const menuItems = [
   { href: '/mission', label: getCategoryLabel('MISSION'), icon: Trophy, category: 'MISSION' },
   { href: '/newsong', label: getCategoryLabel('NEWSONG'), icon: Star, category: 'NEWSONG' },
   { href: '/board', label: '쥐수게시판', icon: SquarePen },
-  { href: '/roulette', label: '룰렛', icon: Shuffle },
-  // LookBook 탭은 아래에서 조건부로 추가
+  { href: '/roulette', label: '신청곡 룰렛', icon: Shuffle },
+  // 돌림판 탭은 아래에서 조건부로 추가
+  // { href: '/Spinner', label: '돌림판', icon: CircleDashed },
 ];
 
 export function Sidebar() {
@@ -136,6 +137,22 @@ export function Sidebar() {
                   </Link>
                 )
               })}
+              {/* 돌림판 탭: 관리자 인증 시에만 노출 */}
+              {isAdmin && (
+                <Link
+                  href="/Spinner"
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors relative text-muted-foreground hover:bg-accent hover:text-accent-foreground md:flex"
+                  )}
+                  onClick={() => setIsOpen(false)}
+                  style={{ minHeight: 40 }}
+                >
+                  <CircleDashed className="h-5 w-5 shrink-0" />
+                  <span className="whitespace-nowrap transition-opacity md:opacity-0 md:group-hover/sidebar:opacity-100">
+                    돌림판
+                  </span>
+                </Link>
+              )}
               {/* LookBook 탭: 관리자 인증 시에만 노출 */}
               {isAdmin && (
                 <Link
@@ -148,7 +165,7 @@ export function Sidebar() {
                 >
                   <Shirt className="h-5 w-5 shrink-0" />
                   <span className="whitespace-nowrap transition-opacity md:opacity-0 md:group-hover/sidebar:opacity-100">
-                    LookBook
+                    OOTD
                   </span>
                 </Link>
               )}

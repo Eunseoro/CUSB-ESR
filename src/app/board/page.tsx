@@ -36,6 +36,7 @@ export default function BoardPage() {
   const [content, setContent] = useState('')
   const [userKey, setUserKey] = useState('')
   const [pinnedId, setPinnedId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     setUserKey(getUserKey())
@@ -80,10 +81,14 @@ export default function BoardPage() {
   }
 
   async function handleDelete(id: string) {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+    setDeletingId(id);
     try {
       await deleteBoard(id, userKey)
+      setDeletingId(null);
       fetchList()
     } catch (e) {
+      setDeletingId(null);
       // 에러 처리 필요시 추가
     }
   }
@@ -158,8 +163,9 @@ export default function BoardPage() {
                           className="rounded-full px-4 ml-2"
                           title="삭제"
                           onClick={e => {e.stopPropagation(); handleDelete(pinned.id)}}
+                          disabled={deletingId === pinned.id}
                         >
-                          삭제
+                          {deletingId === pinned.id ? '삭제 중...' : '삭제'}
                         </Button>
                       </div>
                     )}
@@ -217,8 +223,9 @@ export default function BoardPage() {
                           className="rounded-full px-4"
                           title="삭제"
                           onClick={e => {e.stopPropagation(); handleDelete(item.id)}}
+                          disabled={deletingId === item.id}
                         >
-                          삭제
+                          {deletingId === item.id ? '삭제 중...' : '삭제'}
                         </Button>
                       </div>
                     )}

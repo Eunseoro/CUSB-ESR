@@ -106,7 +106,7 @@ export default function RoulettePage() {
     function animate() {
       const progress = step / totalStep
       const minDelay = 20
-      const maxDelay = 320
+      const maxDelay = 350
       const delay = minDelay + (maxDelay - minDelay) * Math.pow(progress, 2.2)
       // 맨 위에 새 곡 추가, 아래로 밀기
       const s = getRandomSong(songs) || fallbackSong

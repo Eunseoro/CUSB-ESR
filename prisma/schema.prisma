@@ -86,10 +86,21 @@ model PinnedGuestbook {
   updatedAt DateTime @updatedAt
 }
 
-model LookBookImage {
-  id        String   @id @default(cuid())
-  imageUrl  String
+model LookBookPost {
+  id        String               @id @default(cuid())
+  title     String
+  content   String
   uploader  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  images    LookBookPostImage[]
+}
+
+model LookBookPostImage {
+  id        String       @id @default(cuid())
+  imageUrl  String
+  post      LookBookPost @relation(fields: [postId], references: [id])
+  postId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 }
