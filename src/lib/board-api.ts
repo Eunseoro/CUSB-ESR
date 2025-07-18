@@ -30,20 +30,20 @@ export async function deleteBoard(id: string, userKey: string) {
   return res.json()
 }
 
-// 상단 고정 Guestbook id 조회
-export async function getPinnedGuestbookId(): Promise<string | null> {
+// 상단 고정 Guestbook id 목록 조회
+export async function getPinnedGuestbookIds(): Promise<string[]> {
   const res = await fetch('/api/board/pinned')
-  if (!res.ok) return null
+  if (!res.ok) return []
   const data = await res.json()
-  return data.guestbookId || null
+  return data.guestbookIds || []
 }
 
-// 상단 고정 Guestbook id 설정 (관리자만)
-export async function setPinnedGuestbookId(guestbookId: string): Promise<boolean> {
+// 상단 고정 Guestbook id 목록 설정 (관리자만)
+export async function setPinnedGuestbookIds(guestbookIds: string[]): Promise<boolean> {
   const res = await fetch('/api/board/pinned', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ guestbookId })
+    body: JSON.stringify({ guestbookIds })
   })
   return res.ok
 } 

@@ -5,12 +5,18 @@ import { prisma } from '@/lib/prisma'
 const ADMIN_HEADER = 'x-admin-auth'
 
 export async function GET() {
-  // 공지사항 조회
-  let notice = await prisma.notice.findUnique({ where: { id: 1 } })
-  if (!notice) {
-    notice = await prisma.notice.create({ data: { id: 1, content: '', isVisible: true } })
+  try {
+    // 공지사항 조회
+    let notice = await prisma.notice.findUnique({ where: { id: 1 } })
+    if (!notice) {
+      notice = await prisma.notice.create({ data: { id: 1, content: '', isVisible: true } })
+    }
+    return NextResponse.json(notice)
+  } finally {
+    if (process.env.NODE_ENV !== 'production') {
+      await prisma.$disconnect();
+    }
   }
-  return NextResponse.json(notice)
 }
 
 export async function PUT(req: NextRequest) {

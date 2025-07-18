@@ -12,17 +12,26 @@ interface Item {
   count: number;
 }
 
+// 1. 상단에 상수 및 타입 추가
+const HISTORY_KEY = 'spinner_history';
+interface SpinnerHistoryItem {
+  name: string;
+  date: number;
+}
+
 export default function SpinnerPage() {
   const [title, setTitle] = useState('쥐수들의 도파민');
   const [items, setItems] = useState<Item[]>([]);
   const [input, setInput] = useState('');
   const [result, setResult] = useState<string | null>(null);
   const [spinning, setSpinning] = useState(false);
-  const [isSlowingDown, setIsSlowingDown] = useState(false);
+  const [isSlowingDown, setIsSlowingDown] = useState(false); // 감속 중 여부
   const [angle, setAngle] = useState(0);
-  const [targetAngle, setTargetAngle] = useState(0);
   const [spinSpeed, setSpinSpeed] = useState(0);
+  const [stopStartTime, setStopStartTime] = useState<number | null>(null); // 감속 시작 시각
+  const [initialSpeed, setInitialSpeed] = useState(0); // 감속 시작 시의 속도
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const bufferCanvasRef = useRef<HTMLCanvasElement | null>(null); // 버퍼용
   const animRef = useRef<number | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -31,6 +40,7 @@ export default function SpinnerPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [spinStartTime, setSpinStartTime] = useState<number | null>(null);
   const [spinTarget, setSpinTarget] = useState<number | null>(null);
+  const [history, setHistory] = useState<SpinnerHistoryItem[]>([]);
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 900);
@@ -39,6 +49,27 @@ export default function SpinnerPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // 과거 결과 불러오기
+  useEffect(() => {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (raw) {
+      try {
+        const arr = JSON.parse(raw);
+        setHistory(arr);
+      } catch {}
+    }
+  }, []);
+  // 결과가 나올 때마다 저장
+  useEffect(() => {
+    if (result) {
+      const newItem: SpinnerHistoryItem = { name: result, date: Date.now() };
+      const newHistory = [newItem, ...history].slice(0, 10);
+      setHistory(newHistory);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
 
   // 항목 추가
   const handleAdd = () => {
@@ -91,34 +122,26 @@ export default function SpinnerPage() {
     });
   }
 
-  // 고정 바퀴 수, duration
-  const FIXED_ROUNDS = 5;
-  const DURATION = 5000;
   // 빠른 무한 회전 시작
   const handleSpin = () => {
     if (totalCount < 2 || spinning || isSlowingDown) return;
     setSpinning(true);
     setIsSlowingDown(false);
     setResult(null);
-    setSpinSpeed(0.35 + Math.random() * 0.15); // 빠른 속도(라디안/프레임)
+    setSpinSpeed(0.35 + Math.random() * 0.15);
   };
-  // 정지(감속) 시작
+  // 즉시 정지
   const handleStop = () => {
     if (!spinning || isSlowingDown) return;
     setIsSlowingDown(true);
-    // 목표 각도 계산: 현재 각도에서 5~8바퀴 + 0~360도(랜덤)
-    const minRounds = 5;
-    const maxRounds = 8;
-    const randomRounds = minRounds + Math.random() * (maxRounds - minRounds);
-    const randomAngle = randomRounds * 2 * Math.PI + Math.random() * 2 * Math.PI;
-    setTargetAngle(angle + randomAngle);
+    setStopStartTime(performance.now());
+    setInitialSpeed(spinSpeed);
   };
 
   // 회전 애니메이션 개선 (빠른 회전/감속 분리)
   useEffect(() => {
     let requestId: number;
     if (spinning && !isSlowingDown) {
-      // 빠른 무한 회전
       const spin = () => {
         setAngle(prev => prev + spinSpeed);
         requestId = requestAnimationFrame(spin);
@@ -126,44 +149,48 @@ export default function SpinnerPage() {
       requestId = requestAnimationFrame(spin);
       return () => cancelAnimationFrame(requestId);
     }
-    if (spinning && isSlowingDown) {
-      // 감속 애니메이션
-      let start: number | null = null;
-      const from = angle;
-      const to = targetAngle;
-      const duration = 5000;
+    if (spinning && isSlowingDown && stopStartTime !== null) {
+      const duration = 11300;
+      const start = stopStartTime;
+      const initSpeed = initialSpeed;
+      let lastTimestamp = start;
       const animate = (timestamp: number) => {
-        if (!start) start = timestamp;
         const elapsed = timestamp - start;
         let t = Math.min(elapsed / duration, 1);
-        // ease-out
+        // ease-out: 속도가 점점 줄어듦
         const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3);
-        const eased = easeOutCubic(t);
-        const current = from + (to - from) * eased;
-        setAngle(current);
+        const currentSpeed = initSpeed * (1 - easeOutCubic(t));
+        setSpinSpeed(currentSpeed);
+        // 각도 증가: 이전 프레임과의 시간 차이만큼 증가
+        setAngle(prev => prev + currentSpeed);
         if (t < 1) {
           requestId = requestAnimationFrame(animate);
         } else {
           setSpinning(false);
           setIsSlowingDown(false);
-          setAngle(to);
-          setResult(getPointerItemNameByAngle(to));
+          setSpinSpeed(0);
+          setResult(getPointerItemNameByAngle(angle));
+          setStopStartTime(null);
         }
       };
       requestId = requestAnimationFrame(animate);
       return () => cancelAnimationFrame(requestId);
     }
-  }, [spinning, isSlowingDown, spinSpeed, angle, targetAngle]);
+  }, [spinning, isSlowingDown, spinSpeed, stopStartTime, initialSpeed]);
 
-  // 항목/각도 변경 시 돌림판 그리기
+  // 항목/각도 변경 시 버퍼에 섹터/텍스트만 그림
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    if (!bufferCanvasRef.current) {
+      bufferCanvasRef.current = document.createElement('canvas');
+      bufferCanvasRef.current.width = 600;
+      bufferCanvasRef.current.height = 600;
+    }
+    const buffer = bufferCanvasRef.current;
+    const ctx = buffer.getContext('2d');
     if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
+    ctx.clearRect(0, 0, buffer.width, buffer.height);
+    const cx = buffer.width / 2;
+    const cy = buffer.height / 2;
     const radius = Math.min(cx, cy) - 8;
     if (items.length === 0) {
       ctx.beginPath();
@@ -180,8 +207,8 @@ export default function SpinnerPage() {
     let acc = 0;
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      const start = angle + (acc / totalCount) * 2 * Math.PI;
-      const end = angle + ((acc + item.count) / totalCount) * 2 * Math.PI;
+      const start = (acc / totalCount) * 2 * Math.PI - Math.PI / 2;
+      const end = ((acc + item.count) / totalCount) * 2 * Math.PI - Math.PI / 2;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, radius, start, end);
@@ -197,11 +224,30 @@ export default function SpinnerPage() {
       ctx.fillStyle = '#fff';
       ctx.shadowColor = 'rgba(0,0,0,0.1)';
       ctx.shadowBlur = 1;
-      ctx.fillText(item.name, radius - 60, 0); // 원판 중간쯤에 위치
+      ctx.fillText(item.name, radius - 60, 0);
       ctx.restore();
       acc += item.count;
     }
+  }, [items, totalCount]);
+
+  // 회전/렌더링: 버퍼 이미지를 회전해서 drawImage, 포인터는 별도 그림
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const buffer = bufferCanvasRef.current;
+    if (!canvas || !buffer) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 버퍼 이미지를 회전해서 그림
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(angle);
+    ctx.drawImage(buffer, -canvas.width / 2, -canvas.height / 2);
+    ctx.restore();
     // 포인터(위쪽 삼각형)
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const radius = Math.min(cx, cy) - 8;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(0);
@@ -215,14 +261,13 @@ export default function SpinnerPage() {
     ctx.shadowBlur = 5;
     ctx.fill();
     ctx.restore();
-  }, [items, angle, totalCount]);
+  }, [angle, items.length, totalCount]);
 
   // 항목 변경 시 각도 초기화
   useEffect(() => {
     setAngle(0);
     setResult(null);
     setSpinning(false);
-    setIsSlowingDown(false);
   }, [items]);
 
   // 타이틀 인풋 포커스 자동
@@ -233,14 +278,14 @@ export default function SpinnerPage() {
     }
   }, [editingTitle]);
 
-  // 0도(12시) 지점에 위치한 항목명 반환 (각도 보정)
+  // 12시(위쪽) 지점에 위치한 항목명 반환 (각도 보정)
   function getPointerItemNameByAngle(angle: number) {
     if (!items.length) return '';
     const total = totalCount;
     let acc = 0;
     // 12시 방향이 0도이므로, angle을 시계방향으로 회전한 만큼 보정
     // 실제 12시 방향에 오는 각도는 -angle (시계방향 회전)
-    let pointerAngle = ((-angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    let pointerAngle = ((-angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
     for (let i = 0; i < items.length; i++) {
       const start = (acc / total) * 2 * Math.PI;
       const end = ((acc + items[i].count) / total) * 2 * Math.PI;
@@ -421,7 +466,7 @@ export default function SpinnerPage() {
           </div>
           <div className="spinner-wheel-wrapper">
             {/* 원판 상단 포인터 */}
-            <div style={{ position: 'absolute', left: 291, top: -5, zIndex: 25, width: 18, height: 24 }}>
+            <div style={{ position: 'absolute', left: 292, top: -5, zIndex: 25, width: 18, height: 24 }}>
               <svg width="18" height="24">
                 <polygon points="0,0 18,0 9,24" fill="#37474F" stroke="#333" strokeWidth="1" />
               </svg>
@@ -438,8 +483,8 @@ export default function SpinnerPage() {
                 <button
                   className="spinner-btn"
                   onClick={handleSpin}
-                  disabled={spinning || totalCount < 2}
-                  style={{ cursor: spinning || totalCount < 2 ? 'not-allowed' : 'pointer', fontFamily: 'Hanna, Arial, sans-serif' }}
+                  disabled={spinning || isSlowingDown || totalCount < 2}
+                  style={{ cursor: spinning || isSlowingDown || totalCount < 2 ? 'not-allowed' : 'pointer', fontFamily: 'Hanna, Arial, sans-serif' }}
                 >
                   시작
                 </button>
@@ -459,7 +504,7 @@ export default function SpinnerPage() {
                   disabled
                   style={{ fontFamily: 'Hanna, Arial, sans-serif', background: '#ccc', color: '#fff' }}
                 >
-                  멈추는 중...
+                  정지
                 </button>
               )}
             </div>
@@ -532,6 +577,36 @@ export default function SpinnerPage() {
                 </div>
               );
             })}
+          </div>
+          {/* 이전 결과 목록: 항목 리스트 박스 바깥쪽 아래에 분리 표시 */}
+          <div style={{ marginTop: 24 }}>
+            <div className="font-semibold mb-2 flex items-center" style={{ fontSize: 14 }}>
+              <span>이전 결과</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setHistory([]);
+                  localStorage.removeItem(HISTORY_KEY);
+                }}
+                style={{
+                  marginLeft: 10,
+                  marginTop: 4,
+                  fontSize: 12,
+                  color: '#888',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  lineHeight: 3,
+                }}
+              >초기화</button>
+            </div>
+            <ul className="text-xs text-gray-500 space-y-1">
+              {history.length === 0 && <li>없음</li>}
+              {history.map((h, i) => (
+                <li key={h.name + h.date + i} className="truncate">{h.name}</li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>

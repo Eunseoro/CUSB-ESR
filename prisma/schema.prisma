@@ -81,9 +81,9 @@ model VisitorCount {
 
 // 상단 고정 Guestbook id 저장용 테이블
 model PinnedGuestbook {
-  id        Int      @id @default(1)
-  guestbookId String
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  guestbookId String   @unique
+  updatedAt   DateTime @updatedAt
 }
 
 model LookBookPost {
