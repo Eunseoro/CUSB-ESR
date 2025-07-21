@@ -140,7 +140,7 @@ export default function LookBookPage() {
 
   return (
     <div className="flex flex-col items-center pt-4 w-full max-w-xl mx-auto min-h-[60vh]">
-      <h1 className="text-2xl font-bold mb-3">유할매's OOTD</h1>
+      <h1 className="text-2xl font-bold mb-3">유할매's OOTD (Beta)</h1>
       {isAdmin && (
         <Card className="mb-3 w-full rounded-2xl">
           <CardContent className="flex flex-col gap-2 pt-0 pb-0 px-4">

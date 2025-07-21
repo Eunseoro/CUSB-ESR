@@ -17,8 +17,10 @@ const menuItems = [
   { href: '/pop', label: getCategoryLabel('POP'), icon: Music, category: 'POP' },
   { href: '/mission', label: getCategoryLabel('MISSION'), icon: Trophy, category: 'MISSION' },
   { href: '/newsong', label: getCategoryLabel('NEWSONG'), icon: Star, category: 'NEWSONG' },
-  { href: '/board', label: '쥐수게시판', icon: SquarePen },
   { href: '/roulette', label: '신청곡 룰렛', icon: Shuffle },
+  { href: '/Spinner', label: '돌림판', icon: CircleDashed },
+  { href: '/board', label: '쥐수게시판', icon: SquarePen },
+  { href: '/lookbook', label: 'OOTD (Beta)', icon: Shirt },
   // 돌림판 탭은 아래에서 조건부로 추가
   // { href: '/Spinner', label: '돌림판', icon: CircleDashed },
 ];
@@ -111,7 +113,7 @@ export function Sidebar() {
                 )
               })}
               <div className="border-t p-0 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity" />
-              {menuItems.slice(5).map((item) => {
+              {menuItems.slice(5, 7).map((item) => {
                 const isActive = pathname === item.href
                 return (
                   <Link
@@ -137,38 +139,34 @@ export function Sidebar() {
                   </Link>
                 )
               })}
-              {/* 돌림판 탭: 관리자 인증 시에만 노출 */}
-              {isAdmin && (
-                <Link
-                  href="/Spinner"
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors relative text-muted-foreground hover:bg-accent hover:text-accent-foreground md:flex"
-                  )}
-                  onClick={() => setIsOpen(false)}
-                  style={{ minHeight: 40 }}
-                >
-                  <CircleDashed className="h-5 w-5 shrink-0" />
-                  <span className="whitespace-nowrap transition-opacity md:opacity-0 md:group-hover/sidebar:opacity-100">
-                    돌림판
-                  </span>
-                </Link>
-              )}
-              {/* LookBook 탭: 관리자 인증 시에만 노출 */}
-              {isAdmin && (
-                <Link
-                  href="/lookbook"
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors relative text-muted-foreground hover:bg-accent hover:text-accent-foreground md:flex"
-                  )}
-                  onClick={() => setIsOpen(false)}
-                  style={{ minHeight: 40 }}
-                >
-                  <Shirt className="h-5 w-5 shrink-0" />
-                  <span className="whitespace-nowrap transition-opacity md:opacity-0 md:group-hover/sidebar:opacity-100">
-                    OOTD
-                  </span>
-                </Link>
-              )}
+              <div className="border-t p-0 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity" />
+              {menuItems.slice(7, 9).map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors relative",
+                      isActive
+                        ? "bg-accent text-accent-foreground font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-8 before:w-1 before:bg-primary before:rounded-r"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    )}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <span className={cn(
+                      "flex items-center justify-center",
+                      isActive && "text-primary"
+                    )}>
+                      <item.icon className="h-5 w-5" />
+                    </span>
+                    <span className="whitespace-nowrap md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity">
+                      {item.label}
+                    </span>
+                  </Link>
+                )
+              })}
+              <div className="border-t p-0 md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity" />
               {/* 관리자 인증 시에만 '통계' 탭 노출 */}
               {isAdmin && (
                 <Link
