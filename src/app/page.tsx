@@ -234,6 +234,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
+      <p className="text-center mt-3 text-muted-foreground">본 노래책 사이트의 무단 복제ㆍ변형ㆍ카피ㆍ2차 가공ㆍ상업적 이용 등 협의되지 않은 사용을 엄격히 금지합니다.</p>
     </div>
   )
 }

@@ -139,10 +139,16 @@ export default function LookBookPage() {
   }
 
   return (
-    <div className="flex flex-col items-center pt-4 w-full max-w-xl mx-auto min-h-[60vh]">
-      <h1 className="text-2xl font-bold mb-3">유할매's OOTD (Beta)</h1>
+    <div className="flex flex-col items-center max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto min-h-[60vh] px-0">
+      <h1 className="text-2xl font-bold mt-2 mb-2">유할매's OOTD (Beta)</h1>
+      <h2 className="flex flex-col text-sm items-center text-muted-foreground mb-3">
+        <p>두 달이면 사라지는 유할매의 패션을 기록합니다.</p>
+        <p>다시보기도 사라지고, 인스타도 업데이트를 안 해주니</p>
+        <p>이렇게라도 남기면 훗날 추억이 되지 않을까요?</p>
+        <p>📢 베타 서비스이므로, 예고 없이 사라질 수 있습니다 📢</p>
+      </h2>
       {isAdmin && (
-        <Card className="mb-3 w-full rounded-2xl">
+        <Card className="mb-3 rounded-2xl mr-2">
           <CardContent className="flex flex-col gap-2 pt-0 pb-0 px-4">
             <input
               className="border rounded px-2 py-1 text-sm bg-background text-foreground dark:bg-neutral-800 dark:text-white"
@@ -185,11 +191,11 @@ export default function LookBookPage() {
         </Card>
       )}
       <div className="flex flex-col gap-2 w-full">
-        {posts.length === 0 && <div className="text-center text-muted-foreground">로딩 중...</div>}
+        {posts.length === 0 && <div className="text-center text-muted-foreground py-8">로딩 중...</div>}
         {posts.map(post => (
           <div
             key={post.id}
-            className="bg-card rounded-xl shadow p-4 flex gap-4 items-center cursor-pointer hover:shadow-lg transition-colors border border-border dark:bg-neutral-900 dark:border-neutral-800"
+            className="bg-card rounded-xl shadow p-4 flex gap-4 items-center cursor-pointer hover:shadow-lg transition-colors border border-border dark:bg-neutral-900 dark:border-neutral-800 min-w-0 overflow-hidden"
             onClick={() => handleCardClick(post)}
           >
             <img
@@ -247,7 +253,7 @@ export default function LookBookPage() {
           `}</style>
          {showModal && selected && (
            <div
-             className={`bg-card rounded-2xl shadow max-w-lg w-full relative border border-border dark:bg-neutral-900 dark:border-neutral-800 p-6 ${modalClosing ? 'modal-pop-close' : 'modal-pop'} scrollbar-custom`}
+             className={"bg-card rounded-2xl shadow w-full max-w-md sm:max-w-lg lg:max-w-3xl mx-4 sm:mx-6 relative border border-border dark:bg-neutral-900 dark:border-neutral-800 p-4 sm:p-6 " + (modalClosing ? 'modal-pop-close' : 'modal-pop') + " scrollbar-custom"}
              style={{ maxHeight: '90vh', overflowY: 'auto' }}
              onClick={(e: React.MouseEvent) => e.stopPropagation()}
            >
@@ -256,14 +262,14 @@ export default function LookBookPage() {
             {editMode ? (
               <>
                 <input
-                  className="border rounded px-2 py-1 text-lg font-bold w-full mb-2 bg-background text-foreground dark:bg-neutral-800 dark:text-white"
+                  className="border rounded px-2 py-1 text-lg font-bold mb-2 bg-background text-foreground dark:bg-neutral-800 dark:text-white"
                   name="title"
                   value={editForm.title}
                   onChange={handleEditInputChange}
                   maxLength={40}
                 />
                 <textarea
-                  className="border rounded px-2 py-1 text-base w-full mb-4 bg-background text-foreground dark:bg-neutral-800 dark:text-white"
+                  className="border rounded px-2 py-1 text-base mb-4 bg-background text-foreground dark:bg-neutral-800 dark:text-white"
                   name="content"
                   value={editForm.content}
                   onChange={handleEditInputChange}
@@ -272,7 +278,7 @@ export default function LookBookPage() {
                 <div className="flex flex-col gap-2 mb-4">
                   {selected.images.filter(img => !editForm.removeImageIds.includes(img.id)).map(img => (
                     <div key={img.id} className="relative group">
-                      <img src={img.imageUrl} alt="이미지" className="w-full max-h-96 object-contain rounded" />
+                      <img src={img.imageUrl} alt="이미지" className="max-h-96 object-contain rounded" />
                       <button type="button" className="absolute top-2 right-2 bg-black/60 text-white rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition" onClick={() => handleRemoveImage(img.id)}>삭제</button>
                     </div>
                   ))}
@@ -306,7 +312,7 @@ export default function LookBookPage() {
                 <div className="mb-4 text-gray-700 whitespace-pre-line dark:text-gray-300">{selected.content}</div>
                 <div className="flex flex-col gap-0 mb-4">
                   {selected.images.map(img => (
-                    <img key={img.id} src={img.imageUrl} className="w-full max-h-96 object-contain rounded" />
+                    <img key={img.id} src={img.imageUrl} className="max-h-96 object-contain rounded" />
                   ))}
                 </div>
                 <Button onClick={handleModalClose} className="w-full">닫기</Button>
