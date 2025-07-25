@@ -140,15 +140,15 @@ export default function LookBookPage() {
 
   return (
     <div className="flex flex-col items-center max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto min-h-[60vh] px-0">
-      <h1 className="text-2xl font-bold mt-2 mb-2">유할매's OOTD (Beta)</h1>
+      <h1 className="text-2xl font-bold mt-2 mb-2">유할매's OOTD</h1>
       <h2 className="flex flex-col text-sm items-center text-muted-foreground mb-3">
         <p>두 달이면 사라지는 유할매의 패션을 기록합니다.</p>
         <p>다시보기도 사라지고, 인스타도 업데이트를 안 해주니</p>
-        <p>이렇게라도 남기면 훗날 추억이 되지 않을까요?</p>
-        <p>📢 베타 서비스이므로, 예고 없이 사라질 수 있습니다 📢</p>
+        <p>이렇게라도 올리면 내용이라도 직접 수정해주지 않을까요?</p>
+        <p>📢 베타 테스트이므로, 예고 없이 사라질 수 있습니다 📢</p>
       </h2>
       {isAdmin && (
-        <Card className="mb-3 rounded-2xl mr-2">
+        <Card className="mb-3 w-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto rounded-2xl">
           <CardContent className="flex flex-col gap-2 pt-0 pb-0 px-4">
             <input
               className="border rounded px-2 py-1 text-sm bg-background text-foreground dark:bg-neutral-800 dark:text-white"
