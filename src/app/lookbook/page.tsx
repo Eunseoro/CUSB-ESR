@@ -262,14 +262,14 @@ export default function LookBookPage() {
             {editMode ? (
               <>
                 <input
-                  className="border rounded px-2 py-1 text-lg font-bold mb-2 bg-background text-foreground dark:bg-neutral-800 dark:text-white"
+                  className="border rounded px-2 py-1 text-lg font-bold w-full mb-2 bg-background text-foreground dark:bg-neutral-800 dark:text-white"
                   name="title"
                   value={editForm.title}
                   onChange={handleEditInputChange}
                   maxLength={40}
                 />
                 <textarea
-                  className="border rounded px-2 py-1 text-base mb-4 bg-background text-foreground dark:bg-neutral-800 dark:text-white"
+                  className="border rounded px-2 py-1 text-base w-full mb-4 bg-background text-foreground dark:bg-neutral-800 dark:text-white"
                   name="content"
                   value={editForm.content}
                   onChange={handleEditInputChange}
@@ -278,7 +278,7 @@ export default function LookBookPage() {
                 <div className="flex flex-col gap-2 mb-4">
                   {selected.images.filter(img => !editForm.removeImageIds.includes(img.id)).map(img => (
                     <div key={img.id} className="relative group">
-                      <img src={img.imageUrl} alt="이미지" className="max-h-96 object-contain rounded" />
+                      <img src={img.imageUrl} alt="이미지" className="w-full max-h-96 object-contain rounded" />
                       <button type="button" className="absolute top-2 right-2 bg-black/60 text-white rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition" onClick={() => handleRemoveImage(img.id)}>삭제</button>
                     </div>
                   ))}
@@ -312,7 +312,7 @@ export default function LookBookPage() {
                 <div className="mb-4 text-gray-700 whitespace-pre-line dark:text-gray-300">{selected.content}</div>
                 <div className="flex flex-col gap-0 mb-4">
                   {selected.images.map(img => (
-                    <img key={img.id} src={img.imageUrl} className="max-h-96 object-contain rounded" />
+                    <img key={img.id} src={img.imageUrl} className="w-full max-h-96 object-contain rounded" />
                   ))}
                 </div>
                 <Button onClick={handleModalClose} className="w-full">닫기</Button>
