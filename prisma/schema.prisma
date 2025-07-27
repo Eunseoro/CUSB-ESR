@@ -99,6 +99,7 @@ model LookBookPost {
 model LookBookPostImage {
   id        String       @id @default(cuid())
   imageUrl  String
+  order     Int          @default(0)
   post      LookBookPost @relation(fields: [postId], references: [id])
   postId    String
   createdAt DateTime     @default(now())

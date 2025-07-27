@@ -1,0 +1,36 @@
+import sharp from 'sharp';
+
+export interface ImageFile {
+  file: File;
+  order: number;
+}
+
+export async function convertToWebP(file: File, quality: number = 75): Promise<Blob> {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  
+  const webpBuffer = await sharp(buffer)
+    .webp({ quality })
+    .toBuffer();
+  
+  return new Blob([webpBuffer], { type: 'image/webp' });
+}
+
+export async function processImagesForUpload(files: File[], quality: number = 75): Promise<ImageFile[]> {
+  const processedImages: ImageFile[] = [];
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const webpBlob = await convertToWebP(file, quality);
+    const webpFile = new File([webpBlob], `${file.name.replace(/\.[^/.]+$/, '')}.webp`, {
+      type: 'image/webp'
+    });
+    
+    processedImages.push({
+      file: webpFile,
+      order: i
+    });
+  }
+  
+  return processedImages;
+} 

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 // 애니메이션 제거
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { SortableImageList } from '@/components/SortableImageList';
 
 interface LookBookPost {
   id: string;
@@ -13,7 +14,14 @@ interface LookBookPost {
   uploader: string;
   createdAt: string;
   updatedAt: string;
-  images: { id: string; imageUrl: string }[];
+  images: { id: string; imageUrl: string; order: number }[];
+}
+
+interface ImageFile {
+  id: string;
+  file: File;
+  order: number;
+  preview?: string;
 }
 
 export default function LookBookPage() {
@@ -26,8 +34,12 @@ export default function LookBookPage() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ title: '', content: '', files: [] as File[] });
+  const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', content: '', files: [] as File[], removeImageIds: [] as string[] });
+  const [editForm, setEditForm] = useState({ title: '', content: '', files: [] as File[] });
+  const [editImageFiles, setEditImageFiles] = useState<ImageFile[]>([]);
+  const [editExistingImages, setEditExistingImages] = useState<{ id: string; imageUrl: string; order: number }[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]); // 삭제된 이미지 ID 추적
   const [animatingCardId, setAnimatingCardId] = useState<string | null>(null);
   const [modalClosing, setModalClosing] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
@@ -70,27 +82,99 @@ export default function LookBookPage() {
     }, 200); // 팝업 닫힘 애니메이션 시간과 맞춤
   }
 
+  function handleModalClick(e: React.MouseEvent) {
+    // 수정 모드에서는 모달 클릭으로 닫히지 않도록 함
+    if (editMode) {
+      e.stopPropagation();
+      return;
+    }
+    // 모달 내부 어디든 클릭하면 닫기 (좌클릭, 우클릭 모두)
+    e.stopPropagation();
+    handleModalClose();
+  }
+
+  function handleModalContextMenu(e: React.MouseEvent) {
+    // 수정 모드에서는 우클릭으로도 닫히지 않도록 함
+    if (editMode) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    // 우클릭 메뉴 방지 및 모달 닫기
+    e.preventDefault();
+    e.stopPropagation();
+    handleModalClose();
+  }
+
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
-    setForm(f => ({ ...f, files: Array.from(e.target.files as FileList) }));
+    const files = Array.from(e.target.files);
+    const newImageFiles: ImageFile[] = files.map((file, index) => ({
+      id: `new-${Date.now()}-${index}`,
+      file,
+      order: imageFiles.length + index,
+      preview: URL.createObjectURL(file)
+    }));
+    setImageFiles([...imageFiles, ...newImageFiles]);
+    setForm(f => ({ ...f, files: [...f.files, ...files] }));
   }
+
   function handleInputChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
   }
 
+  function handleImageOrderChange(id: string, newOrder: number) {
+    const updatedFiles = imageFiles.map(file => 
+      file.id === id ? { ...file, order: newOrder } : file
+    );
+    updatedFiles.sort((a, b) => a.order - b.order);
+    setImageFiles(updatedFiles);
+  }
+
+  function handleImageRemove(id: string) {
+    const fileToRemove = imageFiles.find(file => file.id === id);
+    if (fileToRemove) {
+      const updatedFiles = imageFiles.filter(file => file.id !== id);
+      const updatedFormFiles = form.files.filter((_, index) => 
+        imageFiles.findIndex(f => f.id === id) !== index
+      );
+      setImageFiles(updatedFiles);
+      setForm(f => ({ ...f, files: updatedFormFiles }));
+    }
+  }
+
+  function handleImageFilesChange(newItems: { id: string; imageUrl: string; fileName?: string; order: number }[]) {
+    const updatedFiles = newItems.map(item => {
+      const originalFile = imageFiles.find(f => f.id === item.id);
+      return {
+        ...originalFile!,
+        order: item.order
+      };
+    });
+    setImageFiles(updatedFiles);
+  }
+
   async function handleUpload() {
-    if (!form.title.trim() || !form.content.trim() || form.files.length === 0) return;
+    if (!form.title.trim() || !form.content.trim() || imageFiles.length === 0) return;
     setUploading(true);
     const fd = new FormData();
     fd.append('title', form.title);
     fd.append('content', form.content);
     fd.append('uploader', 'admin'); // 실제 구현시 관리자 정보로 대체
-    form.files.forEach(f => fd.append('files', f));
+    
+    // 정렬된 순서대로 파일과 순서 정보 추가
+    const sortedFiles = [...imageFiles].sort((a, b) => a.order - b.order);
+    sortedFiles.forEach((imageFile, index) => {
+      fd.append('files', imageFile.file);
+      fd.append('imageOrders', index.toString());
+    });
+    
     const res = await fetch('/api/lookbook', { method: 'POST', body: fd });
     setUploading(false);
     if (!res.ok) return alert('업로드 실패');
     setForm({ title: '', content: '', files: [] });
+    setImageFiles([]);
     fetchPosts();
   }
 
@@ -105,21 +189,89 @@ export default function LookBookPage() {
 
   function handleEditClick(post: LookBookPost) {
     setSelected(post);
-    setEditForm({ title: post.title, content: post.content, files: [], removeImageIds: [] });
+    setEditForm({ title: post.title, content: post.content, files: [] });
+    setEditExistingImages([...post.images].sort((a, b) => a.order - b.order));
+    setEditImageFiles([]);
+    setDeletedImageIds([]); // 삭제된 이미지 목록 초기화
     setEditMode(true);
     setShowModal(true);
   }
+
   function handleEditInputChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setEditForm(f => ({ ...f, [name]: value }));
   }
+
   function handleEditFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
-    setEditForm(f => ({ ...f, files: Array.from(e.target.files as FileList) }));
+    const files = Array.from(e.target.files);
+    const newImageFiles: ImageFile[] = files.map((file, index) => ({
+      id: `edit-new-${Date.now()}-${index}`,
+      file,
+      order: editImageFiles.length + editExistingImages.length + index,
+      preview: URL.createObjectURL(file)
+    }));
+    setEditImageFiles([...editImageFiles, ...newImageFiles]);
+    setEditForm(f => ({ ...f, files: [...f.files, ...files] }));
   }
-  function handleRemoveImage(id: string) {
-    setEditForm(f => ({ ...f, removeImageIds: [...f.removeImageIds, id] }));
+
+  function handleEditImageOrderChange(id: string, newOrder: number) {
+    if (id.startsWith('edit-new-')) {
+      // 새 이미지 순서 변경
+      const updatedFiles = editImageFiles.map(file => 
+        file.id === id ? { ...file, order: newOrder } : file
+      );
+      updatedFiles.sort((a, b) => a.order - b.order);
+      setEditImageFiles(updatedFiles);
+    } else {
+      // 기존 이미지 순서 변경
+      const updatedImages = editExistingImages.map(img => 
+        img.id === id ? { ...img, order: newOrder } : img
+      );
+      updatedImages.sort((a, b) => a.order - b.order);
+      setEditExistingImages(updatedImages);
+    }
   }
+
+  function handleEditImageRemove(id: string) {
+    if (id.startsWith('edit-new-')) {
+      // 새 이미지 삭제
+      const fileToRemove = editImageFiles.find(file => file.id === id);
+      if (fileToRemove) {
+        const updatedFiles = editImageFiles.filter(file => file.id !== id);
+        const updatedFormFiles = editForm.files.filter((_, index) => 
+          editImageFiles.findIndex(f => f.id === id) !== index
+        );
+        setEditImageFiles(updatedFiles);
+        setEditForm(f => ({ ...f, files: updatedFormFiles }));
+      }
+    } else {
+      // 기존 이미지 삭제 - 삭제된 이미지 ID 추적
+      setEditExistingImages(prev => prev.filter(img => img.id !== id));
+      setDeletedImageIds(prev => [...prev, id]); // 삭제된 이미지 ID 추가
+    }
+  }
+
+  function handleEditImageFilesChange(newItems: { id: string; imageUrl: string; fileName?: string; order: number }[]) {
+    const updatedFiles = newItems.map(item => {
+      const originalFile = editImageFiles.find(f => f.id === item.id);
+      return {
+        ...originalFile!,
+        order: item.order
+      };
+    });
+    setEditImageFiles(updatedFiles);
+  }
+
+  function handleEditExistingImagesChange(newItems: { id: string; imageUrl: string; fileName?: string; order: number }[]) {
+    const updatedImages = newItems.map(item => ({
+      id: item.id,
+      imageUrl: item.imageUrl,
+      order: item.order
+    }));
+    setEditExistingImages(updatedImages);
+  }
+
   async function handleEditSave() {
     if (!selected) return;
     setSaving(true);
@@ -127,24 +279,71 @@ export default function LookBookPage() {
     fd.append('id', selected.id);
     fd.append('title', editForm.title);
     fd.append('content', editForm.content);
-    editForm.files.forEach(f => fd.append('files', f));
-    editForm.removeImageIds.forEach(id => fd.append('removeImageIds', id));
+    
+    // 삭제된 이미지 ID 추가
+    if (deletedImageIds.length > 0) {
+      deletedImageIds.forEach(imageId => {
+        fd.append('removeImageIds', imageId);
+      });
+    }
+    
+    // 기존 이미지 순서 변경 정보 추가
+    const reorderData = editExistingImages.map((img, index) => ({
+      id: img.id,
+      order: index
+    }));
+    fd.append('reorderImages', JSON.stringify(reorderData));
+    
+    // 새 이미지 추가
+    const allImages = [...editExistingImages, ...editImageFiles].sort((a, b) => a.order - b.order);
+    const newImages = allImages.filter(img => 'file' in img) as ImageFile[];
+    newImages.forEach((imageFile, index) => {
+      fd.append('files', imageFile.file);
+      fd.append('imageOrders', imageFile.order.toString());
+    });
+    
     const res = await fetch('/api/lookbook', { method: 'PUT', body: fd });
     setSaving(false);
     if (!res.ok) return alert('수정 실패');
     setEditMode(false);
     setShowModal(false);
     setSelected(null);
+    setDeletedImageIds([]); // 삭제된 이미지 목록 초기화
     fetchPosts();
+  }
+
+  async function handleImageDeleteFromPreview(imageId: string) {
+    if (!selected) return;
+    
+    try {
+      // API를 통해 이미지 삭제
+      const fd = new FormData();
+      fd.append('id', selected.id);
+      fd.append('removeImageIds', imageId);
+      
+      const res = await fetch('/api/lookbook', { method: 'PUT', body: fd });
+      if (!res.ok) {
+        alert('이미지 삭제에 실패했습니다.');
+        return;
+      }
+      
+      // 로컬 상태 업데이트
+      const updatedImages = selected.images.filter(image => image.id !== imageId);
+      setSelected({ ...selected, images: updatedImages });
+      
+      // 게시물 목록 새로고침
+      fetchPosts();
+    } catch (error) {
+      alert('이미지 삭제 중 오류가 발생했습니다.');
+    }
   }
 
   return (
     <div className="flex flex-col items-center max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto min-h-[60vh] px-0">
       <h1 className="text-2xl font-bold mt-2 mb-2">유할매's OOTD</h1>
       <h2 className="flex flex-col text-sm items-center text-muted-foreground mb-3">
-        <p>두 달이면 사라지는 유할매의 패션을 기록합니다.</p>
-        <p>다시보기도 사라지고, 인스타도 업데이트를 안 해주니</p>
-        <p>이렇게라도 올리면 내용이라도 직접 수정해주지 않을까요?</p>
+        <p>매일의 방송 요약과 패션을 기록합니다.</p>
+        <p>팬카페에 올려주시는 이미지를 참고하여 선정합니다.</p>
         <p>📢 베타 테스트이므로, 예고 없이 사라질 수 있습니다 📢</p>
       </h2>
       {isAdmin && (
@@ -181,10 +380,29 @@ export default function LookBookPage() {
                 이미지 업로드
               </Button>
               <span className="text-sm text-muted-foreground ml-1">
-                {form.files.length === 0 ? '이미지를 업로드 해주세요' : `${form.files.length}장 선택됨`}
+                {imageFiles.length === 0 ? '이미지를 업로드 해주세요' : `${imageFiles.length}장 선택됨`}
               </span>
             </div>
-            <Button onClick={handleUpload} disabled={uploading || !form.title.trim() || !form.content.trim() || form.files.length === 0} style={{marginBottom: 0}}>
+            
+            {/* 드래그 앤 드롭 이미지 순서 관리 */}
+            {imageFiles.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground mb-2">이미지를 드래그하여 순서를 변경하세요:</p>
+                <SortableImageList
+                  items={imageFiles.map(file => ({
+                    id: file.id,
+                    imageUrl: file.preview || '',
+                    fileName: file.file.name,
+                    order: file.order
+                  }))}
+                  onItemsChange={handleImageFilesChange}
+                  onOrderChange={handleImageOrderChange}
+                  onRemove={handleImageRemove}
+                />
+              </div>
+            )}
+            
+            <Button onClick={handleUpload} disabled={uploading || !form.title.trim() || !form.content.trim() || imageFiles.length === 0} style={{marginBottom: 0}}>
               {uploading ? '게시 중...' : '게시'}
             </Button>
           </CardContent>
@@ -208,8 +426,8 @@ export default function LookBookPage() {
             </div>
             {isAdmin && (
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={e => {e.stopPropagation(); handleEditClick(post);}}>수정</Button>
-                <Button variant="destructive" size="sm" onClick={e => {e.stopPropagation(); handleDelete(post.id);}} disabled={deletingId === post.id}>
+                <Button variant="outline" size="sm" onClick={(e: React.MouseEvent) => {e.stopPropagation(); handleEditClick(post);}}>수정</Button>
+                <Button variant="destructive" size="sm" onClick={(e: React.MouseEvent) => {e.stopPropagation(); handleDelete(post.id);}} disabled={deletingId === post.id}>
                   {deletingId === post.id ? '삭제 중...' : '삭제'}
                 </Button>
               </div>
@@ -255,7 +473,8 @@ export default function LookBookPage() {
            <div
              className={"bg-card rounded-2xl shadow w-full max-w-md sm:max-w-lg lg:max-w-3xl mx-4 sm:mx-6 relative border border-border dark:bg-neutral-900 dark:border-neutral-800 p-4 sm:p-6 " + (modalClosing ? 'modal-pop-close' : 'modal-pop') + " scrollbar-custom"}
              style={{ maxHeight: '90vh', overflowY: 'auto' }}
-             onClick={(e: React.MouseEvent) => e.stopPropagation()}
+             onClick={handleModalClick}
+             onContextMenu={handleModalContextMenu}
            >
             {/* 커스텀 스크롤바 스타일 */}
             {/* 커스텀 스크롤바 스타일 */}
@@ -275,14 +494,43 @@ export default function LookBookPage() {
                   onChange={handleEditInputChange}
                   maxLength={300}
                 />
-                <div className="flex flex-col gap-2 mb-4">
-                  {selected.images.filter(img => !editForm.removeImageIds.includes(img.id)).map(img => (
-                    <div key={img.id} className="relative group">
-                      <img src={img.imageUrl} alt="이미지" className="w-full max-h-96 object-contain rounded" />
-                      <button type="button" className="absolute top-2 right-2 bg-black/60 text-white rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition" onClick={() => handleRemoveImage(img.id)}>삭제</button>
-                    </div>
-                  ))}
-                </div>
+                
+                {/* 기존 이미지 드래그 앤 드롭 순서 관리 */}
+                {editExistingImages.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium mb-2">기존 이미지 순서:</p>
+                    <SortableImageList
+                      items={editExistingImages.map(img => ({
+                        id: img.id,
+                        imageUrl: img.imageUrl,
+                        fileName: `기존 이미지`,
+                        order: img.order
+                      }))}
+                      onItemsChange={handleEditExistingImagesChange}
+                      onOrderChange={handleEditImageOrderChange}
+                      onRemove={handleEditImageRemove}
+                    />
+                  </div>
+                )}
+                
+                {/* 새 이미지 드래그 앤 드롭 순서 관리 */}
+                {editImageFiles.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium mb-2">새 이미지 순서:</p>
+                    <SortableImageList
+                      items={editImageFiles.map(file => ({
+                        id: file.id,
+                        imageUrl: file.preview || '',
+                        fileName: file.file.name,
+                        order: file.order
+                      }))}
+                      onItemsChange={handleEditImageFilesChange}
+                      onOrderChange={handleEditImageOrderChange}
+                      onRemove={handleEditImageRemove}
+                    />
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2 mb-2">
                   <input
                     type="file"
@@ -293,10 +541,10 @@ export default function LookBookPage() {
                     ref={editFileInputRef}
                   />
                   <Button type="button" variant="outline" onClick={() => { editFileInputRef.current && editFileInputRef.current.click(); }}>
-                    이미지 업로드
+                    이미지 추가
                   </Button>
                   <span className="text-xs text-muted-foreground ml-1">
-                    {editForm.files.length === 0 ? '이미지를 업로드 해주세요' : `${editForm.files.length}장 선택됨`}
+                    {editImageFiles.length === 0 ? '새 이미지를 추가하세요' : `${editImageFiles.length}장 추가됨`}
                   </span>
                 </div>
                 <div className="flex gap-2">
