@@ -135,8 +135,10 @@ export default function HomePage() {
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold mb-1"><strong className="text-yellow-400">100,000🧀</strong> ▶ 노래책에 없는 미션곡 신청</h4>
+                <h4 className="font-semibold mb-1"><strong className="line-through italic text-yellow-400">100,000🧀</strong> ▶ <strong className="line-through italic">노래책에 없는 미션곡 신청</strong></h4>
                 <ul className="space-y-1 text-sm">
+                  <li className="break-words"><strong className="text-xl text-red-600">• 미션곡이 많이 밀려있어, 일시적으로 미션곡은 받고있지 않아요 😥</strong></li>
+                  <li className="break-words"><strong className="text-xl text-red-600">• (신청 제한 25.07.28~)</strong></li>
                   <li className="break-words">• 너무 어려운 곡은 신청할 수 없어요❌</li>
                   <li className="break-words">• K-POP 위주로만 미션곡을 받고 있어요</li>
                   <li className="break-words">• 우쿨렐레 편곡 포함, 연습기간 <strong>약 2주</strong>정도 필요해요</li>
