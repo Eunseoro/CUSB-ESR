@@ -40,7 +40,7 @@ export function MiniPlayer({
     if (playerState.volume > 0) {
       onSetVolume(0)
     } else {
-      onSetVolume(0.3)
+      onSetVolume(0.2)
     }
   }
 
@@ -144,44 +144,7 @@ export function MiniPlayer({
             </div>
           </div>
 
-          {/* 중앙: 재생 컨트롤 - 모바일에서 우선순위 높임 */}
-          <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onPreviousTrack}
-              disabled={!playerState.currentTrack || playerState.queue.length === 0}
-              className="p-1 md:p-2"
-            >
-              <SkipBack className="h-3 w-3 md:h-4 md:w-4" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onTogglePlayPause}
-              disabled={!playerState.currentTrack || loading}
-              className="p-1 md:p-2"
-            >
-              {playerState.isPlaying ? (
-                <Pause className="h-4 w-4 md:h-5 md:w-5" />
-              ) : (
-                <Play className="h-4 w-4 md:h-5 md:w-5" />
-              )}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onNextTrack}
-              disabled={!playerState.currentTrack || playerState.queue.length === 0}
-              className="p-1 md:p-2"
-            >
-              <SkipForward className="h-3 w-3 md:h-4 md:w-4" />
-            </Button>
-          </div>
-
-          {/* 오른쪽: 볼륨 컨트롤 - 모바일에서 숨김 */}
+          {/* 중앙: 볼륨 컨트롤 - 모바일에서 숨김 */}
           <div className="hidden md:block relative">
             <Button
               variant="ghost"
@@ -216,6 +179,43 @@ export function MiniPlayer({
                 />
               </div>
             )}
+          </div>
+
+          {/* 오른쪽: 재생 컨트롤 - 모바일에서 우선순위 높임 */}
+          <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onPreviousTrack}
+              disabled={!playerState.currentTrack || playerState.queue.length === 0}
+              className="p-1 md:p-2"
+            >
+              <SkipBack className="h-3 w-3 md:h-4 md:w-4" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onTogglePlayPause}
+              disabled={!playerState.currentTrack || loading}
+              className="p-1 md:p-2"
+            >
+              {playerState.isPlaying ? (
+                <Pause className="h-4 w-4 md:h-5 md:w-5" />
+              ) : (
+                <Play className="h-4 w-4 md:h-5 md:w-5" />
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onNextTrack}
+              disabled={!playerState.currentTrack || playerState.queue.length === 0}
+              className="p-1 md:p-2"
+            >
+              <SkipForward className="h-3 w-3 md:h-4 md:w-4" />
+            </Button>
           </div>
 
           

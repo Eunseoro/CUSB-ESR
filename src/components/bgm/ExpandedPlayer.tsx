@@ -252,9 +252,10 @@ export function ExpandedPlayer({
     return null
   }
 
-  // iframe 로드 핸들러
+  // iframe 로드 핸들러 - 지연된 자동재생 적용
   const handleIframeLoad = () => {
     setIframeLoading(false)
+    
     // iframe이 로드되면 YouTube Player 초기화
     if (iframeRef.current && playerState.currentTrack) {
       onInitializePlayer(iframeRef.current)
@@ -406,10 +407,10 @@ export function ExpandedPlayer({
                   )}
                   <iframe
                     ref={iframeRef}
-                    src={`https://www.youtube.com/embed/${extractVideoId(playerState.currentTrack.videoUrl)}?enablejsapi=1&controls=1&modestbranding=1&rel=0&showinfo=0&fs=0&iv_load_policy=3&playsinline=1&autoplay=1&mute=0`}
+                    src={`https://www.youtube.com/embed/${extractVideoId(playerState.currentTrack.videoUrl)}?&rel=0&modestbranding=1&enablejsapi=1&origin=${window.location.origin}`}
                     title="YouTube Player"
                     className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     onLoad={handleIframeLoad}
                   />
@@ -433,7 +434,7 @@ export function ExpandedPlayer({
                 <button
                   key={genre}
                   onClick={() => setActiveTab(genre)}
-                  className={`flex-shrink-0 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${
+                  className={`flex-1 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === genre
                       ? 'text-primary border-b-2 border-primary'
                       : 'text-muted-foreground hover:text-foreground'
@@ -482,4 +483,4 @@ export function ExpandedPlayer({
       </div>
     </>
   )
-} 
+}

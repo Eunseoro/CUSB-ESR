@@ -15,7 +15,7 @@ export function BgmPlayer() {
     isExpanded: false,
     playbackMode: PlaybackMode.NORMAL,
     queue: [],
-    volume: 0.3
+    volume: 0.2
   })
 
   const [library, setLibrary] = useState<{ [genre: string]: BgmTrack[] } | null>(null)
@@ -156,7 +156,7 @@ export function BgmPlayer() {
       width: '100%',
       videoId: currentVideoId,
       playerVars: {
-        autoplay: 1,
+        autoplay: 0,
         controls: 1,
         disablekb: 0,
         enablejsapi: 1,

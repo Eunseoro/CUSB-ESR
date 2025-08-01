@@ -95,7 +95,7 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4 pb-20">
+    <div className="w-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto p-2 md:p-4 pb-20">
       <h1 className="text-2xl font-bold mb-1">쥐수게시판</h1>
       <div className="text-muted-foreground mb-6">
         <p>방명록 & 수다 & 버그신고 & 건의사항 등 자유롭게 사용하는 게시판입니다.</p>
@@ -136,42 +136,42 @@ export default function BoardPage() {
                   >
                     <CardHeader className="pb-0 pt-2 -my-5">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base leading-tight flex items-center gap-1">
+                        <CardTitle className="text-base leading-tight flex items-center gap-1 min-w-0 flex-1">
                           {pinned.author}
                         </CardTitle>
-                        <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap">{formatDate(pinned.createdAt)}</span>
+                        <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap flex-shrink-0">{formatDate(pinned.createdAt)}</span>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-2 px-6 pb-0 my-[-6px]">
-                      <div className="flex w-full items-center">
-                        <div className="flex-1 text-sm whitespace-pre-line mb-0 flex items-center min-h-[32px]">
+                    <CardContent className="p-2 px-2 md:px-6 pb-0 my-[-6px]">
+                      <div className="flex w-full items-start gap-2">
+                        <div className="flex-1 text-sm whitespace-pre-line mb-0 min-h-[32px] overflow-hidden">
                           {pinned.content}
                         </div>
-                        {/* 고정 체크박스 (관리자만) */}
-                        {isAdmin && (
-                          <input
-                            type="checkbox"
-                            checked={pinnedIds.includes(pinned.id)}
-                            onChange={e => handlePin(pinned.id, e.target.checked)}
-                            className="accent-purple-500 cursor-pointer ml-2"
-                            style={{ width: '22px', height: '22px' }}
-                            title="상단 고정 해제"
-                          />
-                        )}
-                        {(isAdmin || pinned.userKey === userKey) && (
-                          <div className="flex items-center">
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {/* 고정 체크박스 (관리자만) */}
+                          {isAdmin && (
+                            <input
+                              type="checkbox"
+                              checked={pinnedIds.includes(pinned.id)}
+                              onChange={e => handlePin(pinned.id, e.target.checked)}
+                              className="accent-purple-500 cursor-pointer"
+                              style={{ width: '18px', height: '18px' }}
+                              title="상단 고정 해제"
+                            />
+                          )}
+                          {(isAdmin || pinned.userKey === userKey) && (
                             <Button
                               size="sm"
                               variant="destructive"
-                              className="rounded-full px-4 ml-2"
+                              className="rounded-full px-2 md:px-4 text-xs"
                               title="삭제"
                               onClick={e => {e.stopPropagation(); handleDelete(pinned.id)}}
                               disabled={deletingId === pinned.id}
                             >
                               {deletingId === pinned.id ? '삭제 중...' : '삭제'}
                             </Button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -198,33 +198,33 @@ export default function BoardPage() {
               >
                 <CardHeader className="pb-0 pt-2 -my-5">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base leading-tight flex items-center gap-1">
+                    <CardTitle className="text-base leading-tight flex items-center gap-1 min-w-0 flex-1">
                       {item.author}
                     </CardTitle>
-                    <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap">{formatDate(item.createdAt)}</span>
+                    <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap flex-shrink-0">{formatDate(item.createdAt)}</span>
                   </div>
                 </CardHeader>
-                <CardContent className="p-2 px-6 pb-0 my-[-6px]">
-                  <div className="flex w-full items-center">
-                    <div className="flex-1 text-sm whitespace-pre-line mb-0 flex items-center min-h-[32px]">
+                <CardContent className="p-2 px-2 md:px-6 pb-0 my-[-6px]">
+                  <div className="flex w-full items-start gap-2">
+                    <div className="flex-1 text-sm whitespace-pre-line mb-0 min-h-[32px] overflow-hidden">
                       {item.content}
                     </div>
                     {(isAdmin || item.userKey === userKey) && (
-                      <div className="flex items-center">
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         {isAdmin && (
                           <input
                             type="checkbox"
                             checked={pinnedIds.includes(item.id)}
                             onChange={e => handlePin(item.id, e.target.checked)}
-                            className="accent-purple-500 cursor-pointer mr-4"
-                            style={{ width: '20px', height: '20px' }}
+                            className="accent-purple-500 cursor-pointer"
+                            style={{ width: '18px', height: '18px' }}
                             title="상단 고정"
                           />
                         )}
                         <Button
                           size="sm"
                           variant="destructive"
-                          className="rounded-full px-4"
+                          className="rounded-full px-2 md:px-4 text-xs"
                           title="삭제"
                           onClick={e => {e.stopPropagation(); handleDelete(item.id)}}
                           disabled={deletingId === item.id}
