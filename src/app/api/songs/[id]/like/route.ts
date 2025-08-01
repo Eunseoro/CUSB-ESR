@@ -62,17 +62,19 @@ export async function POST(
         },
       })
 
-      // 좋아요 수 감소
+      // 실제 좋아요 개수로 업데이트 (음수 방지)
+      const actualLikeCount = await prisma.songLike.count({
+        where: { songId },
+      })
+
       const updatedSong = await prisma.song.update({
         where: { id: songId },
         data: {
-          likeCount: {
-            decrement: 1,
-          },
+          likeCount: actualLikeCount,
         },
       })
 
-      console.log('Like removed')
+      console.log('Like removed, actual count:', actualLikeCount)
       return NextResponse.json({ liked: false, likeCount: updatedSong.likeCount })
     } else {
       // 좋아요 추가
@@ -83,17 +85,19 @@ export async function POST(
         },
       })
 
-      // 좋아요 수 증가
+      // 실제 좋아요 개수로 업데이트
+      const actualLikeCount = await prisma.songLike.count({
+        where: { songId },
+      })
+
       const updatedSong = await prisma.song.update({
         where: { id: songId },
         data: {
-          likeCount: {
-            increment: 1,
-          },
+          likeCount: actualLikeCount,
         },
       })
 
-      console.log('Like added')
+      console.log('Like added, actual count:', actualLikeCount)
       return NextResponse.json({ liked: true, likeCount: updatedSong.likeCount })
     }
   } catch (error) {

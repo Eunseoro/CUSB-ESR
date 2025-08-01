@@ -127,6 +127,31 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* 브라우저 기본 스크롤바 커스텀 스타일 */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #bbb #f3f4f6;
+  }
+  html::-webkit-scrollbar {
+    width: 8px;
+    background: #f3f4f6;
+  }
+  html::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 8px;
+  }
+  
+  /* 다크모드에서 브라우저 기본 스크롤바 스타일 */
+  html.dark {
+    scrollbar-color: #444 #111 !important;
+  }
+  html.dark::-webkit-scrollbar {
+    background: #111 !important;
+  }
+  html.dark::-webkit-scrollbar-thumb {
+    background: #444 !important;
+  }
 }
 
 /* 공지사항 카드 반짝거리는 border 애니메이션 */
@@ -319,7 +344,7 @@
   bottom: -70px;
   display: flex;
   justify-content: center;
-  z-index: 200;
+  z-index: 20;
 }
 .spinner-btn {
   font-family: 'Hanna', Arial, sans-serif;

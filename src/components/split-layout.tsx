@@ -11,12 +11,19 @@ interface SplitLayoutProps {
 }
 
 export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayoutProps) {
-  // 분할 비율 상태: 0.1~0.9 사이, 기본값 모바일 0.7(70%), PC 0.5(50%)
-  const [ratio, setRatio] = useState(() => (typeof window !== 'undefined' && window.innerWidth >= 1024 ? 0.5 : 0.7))
+  // 분할 비율 상태: 서버와 클라이언트에서 일치하도록 기본값 설정
+  const [ratio, setRatio] = useState(0.7) // 기본값으로 모바일 비율 사용
   const [dragging, setDragging] = useState(false)
   const layoutRef = useRef<HTMLDivElement>(null)
   // PC: 가로 1024px 이상 & 실제 레이아웃도 1024px 이상일 때만 진짜 PC 모드로 간주
   const [isPc, setIsPc] = useState(false)
+
+  // 클라이언트에서만 실행되는 useEffect로 초기 비율 설정
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setRatio(0.5) // PC에서는 50%로 설정
+    }
+  }, [])
 
   // 드래그 시작
   const onDragStart = (e: React.MouseEvent | React.TouchEvent) => {
@@ -130,7 +137,7 @@ export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayo
           {rightPanel}
         </div>
         {isPc && (
-          <img src="/video_player_org.png" className="absolute right-4 bottom-0 w-70 h-70 opacity-60 pointer-events-none z-10" />
+          <img src="/video_player_org.png" className="absolute right-4 bottom-12 w-60 h-60 opacity-60 pointer-events-none z-10" />
         )}
       </div>
     </div>

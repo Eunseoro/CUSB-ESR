@@ -95,7 +95,7 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4">
+    <div className="w-full max-w-3xl mx-auto p-4 pb-20">
       <h1 className="text-2xl font-bold mb-1">쥐수게시판</h1>
       <div className="text-muted-foreground mb-6">
         <p>방명록 & 수다 & 버그신고 & 건의사항 등 자유롭게 사용하는 게시판입니다.</p>

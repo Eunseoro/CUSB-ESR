@@ -29,7 +29,7 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
           }
         >
           <img
-            src="/icons/button.png"
+            src="/icons/button.webp"
             alt="button icon"
             className={`absolute inset-0 w-full h-full object-contain ${checked ? '' : 'grayscale brightness-75'}`}
             draggable={false}

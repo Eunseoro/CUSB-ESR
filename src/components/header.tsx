@@ -54,14 +54,13 @@ export function Header() {
   };
 
   return (
-    <header className="border-b sticky top-0 z-30 bg-background">
+    <header className="border-b sticky top-0 z-100 bg-background">
       <div className="w-full px-4 py-2 flex items-center">
         <div className="flex items-center">
-          {/* 헤더 좌측에 U_GrandMother + 이미지 로고 표시 */}
           <Link href="/" className="focus:outline-none">
             <h1 className="text-2xl font-bold text-black dark:text-white italic flex items-center gap-2 md:ml-16 ml-10 cursor-pointer hover:text-primary transition-colors">
               U_GrandMother
-              <img src="/icons/ugm.png" className="h-11 w-8" alt="유할매 아이콘" />
+              <img src="/icons/ugm.webp" className="h-11 w-8" />
             </h1>
           </Link>
         </div>

@@ -57,6 +57,33 @@ enum Category {
   NEWSONG
 }
 
+// BGM 관련 모델 추가
+model BgmTrack {
+  id          String   @id @default(cuid())
+  title       String?
+  videoUrl    String
+  genre       BgmGenre
+  tags        String[] @default([])
+  duration    Int?
+  thumbnail   String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([genre])
+  @@index([createdAt])
+  @@index([order])
+}
+
+enum BgmGenre {
+  INST
+  K_POP
+  J_POP
+  POP
+  탑골가요
+  ETC
+}
+
 model Notice {
   id        Int      @id @default(1)
   content   String   @db.Text

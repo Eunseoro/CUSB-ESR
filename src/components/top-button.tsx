@@ -44,7 +44,7 @@ export function TopButton() {
         <Button
           onClick={scrollToTop}
           size="sm"
-          className="fixed bottom-6 right-6 z-50 h-10 w-10 rounded-full bg-black/20 hover:bg-black/30 text-white backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:scale-110">
+          className="fixed bottom-20 right-6 z-10 h-10 w-10 rounded-full bg-black/20 hover:bg-black/30 text-white backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300 hover:scale-110">
           <ChevronUp className="h-5 w-5" />
         </Button>
       )}

@@ -1,5 +1,4 @@
-// 이 파일은 좌측 사이드바 컴포넌트입니다. 불필요한 상태, dead code, 중복/비효율 useEffect, 메모리 누수 위험이 있는 부분을 정리합니다.
-// 하단 구분선(border-t) 위에 Youtube, Instagram, Github, Globe 아이콘을 4개 가로로 배치합니다.
+// 이 파일은 좌측 사이드바 컴포넌트입니다. 
 'use client'
 
 import { useState } from 'react'
@@ -20,9 +19,7 @@ const menuItems = [
   { href: '/roulette', label: '신청곡 룰렛', icon: Shuffle },
   { href: '/Spinner', label: '돌림판', icon: CircleDashed },
   { href: '/board', label: '쥐수게시판', icon: SquarePen },
-  { href: '/lookbook', label: 'OOTD (Beta)', icon: Shirt },
-  // 돌림판 탭은 아래에서 조건부로 추가
-  // { href: '/Spinner', label: '돌림판', icon: CircleDashed },
+  { href: '/lookbook', label: 'OOTD', icon: Shirt },
 ];
 
 export function Sidebar() {
@@ -46,7 +43,7 @@ export function Sidebar() {
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed top-0 left-0 z-40 h-full w-64 bg-card border-r transform transition-transform duration-300 ease-in-out group/sidebar",
+        "fixed top-0 left-0 z-110 h-full w-64 bg-card border-r transform transition-transform duration-300 ease-in-out group/sidebar",
         "md:translate-x-0 md:w-16 md:flex-shrink-0 md:hover:w-64 md:hover:translate-x-0 md:transition-all",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
@@ -188,13 +185,13 @@ export function Sidebar() {
             {/* 하단 아이콘 영역 */}
             <div className="flex flex-row gap-4 mb-4 justify-center md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity">
               <a href="https://chzzk.naver.com/2c0c0ff859f6cb8045a3cdf99b3b9b54" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors">
-                <img src="/icons/chzzk.png" className="h-7 w-7" alt="치즈크 아이콘" />
+                <img src="/icons/chzzk.webp" className="h-7 w-7" />
               </a>
               <a href="https://youtube.com/@u_grandmother?si=XOVQqg6fS8yMOcpX" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors">
-                <img src="/icons/youtube.png" className="h-7 w-7" alt="유튜브 아이콘" />
+                <img src="/icons/youtube.webp" className="h-7 w-7" />
               </a>
               <a href="https://cafe.naver.com/ugrandmother" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors">
-                <img src="/icons/cafe.png" className="h-7 w-7" alt="카페 아이콘" />
+                <img src="/icons/cafe.webp" className="h-7 w-7" />
               </a>
             </div>
             <div className="border-t pt-4 mt-auto">

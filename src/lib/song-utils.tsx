@@ -1,5 +1,6 @@
 // 이 파일은 노래 목록에서 사용하는 유틸리티 함수들을 모아둔 파일입니다.
 import React from 'react'
+import { BgmTag } from '@/types/bgm'
 
 // 날짜를 YYYY.MM.DD 포맷으로 반환
 export function formatDate(dateString: string): string {
@@ -60,11 +61,37 @@ export function getKoreanSortKey(text: string): string {
   return '4' + text
 }
 
+// BGM 태그별 색상 반환
+export function getBgmTagColor(tag: BgmTag): string {
+  switch (tag) {
+    case '신나는': return 'bg-red-100 text-red-700'
+    case '잔잔한': return 'bg-blue-100 text-blue-700'
+    case '멋있는': return 'bg-purple-100 text-purple-700'
+    case '감성적인': return 'bg-yellow-100 text-yellow-700'
+    case '재밌는': return 'bg-green-100 text-green-700'
+    case '애니메이션': return 'bg-pink-100 text-pink-700'
+    default: return 'bg-gray-100 text-gray-700'
+  }
+}
+
+// 선택되지 않은 BGM 태그 색상 반환 (흐릿한 버전)
+export function getBgmTagUnselectedColor(tag: BgmTag): string {
+  switch (tag) {
+    case '신나는': return 'bg-red-50 text-red-500'
+    case '잔잔한': return 'bg-blue-50 text-blue-500'
+    case '멋있는': return 'bg-purple-50 text-purple-500'
+    case '감성적인': return 'bg-gray-50 text-yellow-500'
+    case '재밌는': return 'bg-green-50 text-green-500'
+    case '애니메이션': return 'bg-pink-50 text-pink-500'
+    default: return 'bg-gray-50 text-gray-500'
+  }
+}
+
 // 1절만 아이콘 컴포넌트
 export function FirstVerseIcon() {
   return (
     <span className="inline-flex items-center text-m" title="1절만">
-      <img src="/icons/1st-verse.png" alt="1절만 아이콘" className="h-5 w-5 mr-1" />
+      <img src="/icons/1st-verse.webp" className="h-5 w-5 mr-1"/>
     </span>
   )
 }

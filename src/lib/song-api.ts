@@ -3,14 +3,17 @@ import { Song } from '@/types/song'
 import { getAnonymousId } from './anonymous'
 
 // 곡 목록을 서버에서 가져오는 함수
-export async function fetchSongsApi({ category, search, pageNum, limit = 50, sort = 'latest' }: { category?: string, search?: string, pageNum: number, limit?: number, sort?: string }) {
+export async function fetchSongsApi({ category, search, pageNum, limit = 50, sort = 'latest', signal }: { category?: string, search?: string, pageNum: number, limit?: number, sort?: string, signal?: AbortSignal }) {
   const params = new URLSearchParams()
   if (category) params.append('category', category)
   if (search) params.append('search', search)
   params.append('page', pageNum.toString())
   params.append('limit', limit.toString())
   params.append('sort', sort)
-  const response = await fetch(`/api/songs?${params}`)
+  
+  const response = await fetch(`/api/songs?${params}`, {
+    signal // AbortController signal 추가
+  })
   if (!response.ok) throw new Error('곡 목록을 불러오지 못했습니다.')
   return response.json()
 }

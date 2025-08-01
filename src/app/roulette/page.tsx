@@ -73,8 +73,14 @@ export default function RoulettePage() {
         })
       })
       let filtered = Object.values(merged)
-      // 고급신청 필터 적용 (고난이도 또는 루프스테이션 중 하나만 만족해도 표시)
-      if (secondary.advanced) filtered = filtered.filter(s => s.isHighDifficulty || s.isLoopStation)
+      // 고급신청 필터 적용
+      if (secondary.advanced) {
+        // 고급신청 필터가 활성화된 경우: 고난이도 또는 루프스테이션 중 하나라도 TRUE인 곡만 추첨 대상
+        filtered = filtered.filter(s => s.isHighDifficulty || s.isLoopStation)
+      } else {
+        // 고급신청 필터가 비활성화된 경우: 고난이도와 루프스테이션 모두 FALSE인 곡만 추첨 대상
+        filtered = filtered.filter(s => !s.isHighDifficulty && !s.isLoopStation)
+      }
       setSongs(filtered)
       setLoading(false)
     })
@@ -284,7 +290,7 @@ export default function RoulettePage() {
       <button
         className="w-full py-3 rounded-full bg-zinc-500 hover:bg-zinc-600 text-white font-bold mb-6 disabled:opacity-50 text-base shadow-md dark:bg-zinc-700 dark:text-zinc-100"
         onClick={handleRoll}
-        disabled={rolling || !songs.length}
+        disabled={rolling || !songs.length || loading}
       >
         {rolling ? 'Go !' : 'Go !'}
       </button>

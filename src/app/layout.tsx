@@ -6,13 +6,14 @@ import { Providers } from './providers'
 import { Sidebar } from '@/components/sidebar'
 import { Header } from '@/components/header'
 import { TopButton } from '@/components/top-button'
+import { BgmPlayer } from '@/components/bgm/BgmPlayer'
 import { isAdminAuthenticated } from '@/lib/auth'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: '유할매 노래책',
-  description: '치지직 음악 스트리머 유할매의 신청곡 리스트',
+  description: '치지직 음악 스트리머 유할매의 팬 페이지',
 }
 
 export default function RootLayout({
@@ -36,6 +37,7 @@ export default function RootLayout({
               <a href="/admin/statistics" style={{ marginLeft: 16, color: '#0070f3', fontWeight: 'bold' }}>방문자 통계</a>
             )}
             <TopButton />
+            <BgmPlayer />
           </div>
         </Providers>
       </body>

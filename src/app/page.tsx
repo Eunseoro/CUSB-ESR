@@ -17,15 +17,15 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="w-full p-6 max-w-4xl mx-auto">
+    <div className="w-full p-6 max-w-4xl mx-auto pb-20">
       <div className="space-y-6">
         <div className="relative flex items-center justify-center text-center">
-          <img src="/heder_r.png" className="hidden sm:block absolute left-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" />
+          <img src="/icons/ugm.webp" className="hidden sm:block absolute left-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" />
           <div className="w-full">
             <h1 className="text-3xl font-bold mb-2">유할매 노래책 이용안내</h1>
             <p className="text-muted-foreground">이용 시 꼭 확인해주세요</p>
           </div>
-          <img src="/heder_l.png" className="hidden sm:block absolute right-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" />
+          <img src="/icons/ugm.webp" className="hidden sm:block absolute right-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" />
         </div>
         <NoticeBox />
 
@@ -102,43 +102,39 @@ export default function HomePage() {
                 <h4 className="font-semibold mb-1"><strong>10,000🧀</strong> ▶ 일반 신청곡 </h4>
                 <ul className="space-y-1 text-sm">
                   <li className="break-words">• 후원 채팅 '가수명 - 제목'으로 신청곡을 지정할 수 있어요</li>
-                  <li className="break-words">• 지정곡이 없다면, 후원 채팅 '일반신청'으로 랜덤 룰렛이 돌아가요</li>
-                  <li>　</li>
-                </ul>
+                  <li className="break-words mb-8">• 지정곡이 없다면, 후원 채팅 '일반신청'으로 랜덤 룰렛이 돌아가요</li>
+                  </ul>
               </div>
               <div>
                 <h4 className="font-semibold mb-1"><strong>15,000🧀</strong> ▶ 당일 불렀던 곡 재신청 </h4>
                 <ul className="space-y-1 text-sm">
                   <li className="break-words">• 한 곡 당 하루에 한 번만 다시 불러드려요</li>
-                  <li>　</li>
+                  <li className="break-words mb-7">• 다양한 노래 리스트를 위해 양해 부탁드립니다🎹</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold mb-1"><strong>20,000🧀</strong> ▶ 우선 신청곡 </h4>
                 <ul className="space-y-1 text-sm">
-                <li className="break-words">• 노래 순서 새치기!</li>
-                <li>　</li>
+                <li className="break-words mb-8">• 노래 순서 새치기!</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold mb-1"><strong className="text-red-600">50,000🧀</strong> ▶ ⚡ 루프 스테이션 곡</h4>
                 <ul className="space-y-1 text-sm">
-                  <li className="break-words">• 노래 제목 옆에 ⚡아이콘이 붙어있어요</li>
-                  <li>　</li>
+                  <li className="break-words mb-8">• 노래 제목 옆에 ⚡아이콘이 붙어있어요</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold mb-1"><strong className="text-red-600">50,000🧀</strong> ▶ 🔥 난이도 높은 곡</h4>
                 <ul className="space-y-1 text-sm">
-                  <li className="break-words">• 노래 제목 옆에 🔥아이콘이 붙어있어요</li>
-                  <li>　</li>
+                  <li className="break-words mb-8">• 노래 제목 옆에 🔥아이콘이 붙어있어요</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold mb-1"><strong className="line-through italic text-yellow-400">100,000🧀</strong> ▶ <strong className="line-through italic">노래책에 없는 미션곡 신청</strong></h4>
                 <ul className="space-y-1 text-sm">
                   <li className="break-words"><strong className="text-xl text-red-600">• 미션곡이 많이 밀려있어, 일시적으로 미션곡은 받고있지 않아요 😥</strong></li>
-                  <li className="break-words"><strong className="text-xl text-red-600">• (신청 제한 25.07.28~)</strong></li>
+                  <li className="break-words"><strong className="text-xl text-red-600">• 신청 마감 25.07.28 ~</strong></li>
                   <li className="break-words">• 너무 어려운 곡은 신청할 수 없어요❌</li>
                   <li className="break-words">• K-POP 위주로만 미션곡을 받고 있어요</li>
                   <li className="break-words">• 우쿨렐레 편곡 포함, 연습기간 <strong>약 2주</strong>정도 필요해요</li>
@@ -160,7 +156,7 @@ export default function HomePage() {
               <div className="flex items-start gap-4">
                 <div>
                   <h4 className="font-semibold flex items-center gap-2">
-                    <img src="/icons/1st-verse.png" alt="1절만 아이콘" className="h-5 w-5" />
+                    <img src="/icons/1st-verse.webp" className="h-5 w-5" />
                     아이콘을 확인해 주세요
                   </h4>
                   <p className="text-sm text-muted-foreground">
@@ -205,38 +201,28 @@ export default function HomePage() {
             <div className="space-y-4">
               <div>
                 <h4 className="font-semibold mb-1">Q: 랜덤으로 일반 신청을 했는데, 룰렛이 안돌아갔어요😥</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm mb-7 text-muted-foreground">
                   A: 익명 후원에는 룰렛이 돌아가지 않습니다. 하지만 걱정하지 마세요! 룰렛은 유할매가 다시 돌려드린답니다 :)
                 </p>
-                <p className="text-xs text-muted-foreground">
-                　
-                </p>
-                
               </div>
               <div>
                 <h4 className="font-semibold mb-1">Q: 이미 신청곡이 많이 밀려있어요, 몇 곡까지 신청이 가능한가요?</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm mb-7 text-muted-foreground">
                   A: 돈미쥐💸 유할매는 신청곡🧀을 거절하지 않지만, 상식적인 범위는 지켜주세요🤣
-                </p>
-                <p className="text-xs text-muted-foreground">
-                　
                 </p>
               </div>
 
               <div>
                 <h4 className="font-semibold mb-1">Q: 신곡 업데이트 주기는 어떻게 되나요?</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm mb-1 text-muted-foreground">
                   A: 특이사항(대형서버 참여 등)이 없을 경우, 매달 업데이트 될 예정입니다
-                </p>
-                <p className="text-xs text-muted-foreground">
-                　
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-      <p className="text-center mt-3 text-muted-foreground">본 노래책 사이트의 무단 복제ㆍ변형ㆍ카피ㆍ2차 가공ㆍ상업적 이용 등 협의되지 않은 사용을 엄격히 금지합니다.</p>
+      <p className="text-center mt-3 text-sm text-muted-foreground">본 노래책 사이트의 무단 복제ㆍ변형ㆍ카피ㆍ2차 가공ㆍ상업적 이용 등 협의되지 않은 사용을 엄격히 금지합니다.</p>
     </div>
   )
 }

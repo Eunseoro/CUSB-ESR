@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
       isPublic: true,
     }
 
-    if (category) {
+    // 검색어가 있을 때는 카테고리 필터를 무시하여 모든 카테고리에서 검색
+    if (category && !search) {
       where.category = category
     }
 
@@ -86,10 +87,6 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
-  } finally {
-    if (process.env.NODE_ENV !== 'production') {
-      await prisma.$disconnect();
-    }
   }
 }
 
@@ -146,9 +143,5 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
-  } finally {
-    if (process.env.NODE_ENV !== 'production') {
-      await prisma.$disconnect();
-    }
   }
-} 
+}
