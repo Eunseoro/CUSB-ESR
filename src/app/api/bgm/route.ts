@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
     const bgmTrack = await prisma.bgmTrack.create({
       data: {
         videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
-        genre: prismaGenre,
+        genre: prismaGenre as any,
         title: finalTitle || null,
         duration: duration,
         tags: tags || [],
