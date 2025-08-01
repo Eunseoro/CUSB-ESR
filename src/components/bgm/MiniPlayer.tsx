@@ -89,33 +89,33 @@ export function MiniPlayer({
       {/* 푸터 미니 플레이어 - 항상 표시 */}
       <div className="fixed bottom-0 left-0 right-0 z-100 bg-background/95 backdrop-blur-md border-t border-border shadow-lg md:left-16" data-footer-player>
         <div className="flex items-center justify-between px-4 py-3">
-          {/* 왼쪽: 트랙 정보 */}
+          {/* 왼쪽: 트랙 정보 - 모바일에서 더 간결하게 */}
           <div 
-            className="flex-1 flex items-center space-x-3 cursor-pointer"
+            className="flex items-center space-x-3 cursor-pointer min-w-0 flex-1 md:flex-1"
             onClick={onToggleExpanded}
           >
-            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
               {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-primary"></div>
               ) : playerState.currentTrack ? (
-                <Music className="h-5 w-5 text-muted-foreground" />
+                <Music className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               ) : (
-                <Music className="h-5 w-5 text-muted-foreground" />
+                <Music className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               {loading ? (
-                <div className="text-sm text-muted-foreground">BGM 로딩 중...</div>
+                <div className="text-xs md:text-sm text-muted-foreground">BGM 로딩 중...</div>
               ) : playerState.currentTrack ? (
                 <>
-                  <div className="text-sm font-medium text-foreground truncate">
+                  <div className="text-xs md:text-sm font-medium text-foreground truncate">
                     {playerState.currentTrack.title || 'Unknown Track'}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="hidden md:flex items-center gap-2">
                     <div className="text-xs text-muted-foreground">
                       {playerState.currentTrack.genre}
                     </div>
-                    {/* 태그 표시 */}
+                    {/* 태그 표시 - 데스크톱에서만 */}
                     {playerState.currentTrack.tags && playerState.currentTrack.tags.length > 0 && (
                       <div className="flex gap-1">
                         {playerState.currentTrack.tags.slice(0, 2).map((tag) => (
@@ -137,15 +137,52 @@ export function MiniPlayer({
                 </>
               ) : (
                 <>
-                  <div className="text-sm font-medium text-foreground">Playlist</div>
-                  <div className="text-xs text-muted-foreground">BGM</div>
+                  <div className="text-xs md:text-sm font-medium text-foreground">Playlist</div>
+                  <div className="hidden md:block text-xs text-muted-foreground">BGM</div>
                 </>
               )}
             </div>
           </div>
 
-          {/* 오른쪽: 볼륨 컨트롤 */}
-          <div className="relative">
+          {/* 중앙: 재생 컨트롤 - 모바일에서 우선순위 높임 */}
+          <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onPreviousTrack}
+              disabled={!playerState.currentTrack || playerState.queue.length === 0}
+              className="p-1 md:p-2"
+            >
+              <SkipBack className="h-3 w-3 md:h-4 md:w-4" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onTogglePlayPause}
+              disabled={!playerState.currentTrack || loading}
+              className="p-1 md:p-2"
+            >
+              {playerState.isPlaying ? (
+                <Pause className="h-4 w-4 md:h-5 md:w-5" />
+              ) : (
+                <Play className="h-4 w-4 md:h-5 md:w-5" />
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onNextTrack}
+              disabled={!playerState.currentTrack || playerState.queue.length === 0}
+              className="p-1 md:p-2"
+            >
+              <SkipForward className="h-3 w-3 md:h-4 md:w-4" />
+            </Button>
+          </div>
+
+          {/* 오른쪽: 볼륨 컨트롤 - 모바일에서 숨김 */}
+          <div className="hidden md:block relative">
             <Button
               variant="ghost"
               size="sm"
@@ -179,43 +216,6 @@ export function MiniPlayer({
                 />
               </div>
             )}
-          </div>
-
-          {/* 중앙: 재생 컨트롤 */}
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onPreviousTrack}
-              disabled={!playerState.currentTrack || playerState.queue.length === 0}
-              className="p-2"
-            >
-              <SkipBack className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onTogglePlayPause}
-              disabled={!playerState.currentTrack || loading}
-              className="p-2"
-            >
-              {playerState.isPlaying ? (
-                <Pause className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5" />
-              )}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onNextTrack}
-              disabled={!playerState.currentTrack || playerState.queue.length === 0}
-              className="p-2"
-            >
-              <SkipForward className="h-4 w-4" />
-            </Button>
           </div>
 
           

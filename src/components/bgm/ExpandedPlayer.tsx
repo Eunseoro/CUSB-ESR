@@ -393,9 +393,9 @@ export function ExpandedPlayer({
         }`}
         data-expanded-panel
       >
-        <div className="flex h-full">
-          {/* 좌측: YouTube iframe */}
-          <div className="w-1/2 p-4 border-r border-border">
+        <div className="flex flex-col h-full md:flex-row">
+          {/* 상단: YouTube iframe - 모바일에서는 작은 크기 */}
+          <div className="w-full h-1/3 md:h-full md:w-1/2 p-2 md:p-4 border-b md:border-b-0 md:border-r border-border">
             <div className="h-full bg-muted rounded-lg overflow-hidden relative">
               {playerState.currentTrack ? (
                 <>
@@ -417,23 +417,23 @@ export function ExpandedPlayer({
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   <div className="text-center">
-                    <div className="text-lg font-medium mb-2">플레이리스트를 선택해주세요</div>
+                    <div className="text-sm md:text-lg font-medium mb-2">플레이리스트를 선택해주세요</div>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* 우측: 탭 리스트 */}
-          <div className="w-1/2 flex flex-col">
+          {/* 하단: 탭 리스트 - 모바일에서는 전체 너비 */}
+          <div className="w-full h-2/3 md:h-full md:w-1/2 flex flex-col">
 
-            {/* 탭 헤더 */}
-            <div className="flex border-b border-border">
+            {/* 탭 헤더 - 가로 스크롤 가능 */}
+            <div className="flex border-b border-border overflow-x-auto scrollbar-hide">
               {genres.map((genre) => (
                 <button
                   key={genre}
                   onClick={() => setActiveTab(genre)}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  className={`flex-shrink-0 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === genre
                       ? 'text-primary border-b-2 border-primary'
                       : 'text-muted-foreground hover:text-foreground'
