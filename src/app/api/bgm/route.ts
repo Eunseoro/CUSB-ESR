@@ -1,6 +1,7 @@
 // BGM API 라우트
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { BgmGenre } from '@prisma/client'
 
 // YouTube URL에서 비디오 ID 추출
 function extractVideoId(url: string): string | null {
@@ -29,13 +30,8 @@ function convertGenreToPrisma(genre: string): string {
   return genre.replace('-', '_')
 }
 
-// 언더스코어 장르를 하이픈으로 변환 (클라이언트 타입과 호환)
-function convertGenreToClient(genre: string): string {
-  return genre.replace('_', '-')
-}
-
 // Prisma enum을 클라이언트 타입으로 변환
-function convertPrismaGenreToClient(genre: any): string {
+function convertPrismaGenreToClient(genre: string): string {
   const genreString = String(genre)
   
   // 특별한 변환 규칙
@@ -214,7 +210,7 @@ export async function POST(request: NextRequest) {
     const bgmTrack = await prisma.bgmTrack.create({
       data: {
         videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
-        genre: prismaGenre as any,
+        genre: prismaGenre as BgmGenre,
         title: finalTitle || null,
         duration: duration,
         tags: tags || [],

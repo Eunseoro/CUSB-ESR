@@ -1,6 +1,7 @@
 // BGM 개별 항목 API 라우트
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { BgmGenre } from '@prisma/client'
 
 // 하이픈 장르를 언더스코어로 변환 (Prisma enum과 호환)
 function convertGenreToPrisma(genre: string): string {
@@ -50,14 +51,18 @@ export async function PUT(
       return NextResponse.json({ error: 'At least one field is required' }, { status: 400 })
     }
 
-    const updateData: any = {}
+    const updateData: {
+      title?: string;
+      genre?: BgmGenre;
+      tags?: string[];
+    } = {}
     
     if (title !== undefined) {
       updateData.title = title
     }
     
     if (genre !== undefined) {
-      updateData.genre = convertGenreToPrisma(genre)
+      updateData.genre = convertGenreToPrisma(genre) as BgmGenre
     }
 
     if (tags !== undefined) {

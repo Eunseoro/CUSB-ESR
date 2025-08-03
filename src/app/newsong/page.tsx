@@ -7,9 +7,12 @@ import { SongList, SongListRef } from '@/components/song-list'
 import { VideoPlayer } from '@/components/video-player'
 import { SplitLayout } from '@/components/split-layout'
 
-export default function NewSongPage() {
+export default function NewsongPage() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
+  const [loading, setLoading] = useState(false)
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<'title' | 'latest' | 'popular'>('title')
   const songListRef = useRef<SongListRef>(null)
 
   // 신곡 탭 진입 시 정렬을 최신순으로 강제

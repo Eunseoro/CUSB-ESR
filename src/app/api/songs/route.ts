@@ -5,12 +5,11 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const category = searchParams.get('category')
-    const search = searchParams.get('search')
-    const page = parseInt(searchParams.get('page') || '1')
+    const pageNum = parseInt(searchParams.get('pageNum') || '1')
     const limit = parseInt(searchParams.get('limit') || '30')
-    const sort = searchParams.get('sort') || 'latest'
-    const skip = (page - 1) * limit
+    const search = searchParams.get('search') || ''
+    const sort = searchParams.get('sort') || 'title'
+    const skip = (pageNum - 1) * limit
 
     const where: Record<string, unknown> = {
       isPublic: true,
@@ -82,7 +81,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       songs: songsWithCategories,
       pagination: {
-        page,
+        page: pageNum,
         limit,
         total,
         totalPages: Math.ceil(total / limit),

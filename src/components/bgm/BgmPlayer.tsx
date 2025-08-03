@@ -1,8 +1,9 @@
 // BGM 플레이어 메인 컨테이너 컴포넌트
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { BgmTrack, BgmGenre, PlaybackMode, BgmPlayerState } from '@/types/bgm'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX } from 'lucide-react'
+import { BgmTrack, PlaybackMode, BgmPlayerState } from '@/types/bgm'
 import { getBgmLibraryApi } from '@/lib/bgm-api'
 import { MiniPlayer } from './MiniPlayer'
 import { ExpandedPlayer } from './ExpandedPlayer'

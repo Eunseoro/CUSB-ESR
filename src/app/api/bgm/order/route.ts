@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { BgmGenre } from '@/types/bgm'
 
 export async function PUT(req: NextRequest) {
   try {
