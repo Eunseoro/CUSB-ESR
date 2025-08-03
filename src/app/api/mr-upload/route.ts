@@ -4,9 +4,52 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('MR 업로드 API 호출 시작')
+    console.log('요청 URL:', req.url)
+    console.log('요청 메서드:', req.method)
+    console.log('요청 헤더:', Object.fromEntries(req.headers.entries()))
+    
+    // Supabase 클라이언트 상태 확인
+    console.log('Supabase 클라이언트 상태:', {
+      hasSupabaseAdmin: !!supabaseAdmin,
+      hasStorage: !!supabaseAdmin?.storage
+    })
+    
+    if (!supabaseAdmin) {
+      console.error('Supabase 관리자 클라이언트가 초기화되지 않았습니다.')
+      return NextResponse.json({ 
+        error: 'Supabase 서비스가 초기화되지 않았습니다. 환경변수를 확인해주세요.' 
+      }, { status: 500 })
+    }
+    
+    // 환경변수 검증
+    const supabaseUrl = process.env.SUPA__SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPA__SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    console.log('환경변수 확인:', {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey,
+      url: supabaseUrl ? '설정됨' : '누락',
+      serviceKey: supabaseServiceKey ? '설정됨' : '누락',
+      urlLength: supabaseUrl?.length,
+      serviceKeyLength: supabaseServiceKey?.length
+    })
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase 환경변수 누락:', { 
+        url: !!supabaseUrl, 
+        serviceKey: !!supabaseServiceKey 
+      })
+      return NextResponse.json({ 
+        error: 'Supabase 환경변수가 설정되지 않았습니다.' 
+      }, { status: 500 })
+    }
+
     // 관리자 인증 확인
     const cookie = req.cookies.get('admin_session')
     const isAdmin = cookie && cookie.value === '1'
+    
+    console.log('관리자 인증 확인:', { isAdmin, cookieValue: cookie?.value })
     
     if (!isAdmin) {
       return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })
@@ -15,6 +58,15 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData()
     const file = formData.get('file') as File
     const songId = formData.get('songId') as string
+
+    console.log('FormData 파싱:', { 
+      hasFile: !!file, 
+      hasSongId: !!songId,
+      songId,
+      fileName: file?.name,
+      fileSize: file?.size,
+      fileType: file?.type
+    })
 
     if (!file || !songId) {
       return NextResponse.json({ error: '파일과 곡 ID가 필요합니다.' }, { status: 400 })
@@ -33,6 +85,8 @@ export async function POST(req: NextRequest) {
     // 파일 확장자 추출
     const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'mp3'
     
+    console.log('MR 파일 업로드 시작:', { songId, fileExtension, fileSize: file.size })
+    
     // Supabase에 업로드 (관리자 클라이언트 사용)
     const { data, error } = await supabaseAdmin.storage
       .from('mr-files')
@@ -46,9 +100,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    console.log('MR 파일 업로드 성공:', data)
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error('MR 업로드 오류:', error)
+    console.error('오류 스택:', error instanceof Error ? error.stack : '스택 없음')
     return NextResponse.json({ error: '업로드 중 오류가 발생했습니다.' }, { status: 500 })
   }
 }

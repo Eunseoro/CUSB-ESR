@@ -4,6 +4,8 @@ import { optimizeAudioFile } from './audio-converter'
 // MR 파일 업로드 (서버 사이드 API 사용)
 export async function uploadMRFile(songId: string, file: File) {
   try {
+    console.log('MR 파일 업로드 시작:', { songId, fileName: file.name, fileSize: file.size })
+    
     // 파일 크기 검증 (50MB 제한)
     if (file.size > 52428800) {
       throw new Error('파일 크기가 50MB를 초과합니다.')
@@ -16,11 +18,14 @@ export async function uploadMRFile(songId: string, file: File) {
 
     // AAC로 변환
     const optimizedFile = await optimizeAudioFile(file)
+    console.log('오디오 파일 최적화 완료:', { originalSize: file.size, optimizedSize: optimizedFile.size })
 
     // FormData 생성
     const formData = new FormData()
     formData.append('file', optimizedFile)
     formData.append('songId', songId)
+
+    console.log('MR 파일 업로드 요청:', { songId, fileSize: optimizedFile.size })
 
     // 서버 사이드 API 호출
     const response = await fetch('/api/mr-upload', {
@@ -28,12 +33,50 @@ export async function uploadMRFile(songId: string, file: File) {
       body: formData
     })
 
-    const result = await response.json()
+    console.log('MR 업로드 응답 상태:', response.status, response.statusText)
+    console.log('MR 업로드 응답 URL:', response.url)
+    console.log('MR 업로드 응답 헤더:', Object.fromEntries(response.headers.entries()))
+
+    // 응답 텍스트 확인
+    const responseText = await response.text()
+    console.log('MR 업로드 응답 텍스트 (처음 1000자):', responseText.substring(0, 1000))
+    console.log('MR 업로드 응답 텍스트 길이:', responseText.length)
+
+    // 응답이 비어있는지 확인
+    if (!responseText.trim()) {
+      throw new Error('서버에서 빈 응답을 받았습니다.')
+    }
+
+    let result
+    try {
+      result = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error('JSON 파싱 실패:', parseError)
+      console.error('전체 응답 텍스트:', responseText)
+      
+      // HTML 에러 페이지인지 확인
+      if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
+        throw new Error('서버에서 HTML 에러 페이지를 반환했습니다. 서버 에러가 발생한 것 같습니다.')
+      }
+      
+      // HTTP 에러 메시지인지 확인
+      if (responseText.startsWith('Request') || responseText.includes('Error')) {
+        throw new Error(`서버 에러: ${responseText.substring(0, 200)}`)
+      }
+      
+      // Vercel 에러 페이지인지 확인
+      if (responseText.includes('Vercel') || responseText.includes('Function')) {
+        throw new Error('Vercel 함수 에러가 발생했습니다.')
+      }
+      
+      throw new Error(`서버 응답을 파싱할 수 없습니다: ${responseText.substring(0, 100)}`)
+    }
 
     if (!response.ok) {
       throw new Error(result.error || '업로드에 실패했습니다.')
     }
 
+    console.log('MR 파일 업로드 성공:', result)
     return { success: true, data: result.data }
   } catch (error) {
     console.error('MR 파일 업로드 실패:', error)
