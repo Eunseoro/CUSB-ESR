@@ -14,6 +14,8 @@ import { Switch } from '@/components/ui/switch'
 // song 관련 유틸 함수 import
 import { formatDate, getCategoryColor, getCategoryLabel } from '@/lib/song-utils'
 import { deleteSongApi } from '@/lib/song-api'
+import { MRPlayer } from './mr-player'
+import { MRUploadDialog } from './mr-upload-dialog'
 
 interface VideoPlayerProps {
   song: Song | null
@@ -22,13 +24,16 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerProps) {
-  const { isAdmin } = useAdminAuth();
+  const { isAdmin } = useAdminAuth()
   const [embedUrl, setEmbedUrl] = useState<string | null>(null)
-  const [showLyrics, setShowLyrics] = useState(true)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [editOpen, setEditOpen] = useState(false)
   const [useAltUrl, setUseAltUrl] = useState(false)
+  const [showLyrics, setShowLyrics] = useState(true)
+  const [editOpen, setEditOpen] = useState(false)
+  const [mrUploadOpen, setMrUploadOpen] = useState(false)
+  const [mrRefreshTrigger, setMrRefreshTrigger] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
 
+  // 노래가 변경될 때마다 임베드 URL 업데이트
   useEffect(() => {
     if (!song) {
       setEmbedUrl(null)
@@ -94,7 +99,7 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
 
   return (
     <div className="w-full h-full p-4 flex flex-col">
-      <div className="flex-1 space-y-4 overflow-y-auto">
+      <div className="flex-1 space-y-4 pb-20 overflow-y-auto">
         {/* 비디오 플레이어 */}
         <Card className="py-0">
           <CardContent className="p-0">
@@ -135,9 +140,19 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
                   <CardTitle className="text-xl">{song.title}</CardTitle>
                   <p className="text-lg text-muted-foreground mt-1">{song.artist}</p>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(song.category)}`}>
-                      {getCategoryLabel(song.category)}
-                    </span>
+                    {/* 다중 카테고리 표시 */}
+                    {song.categories && song.categories.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {song.categories.map((cat) => (
+                          <span
+                            key={cat}
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(cat)}`}
+                          >
+                            {getCategoryLabel(cat)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {formatDate(song.createdAt)}
                     </span>
@@ -153,6 +168,15 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
               </div>
             </CardHeader>
             <CardContent>
+              {/* MR 재생기 - 관리자 인증 시에만 표시 */}
+              {isAdmin && (
+                <MRPlayer 
+                  songId={song.id} 
+                  songTitle={song.title} 
+                  refreshTrigger={mrRefreshTrigger}
+                />
+              )}
+              
               {song.description && (
                 <div className="mb-4">
                   <h4 className="font-medium mb-2">설명</h4>
@@ -190,6 +214,20 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
                     open={editOpen}
                     onOpenChange={setEditOpen}
                     onSongUpdated={handleSongUpdate}
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setMrUploadOpen(true)}
+                    size="sm"
+                  >
+                    <Music className="h-4 w-4 mr-1" />
+                    MR 관리
+                  </Button>
+                  <MRUploadDialog
+                    song={song}
+                    open={mrUploadOpen}
+                    onOpenChange={setMrUploadOpen}
+                    onUploadSuccess={() => setMrRefreshTrigger(prev => prev + 1)}
                   />
                   <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                     <Trash2 className="h-4 w-4 mr-0" />

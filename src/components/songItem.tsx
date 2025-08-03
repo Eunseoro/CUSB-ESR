@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Heart, Copy } from 'lucide-react'
 import { Song } from '@/types/song'
-import { FirstVerseIcon, HighDifficultyIcon, LoopStationIcon, getProgressColor } from '@/lib/song-utils'
+import { FirstVerseIcon, HighDifficultyIcon, LoopStationIcon, MrIcon, getProgressColor } from '@/lib/song-utils'
 import { handleProgressChangeApi } from '@/lib/song-api'
 
 interface SongItemProps {
@@ -84,11 +84,12 @@ export const SongItem = React.memo<SongItemProps>(({
       return currGroup !== prevGroup ? currGroup : null
     }
 
-    if (sort === 'first-verse' || sort === 'high-difficulty' || sort === 'loop-station') {
+    if (sort === 'first-verse' || sort === 'high-difficulty' || sort === 'loop-station' || sort === 'mr') {
       const getConditionStatus = (song: Song) => {
         if (sort === 'first-verse') return song.isFirstVerseOnly ? '1절만' : '일반'
         if (sort === 'high-difficulty') return song.isHighDifficulty ? '🔥' : '일반'
-        return song.isLoopStation ? '⚡' : '일반'
+        if (sort === 'loop-station') return song.isLoopStation ? '⚡' : '일반'
+        return song.isMr ? 'MR' : '일반'
       }
       const currStatus = getConditionStatus(song)
       const prevStatus = getConditionStatus(prevSong)
@@ -148,6 +149,7 @@ export const SongItem = React.memo<SongItemProps>(({
                 {song.isFirstVerseOnly && <FirstVerseIcon />}
                 {song.isHighDifficulty && <HighDifficultyIcon />}
                 {song.isLoopStation && <LoopStationIcon />}
+                {song.isMr && <MrIcon />}
                 {song.title}
               </CardTitle>
               <p className="text-muted-foreground mt-0">

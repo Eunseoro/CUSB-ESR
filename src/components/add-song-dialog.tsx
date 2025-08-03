@@ -9,13 +9,14 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, Plus, Edit } from 'lucide-react'
-import { Song } from '@/types/song'
+import { Song, SongCategory } from '@/types/song'
 import { BgmTrack, BgmGenre, BgmTag } from '@/types/bgm'
 import { triggerSongListRefresh, triggerSongUpdate } from '@/lib/song-events'
 import { addSongApi, updateSongApi } from '@/lib/song-api'
 import { addBgmApi } from '@/lib/bgm-api'
-import { getCategoryLabel, FirstVerseIcon, HighDifficultyIcon, LoopStationIcon } from '@/lib/song-utils'
+import { getCategoryLabel, FirstVerseIcon, HighDifficultyIcon, LoopStationIcon, MrIcon } from '@/lib/song-utils'
 import { TagSelector } from '@/components/ui/tag-selector'
+import { CategorySelector } from '@/components/ui/category-selector'
 
 interface AddSongDialogProps {
   onSongAdded?: () => void
@@ -44,14 +45,15 @@ export function AddSongDialog({
   const [formData, setFormData] = useState({
     title: '',
     artist: '',
-    category: '',
+    categories: [] as SongCategory[],
     videoUrl: '',
     videoUrl2: '',
     description: '',
     lyrics: '',
     isFirstVerseOnly: false,
     isHighDifficulty: false,
-    isLoopStation: false
+    isLoopStation: false,
+    isMr: false
   })
   const [bgmFormData, setBgmFormData] = useState({
     videoUrl: '',
@@ -81,28 +83,30 @@ export function AddSongDialog({
       setFormData({
         title: song.title || '',
         artist: song.artist || '',
-        category: song.category || '',
+        categories: song.categories || [],
         videoUrl: song.videoUrl || '',
         videoUrl2: song.videoUrl2 || '',
         description: song.description || '',
         lyrics: song.lyrics || '',
         isFirstVerseOnly: song.isFirstVerseOnly || false,
         isHighDifficulty: song.isHighDifficulty || false,
-        isLoopStation: song.isLoopStation || false
+        isLoopStation: song.isLoopStation || false,
+        isMr: song.isMr || false
       })
     } else if (mode === 'add') {
       // 추가 모드일 때 폼 초기화
       setFormData({
         title: '',
         artist: '',
-        category: 'KPOP',
+        categories: ['KPOP'],
         videoUrl: '',
         videoUrl2: '',
         description: '',
         lyrics: '',
         isFirstVerseOnly: false,
         isHighDifficulty: false,
-        isLoopStation: false
+        isLoopStation: false,
+        isMr: false
       })
     }
   }, [mode, song])
@@ -155,6 +159,10 @@ export function AddSongDialog({
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleCategoriesChange = (categories: SongCategory[]) => {
+    setFormData(prev => ({ ...prev, categories }))
   }
 
   const handleBgmInputChange = (field: string, value: string) => {
@@ -276,22 +284,12 @@ export function AddSongDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">카테고리 *</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => handleInputChange('category', value)}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="카테고리를 선택하세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="KPOP">{getCategoryLabel('KPOP')}</SelectItem>
-                    <SelectItem value="POP">{getCategoryLabel('POP')}</SelectItem>
-                    <SelectItem value="MISSION">{getCategoryLabel('MISSION')}</SelectItem>
-                    <SelectItem value="NEWSONG">{getCategoryLabel('NEWSONG')}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>카테고리 선택 *</Label>
+                <CategorySelector
+                  selectedCategories={formData.categories}
+                  onCategoriesChange={handleCategoriesChange}
+                  maxCategories={4}
+                />
               </div>
 
               <div className="space-y-2">
@@ -359,6 +357,19 @@ export function AddSongDialog({
                     />
                     <Label htmlFor="isLoopStation" className="text-sm font-normal flex items-center gap-1">
                       <LoopStationIcon /> 루프 스테이션
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="isMr"
+                      checked={formData.isMr}
+                      onChange={(e) => handleInputChange('isMr', e.target.checked)}
+                      disabled={loading}
+                      className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <Label htmlFor="isMr" className="text-sm font-normal flex items-center gap-1">
+                      <MrIcon /> MR
                     </Label>
                   </div>
                 </div>

@@ -339,7 +339,7 @@ export default function LookBookPage() {
   }
 
   return (
-    <div className="flex flex-col items-center max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto min-h-[60vh] px-0 pb-20 scrollbar-custom">
+    <div className="flex flex-col items-center max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto min-h-[60vh] px-0 pb-20">
       <h1 className="text-2xl font-bold mt-2 mb-2">유할매's OOTD</h1>
       <h2 className="flex flex-col text-sm items-center text-muted-foreground mb-3">
         <p>매일의 방송 요약과 패션을 기록합니다.</p>

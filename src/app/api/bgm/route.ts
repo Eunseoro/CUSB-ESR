@@ -21,6 +21,11 @@ function extractVideoId(url: string): string | null {
 
 // 하이픈 장르를 언더스코어로 변환 (Prisma enum과 호환)
 function convertGenreToPrisma(genre: string): string {
+  // 특별한 변환 규칙
+  if (genre === '탑골가요') {
+    return 'TOPGOL'
+  }
+  
   return genre.replace('-', '_')
 }
 
@@ -32,6 +37,12 @@ function convertGenreToClient(genre: string): string {
 // Prisma enum을 클라이언트 타입으로 변환
 function convertPrismaGenreToClient(genre: any): string {
   const genreString = String(genre)
+  
+  // 특별한 변환 규칙
+  if (genreString === 'TOPGOL') {
+    return '탑골가요'
+  }
+  
   return genreString.replace('_', '-')
 }
 
@@ -191,6 +202,7 @@ export async function POST(request: NextRequest) {
 
     // 장르를 Prisma 형식으로 변환
     const prismaGenre = convertGenreToPrisma(genre)
+    
     console.log('Creating BGM track with data:', {
       videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
       genre: prismaGenre,

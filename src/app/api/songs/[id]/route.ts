@@ -1,7 +1,7 @@
 // 이 파일은 개별 노래 조회, 수정, 삭제 API Route를 정의합니다.
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { Category, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 
 export async function GET(
   request: NextRequest,
@@ -22,7 +22,13 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(song)
+    // 카테고리 문자열을 배열로 변환
+    const songWithCategories = {
+      ...song,
+      categories: song.category ? song.category.split(',').map(cat => cat.trim()) : []
+    }
+
+    return NextResponse.json(songWithCategories)
   } catch (error) {
     console.error('Error fetching song:', error)
     return NextResponse.json(
@@ -61,12 +67,15 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { title, artist, category, videoUrl, videoUrl2, description, lyrics, isFirstVerseOnly, isHighDifficulty, isLoopStation, progress } = body
+    const { title, artist, categories, videoUrl, videoUrl2, description, lyrics, isFirstVerseOnly, isHighDifficulty, isLoopStation, isMr, progress } = body
 
     const updateData: Prisma.SongUpdateInput = {}
+    
     if (title !== undefined) updateData.title = title
     if (artist !== undefined) updateData.artist = artist
-    if (category !== undefined) updateData.category = category as Category
+    if (categories !== undefined) {
+      updateData.category = categories.join(',')
+    }
     if (videoUrl !== undefined) updateData.videoUrl = videoUrl
     if (videoUrl2 !== undefined) updateData.videoUrl2 = videoUrl2
     if (description !== undefined) updateData.description = description
@@ -74,6 +83,7 @@ export async function PUT(
     if (isFirstVerseOnly !== undefined) updateData.isFirstVerseOnly = isFirstVerseOnly
     if (isHighDifficulty !== undefined) updateData.isHighDifficulty = isHighDifficulty
     if (isLoopStation !== undefined) updateData.isLoopStation = isLoopStation
+    if (isMr !== undefined) updateData.isMr = isMr
     if (progress !== undefined) updateData.progress = progress
 
     const updatedSong = await prisma.song.update({
@@ -81,7 +91,13 @@ export async function PUT(
       data: updateData,
     })
 
-    return NextResponse.json(updatedSong)
+    // 응답에서 카테고리를 배열로 변환
+    const songWithCategories = {
+      ...updatedSong,
+      categories: updatedSong.category ? updatedSong.category.split(',').map(cat => cat.trim()) : []
+    }
+
+    return NextResponse.json(songWithCategories)
   } catch (error) {
     console.error('Error updating song:', error)
     return NextResponse.json(

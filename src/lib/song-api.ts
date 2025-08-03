@@ -3,7 +3,7 @@ import { Song } from '@/types/song'
 import { getAnonymousId } from './anonymous'
 
 // 곡 목록을 서버에서 가져오는 함수
-export async function fetchSongsApi({ category, search, pageNum, limit = 50, sort = 'latest', signal }: { category?: string, search?: string, pageNum: number, limit?: number, sort?: string, signal?: AbortSignal }) {
+export async function fetchSongsApi({ category, search, pageNum, limit = 30, sort = 'latest', signal }: { category?: string, search?: string, pageNum: number, limit?: number, sort?: string, signal?: AbortSignal }) {
   const params = new URLSearchParams()
   if (category) params.append('category', category)
   if (search) params.append('search', search)

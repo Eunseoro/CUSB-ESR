@@ -35,12 +35,12 @@ export interface SongListRef {
 }
 
 // 상수들을 파일 상단으로 이동
-const SONGS_PER_PAGE = 50
+const SONGS_PER_PAGE = 30
 const DEBOUNCE_DELAY = 300
 const SCROLL_THRESHOLD = 0.8
 const SCROLL_TOP_THRESHOLD = 200
 
-type SortType = 'artist' | 'title' | 'popular' | 'latest' | 'oldest' | 'first-verse' | 'high-difficulty' | 'loop-station'
+type SortType = 'artist' | 'title' | 'popular' | 'latest' | 'oldest' | 'first-verse' | 'high-difficulty' | 'loop-station' | 'mr'
 
 export const SongList = forwardRef<SongListRef, SongListProps>(function SongListImpl({ 
   category, 
@@ -77,6 +77,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
     hasMore,
     loadingMore,
     fetchSongs,
+    loadMoreSongs,
     resetPagination
   } = useInfiniteScroll({
         category,
@@ -91,6 +92,8 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
   const { displaySongs, refresh } = useSongData({
     songs,
     sort,
+    category,
+    search: debouncedSearch,
     fetchSongs,
     resetPagination
   })
@@ -109,17 +112,17 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
       // TOP 버튼 표시 여부
       setShowTopBtn(scrollTop > SCROLL_TOP_THRESHOLD)
       
-      // 무한 스크롤 트리거
+      // 무한 스크롤 트리거 - 더 정확한 조건
       if (scrollTop + clientHeight >= scrollHeight * SCROLL_THRESHOLD) {
-        if (!loading && !loadingMore && hasMore) {
-          fetchSongs(page + 1, false)
+        if (!loading && !loadingMore && hasMore && displaySongs.length > 0) {
+          loadMoreSongs()
         }
       }
     }
     
     el.addEventListener('scroll', handleScroll)
     return () => el.removeEventListener('scroll', handleScroll)
-  }, [loading, loadingMore, hasMore, page, fetchSongs])
+  }, [loading, loadingMore, hasMore, page, fetchSongs, displaySongs.length])
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -204,7 +207,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
       />
 
       {/* 곡 목록 */}
-      <div ref={listRef} className="flex-1 overflow-y-auto space-y-2 scrollbar-custom">
+      <div ref={listRef} className="flex-1 overflow-y-auto space-y-2 scrollbar-custom pb-20">
         <SongListContent
           loading={loading}
           loadingMore={loadingMore}
@@ -267,6 +270,10 @@ const SearchAndSortControls = ({ search, setSearch, sort, onSortChange }: Search
             </SelectItem>
             <SelectItem value="high-difficulty">🔥 고난이도</SelectItem>
             <SelectItem value="loop-station">⚡ 루프 스테이션</SelectItem>
+            <SelectItem value="mr">
+              <img src="/icons/mr.webp" className="h-4 w-4 inline mr-1" />
+              MR
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>

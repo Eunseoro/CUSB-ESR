@@ -4,11 +4,21 @@ import { prisma } from '@/lib/prisma'
 
 // 하이픈 장르를 언더스코어로 변환 (Prisma enum과 호환)
 function convertGenreToPrisma(genre: string): string {
+  // 특별한 변환 규칙
+  if (genre === '탑골가요') {
+    return 'TOPGOL'
+  }
+  
   return genre.replace('-', '_')
 }
 
 // 언더스코어 장르를 하이픈으로 변환 (클라이언트 타입과 호환)
 function convertGenreToClient(genre: string): string {
+  // 특별한 변환 규칙
+  if (genre === 'TOPGOL') {
+    return '탑골가요'
+  }
+  
   return genre.replace('_', '-')
 }
 
@@ -71,6 +81,11 @@ export async function PUT(
     return NextResponse.json(clientTrack)
   } catch (error) {
     console.error('Error updating BGM track:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : 'Unknown'
+    })
     return NextResponse.json({ 
       error: 'Failed to update BGM track',
       details: error instanceof Error ? error.message : 'Unknown error'

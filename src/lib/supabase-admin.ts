@@ -1,0 +1,13 @@
+import { createClient } from '@supabase/supabase-js'
+
+// Vercel 배포 환경에서는 SUPA_ 접두사가 붙은 환경변수 사용
+const supabaseUrl = process.env.SUPA__SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+// 서버 사이드에서 사용할 관리자 클라이언트 (서비스 롤 키 사용)
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+}) 

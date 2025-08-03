@@ -1,15 +1,14 @@
 // 이 파일은 노래 목록 조회 및 노래 추가 API Route를 정의합니다.
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { Category } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const category = searchParams.get('category') as Category | null
+    const category = searchParams.get('category')
     const search = searchParams.get('search')
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const limit = parseInt(searchParams.get('limit') || '30')
     const sort = searchParams.get('sort') || 'latest'
     const skip = (page - 1) * limit
 
@@ -17,11 +16,8 @@ export async function GET(request: NextRequest) {
       isPublic: true,
     }
 
-    // 검색어가 있을 때는 카테고리 필터를 무시하여 모든 카테고리에서 검색
-    if (category && !search) {
-      where.category = category
-    }
-
+    // 검색어가 있을 때만 필터링 적용
+    // 카테고리 필터링은 클라이언트 사이드에서 정확하게 처리
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -58,6 +54,10 @@ export async function GET(request: NextRequest) {
         // 루프 스테이션 곡을 우선적으로 정렬
         orderBy = [{ isLoopStation: 'desc' }, { artist: 'asc' }]
         break
+      case 'mr':
+        // MR 곡을 우선적으로 정렬
+        orderBy = [{ isMr: 'desc' }, { artist: 'asc' }]
+        break
       default:
         orderBy = [{ createdAt: 'desc' }]
     }
@@ -68,12 +68,19 @@ export async function GET(request: NextRequest) {
         orderBy,
         skip,
         take: limit,
+        distinct: ['id'], // 중복 제거
       }),
       prisma.song.count({ where }),
     ])
 
+    // 카테고리 문자열을 배열로 변환
+    const songsWithCategories = songs.map(song => ({
+      ...song,
+      categories: song.category ? song.category.split(',').map(cat => cat.trim()) : []
+    }))
+
     return NextResponse.json({
-      songs,
+      songs: songsWithCategories,
       pagination: {
         page,
         limit,
@@ -103,29 +110,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, artist, category, videoUrl, videoUrl2, description, lyrics, isFirstVerseOnly, isHighDifficulty, isLoopStation } = body
+    const { title, artist, categories, videoUrl, videoUrl2, description, lyrics, isFirstVerseOnly, isHighDifficulty, isLoopStation, isMr } = body
 
     // 입력 검증
-    if (!title || !artist || !category) {
+    if (!title || !artist || !categories || categories.length === 0) {
       return NextResponse.json(
         { error: '제목, 아티스트, 카테고리를 선택해 주세요.' },
         { status: 400 }
       )
     }
 
-    // category 값이 Enum 값인지 검증
-    if (!Object.values(Category).includes(category)) {
-      return NextResponse.json(
-        { error: `Invalid category. Must be one of: ${Object.values(Category).join(', ')}` },
-        { status: 400 }
-      )
-    }
+    // categories 배열을 쉼표로 구분된 문자열로 변환
+    const categoryString = categories.join(',')
 
     const song = await prisma.song.create({
       data: {
         title,
         artist,
-        category: category as Category,
+        category: categoryString,
         videoUrl,
         videoUrl2,
         description,
@@ -133,10 +135,17 @@ export async function POST(request: NextRequest) {
         isFirstVerseOnly: isFirstVerseOnly || false,
         isHighDifficulty: isHighDifficulty || false,
         isLoopStation: isLoopStation || false,
+        isMr: isMr || false,
       },
     })
 
-    return NextResponse.json(song, { status: 201 })
+    // 응답에서 카테고리를 배열로 변환
+    const songWithCategories = {
+      ...song,
+      categories: song.category ? song.category.split(',').map(cat => cat.trim()) : []
+    }
+
+    return NextResponse.json(songWithCategories, { status: 201 })
   } catch (error) {
     console.error('Error creating song:', error)
     return NextResponse.json(

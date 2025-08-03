@@ -47,7 +47,7 @@ export const updateBgmApi = async (id: string, data: Partial<BgmTrack>): Promise
   if (!response.ok) {
     const errorData = await response.json()
     console.error('BGM update API error:', errorData)
-    throw new Error('BGM 수정에 실패했습니다.')
+    throw new Error(errorData.error || errorData.details || 'BGM 수정에 실패했습니다.')
   }
 
   return response.json()

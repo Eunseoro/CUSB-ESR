@@ -1,6 +1,7 @@
 // 이 파일은 노래 목록에서 사용하는 유틸리티 함수들을 모아둔 파일입니다.
 import React from 'react'
 import { BgmTag } from '@/types/bgm'
+import { Song, SongCategory } from '@/types/song'
 
 // 날짜를 YYYY.MM.DD 포맷으로 반환
 export function formatDate(dateString: string): string {
@@ -87,6 +88,23 @@ export function getBgmTagUnselectedColor(tag: BgmTag): string {
   }
 }
 
+// 정확한 카테고리 필터링 함수
+export function filterSongsByCategory(songs: Song[], targetCategory: SongCategory): Song[] {
+  return songs.filter(song => {
+    if (!song.categories || song.categories.length === 0) {
+      return false
+    }
+    
+    // POP 페이지의 경우 KPOP 카테고리를 제외
+    if (targetCategory === 'POP') {
+      return song.categories.includes(targetCategory) && !song.categories.includes('KPOP')
+    }
+    
+    // 해당 카테고리가 포함된 모든 곡 표시
+    return song.categories.includes(targetCategory)
+  })
+}
+
 // 1절만 아이콘 컴포넌트
 export function FirstVerseIcon() {
   return (
@@ -107,5 +125,14 @@ export function HighDifficultyIcon() {
 export function LoopStationIcon() {
   return (
     <span className="inline-flex items-center text-m" title="루프 스테이션">⚡</span>
+  )
+}
+
+// MR 아이콘 컴포넌트
+export function MrIcon() {
+  return (
+    <span className="inline-flex items-center text-m" title="MR">
+      <img src="/icons/mr.webp" className="h-5 w-5 mr-1"/>
+    </span>
   )
 } 
