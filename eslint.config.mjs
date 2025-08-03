@@ -21,7 +21,24 @@ const eslintConfig = [
       "react/no-unescaped-entities": "warn",
       "@typescript-eslint/no-unused-expressions": "warn",
       "react/display-name": "warn",
-      "prefer-const": "warn"
+      "prefer-const": "warn",
+      "@typescript-eslint/no-this-alias": "warn",
+      "@typescript-eslint/no-require-imports": "warn"
+    }
+  },
+  {
+    files: ["**/generated/**/*", "**/node_modules/**/*", "**/prisma/**/*"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
+      "@typescript-eslint/no-this-alias": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/no-unnecessary-type-constraint": "off",
+      "@typescript-eslint/no-wrapper-object-types": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+      "prefer-const": "off"
     }
   }
 ];
