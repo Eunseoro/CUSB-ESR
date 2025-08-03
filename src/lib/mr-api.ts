@@ -73,6 +73,12 @@ export async function checkMRFileExists(songId: string) {
   try {
     console.log('MR 파일 존재 확인:', songId)
     
+    // Supabase 클라이언트가 초기화되지 않은 경우
+    if (!supabase) {
+      console.error('Supabase 클라이언트가 초기화되지 않았습니다.')
+      return false
+    }
+    
     // 여러 확장자로 검색
     const extensions = ['mp3', 'm4a', 'wav', 'ogg']
     
@@ -106,6 +112,12 @@ export async function checkMRFileExists(songId: string) {
 export async function getMRFileUrl(songId: string) {
   try {
     console.log('MR 파일 URL 생성:', songId)
+    
+    // Supabase 클라이언트가 초기화되지 않은 경우
+    if (!supabase) {
+      console.error('Supabase 클라이언트가 초기화되지 않았습니다.')
+      return null
+    }
     
     // 여러 확장자로 시도
     const extensions = ['mp3', 'm4a', 'wav', 'ogg']
