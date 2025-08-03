@@ -1,40 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-
-// Supabase 클라이언트를 안전하게 초기화
-let supabaseAdmin: any = null
-
-// 환경변수 확인 (Vercel에서는 SUPA__ 접두사 사용)
-const supabaseUrl = process.env.SUPA__SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPA__SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (supabaseUrl && supabaseServiceKey) {
-  try {
-    // 동적 import 사용
-    import('@supabase/supabase-js').then(({ createClient }) => {
-      supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      })
-    }).catch(error => {
-      console.error('Failed to initialize Supabase admin client:', error)
-    })
-  } catch (error) {
-    console.error('Failed to initialize Supabase admin client:', error)
-  }
-}
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST(req: NextRequest) {
   try {
-    // Supabase 클라이언트가 초기화되지 않은 경우
-    if (!supabaseAdmin) {
-      return NextResponse.json({ 
-        error: 'Supabase 서비스가 초기화되지 않았습니다. 환경변수를 확인해주세요.' 
-      }, { status: 500 })
-    }
-
     // 관리자 인증 확인
     const cookie = req.cookies.get('admin_session')
     const isAdmin = cookie && cookie.value === '1'
@@ -86,13 +55,6 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    // Supabase 클라이언트가 초기화되지 않은 경우
-    if (!supabaseAdmin) {
-      return NextResponse.json({ 
-        error: 'Supabase 서비스가 초기화되지 않았습니다. 환경변수를 확인해주세요.' 
-      }, { status: 500 })
-    }
-
     // 관리자 인증 확인
     const cookie = req.cookies.get('admin_session')
     const isAdmin = cookie && cookie.value === '1'

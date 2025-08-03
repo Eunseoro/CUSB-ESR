@@ -265,15 +265,15 @@ const SearchAndSortControls = ({ search, setSearch, sort, onSortChange }: Search
             <SelectItem value="latest">최신순</SelectItem>
             <SelectItem value="oldest">과거순</SelectItem>
         <SelectItem value="first-verse">
-          <img src="/icons/1st-verse.webp" className="h-4 w-4 inline mr-1" />
+          <img src="/icons/1st-verse.webp" className="h-4 w-4 inline mr-0" />
               1절만
+            </SelectItem>
+            <SelectItem value="mr">
+              <img src="/icons/mr.webp" className="h-4 w-4 inline mr-0" />
+              MR
             </SelectItem>
             <SelectItem value="high-difficulty">🔥 고난이도</SelectItem>
             <SelectItem value="loop-station">⚡ 루프 스테이션</SelectItem>
-            <SelectItem value="mr">
-              <img src="/icons/mr.webp" className="h-4 w-4 inline mr-1" />
-              MR
-            </SelectItem>
           </SelectContent>
         </Select>
       </div>

@@ -207,7 +207,7 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
     return (
       <div className="w-full p-1 border rounded-lg bg-muted/50">
         <div className="flex items-center justify-between mb-2">
-          <h4 className="font-medium text-sm">MR</h4>
+          <h4 className="font-medium text-sm">Inst.</h4>
         </div>
         <div className="text-center py-4">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-2" />
@@ -227,7 +227,7 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
   return (
     <div className="w-full p-2 border mb-2 rounded-lg bg-muted/50">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium pl-2 text-sm">MR</h4>
+        <h4 className="font-medium pl-2 text-sm">Inst.</h4>
       </div>
 
       {/* 진행률 바 */}

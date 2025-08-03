@@ -1,7 +1,7 @@
 "use client"
 // 이 파일은 메인(이용안내) 페이지입니다.
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertTriangle, CheckCircle, XCircle, Info, HelpCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle, XCircle, Info, HelpCircle, AlignJustify } from 'lucide-react'
 import NoticeBox from '@/components/notice-box'
 import { useEffect } from 'react'
 
@@ -156,11 +156,33 @@ export default function HomePage() {
               <div className="flex items-start gap-4">
                 <div>
                   <h4 className="font-semibold flex items-center gap-2">
+                    <AlignJustify className="h-5 w-5" />
+                    왼쪽 사이드바에서 노래 목록을 확인해 주세요
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                  • 장르별 노래 페이지와, 다양한 기능이 준비되어 있답니다
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div>
+                  <h4 className="font-semibold flex items-center gap-2">
                     <img src="/icons/1st-verse.webp" className="h-5 w-5" />
                     아이콘을 확인해 주세요
                   </h4>
                   <p className="text-sm text-muted-foreground">
                   • 특정 곡들은 1절만 불러드릴 수 있어요
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div>
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <img src="/icons/mr.webp" className="h-5 w-5" />
+                    아이콘이 붙어 있다면
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                  • MR 버전이나, 우쿨렐레 버전으로 불러드릴 수 있어요
                   </p>
                 </div>
               </div>
