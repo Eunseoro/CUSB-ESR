@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 import { optimizeAudioFile } from './audio-converter'
 
-// MR 파일 업로드 (서버 사이드 API 사용)
+// MR 파일 업로드 (클라이언트 사이드에서 직접 Supabase 업로드)
 export async function uploadMRFile(songId: string, file: File) {
   try {
     console.log('MR 파일 업로드 시작:', { songId, fileName: file.name, fileSize: file.size })
@@ -20,90 +20,79 @@ export async function uploadMRFile(songId: string, file: File) {
     const optimizedFile = await optimizeAudioFile(file)
     console.log('오디오 파일 최적화 완료:', { originalSize: file.size, optimizedSize: optimizedFile.size })
 
-    // FormData 생성
-    const formData = new FormData()
-    formData.append('file', optimizedFile)
-    formData.append('songId', songId)
-
-    console.log('MR 파일 업로드 요청:', { songId, fileSize: optimizedFile.size })
-
-    // 서버 사이드 API 호출
-    const response = await fetch('/api/mr-upload', {
-      method: 'POST',
-      body: formData
-    })
-
-    console.log('MR 업로드 응답 상태:', response.status, response.statusText)
-    console.log('MR 업로드 응답 URL:', response.url)
-    console.log('MR 업로드 응답 헤더:', Object.fromEntries(response.headers.entries()))
-
-    // 응답 텍스트 확인
-    const responseText = await response.text()
-    console.log('MR 업로드 응답 텍스트 (처음 1000자):', responseText.substring(0, 1000))
-    console.log('MR 업로드 응답 텍스트 길이:', responseText.length)
-
-    // 응답이 비어있는지 확인
-    if (!responseText.trim()) {
-      throw new Error('서버에서 빈 응답을 받았습니다.')
+    // Supabase 클라이언트가 초기화되지 않은 경우
+    if (!supabase) {
+      throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.')
     }
 
-    let result
-    try {
-      result = JSON.parse(responseText)
-    } catch (parseError) {
-      console.error('JSON 파싱 실패:', parseError)
-      console.error('전체 응답 텍스트:', responseText)
-      
-      // HTML 에러 페이지인지 확인
-      if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
-        throw new Error('서버에서 HTML 에러 페이지를 반환했습니다. 서버 에러가 발생한 것 같습니다.')
-      }
-      
-      // HTTP 에러 메시지인지 확인
-      if (responseText.startsWith('Request') || responseText.includes('Error')) {
-        throw new Error(`서버 에러: ${responseText.substring(0, 200)}`)
-      }
-      
-      // Vercel 에러 페이지인지 확인
-      if (responseText.includes('Vercel') || responseText.includes('Function')) {
-        throw new Error('Vercel 함수 에러가 발생했습니다.')
-      }
-      
-      throw new Error(`서버 응답을 파싱할 수 없습니다: ${responseText.substring(0, 100)}`)
+    // 파일 확장자 추출
+    const fileExtension = optimizedFile.name.split('.').pop()?.toLowerCase() || 'mp3'
+    
+    console.log('Supabase 직접 업로드 시작:', { songId, fileExtension, fileSize: optimizedFile.size })
+    
+    // 클라이언트 사이드에서 직접 Supabase에 업로드
+    const { data, error } = await supabase.storage
+      .from('mr-files')
+      .upload(`${songId}.${fileExtension}`, optimizedFile, {
+        cacheControl: '3600',
+        upsert: true
+      })
+
+    if (error) {
+      console.error('Supabase 업로드 오류:', error)
+      throw new Error(`업로드 실패: ${error.message}`)
     }
 
-    if (!response.ok) {
-      throw new Error(result.error || '업로드에 실패했습니다.')
-    }
-
-    console.log('MR 파일 업로드 성공:', result)
-    return { success: true, data: result.data }
+    console.log('MR 파일 업로드 성공:', data)
+    return { success: true, data }
   } catch (error) {
     console.error('MR 파일 업로드 실패:', error)
     return { success: false, error: error instanceof Error ? error.message : '알 수 없는 오류' }
   }
 }
 
-// MR 파일 삭제 (서버 사이드 API 사용)
+// MR 파일 삭제 (클라이언트 사이드에서 직접 Supabase 삭제)
 export async function deleteMRFile(songId: string) {
   try {
     console.log('MR 파일 삭제 요청:', songId)
     
-    const response = await fetch('/api/mr-upload', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ songId })
-    })
-
-    const result = await response.json()
-    console.log('삭제 응답:', result)
-
-    if (!response.ok) {
-      throw new Error(result.error || '삭제에 실패했습니다.')
+    // Supabase 클라이언트가 초기화되지 않은 경우
+    if (!supabase) {
+      throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.')
+    }
+    
+    // 먼저 어떤 파일이 존재하는지 확인
+    const extensions = ['mp3', 'm4a', 'wav', 'ogg']
+    let existingFile = null
+    
+    for (const ext of extensions) {
+      const { data, error } = await supabase.storage
+        .from('mr-files')
+        .list('', {
+          search: `${songId}.${ext}`
+        })
+      
+      if (!error && data && data.length > 0) {
+        existingFile = `${songId}.${ext}`
+        break
+      }
     }
 
+    if (!existingFile) {
+      throw new Error('삭제할 MR 파일을 찾을 수 없습니다.')
+    }
+
+    // 실제 파일 삭제
+    const { error: deleteError } = await supabase.storage
+      .from('mr-files')
+      .remove([existingFile])
+
+    if (deleteError) {
+      console.error('Supabase 삭제 오류:', deleteError)
+      throw new Error(`파일 삭제에 실패했습니다: ${deleteError.message}`)
+    }
+
+    console.log(`MR 파일 삭제 성공: ${existingFile}`)
     return { success: true }
   } catch (error) {
     console.error('MR 파일 삭제 실패:', error)
