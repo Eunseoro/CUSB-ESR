@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Play, Pause, Volume2, VolumeX, Music, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
-import { getMRFileUrl } from '@/lib/mr-api'
+import { getMRFileUrl, getMRMemo } from '@/lib/mr-api'
 
 interface MRPlayerProps {
   songId: string
@@ -21,6 +21,7 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
   const [isMuted, setIsMuted] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [memo, setMemo] = useState<string | null>(null)
   
   const audioRef = useRef<HTMLAudioElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -28,6 +29,11 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
   // MR 파일 로드
   useEffect(() => {
     loadMRAudio()
+  }, [songId, refreshTrigger])
+
+  // 메모 로드 (별도 useEffect로 분리)
+  useEffect(() => {
+    loadMRMemo()
   }, [songId, refreshTrigger])
 
   // 컴포넌트 언마운트 시 cleanup
@@ -61,6 +67,20 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
       setIsLoading(false)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadMRMemo = async () => {
+    if (!songId) return
+    
+    try {
+      console.log('메모 로드 시작:', songId)
+      const savedMemo = await getMRMemo(songId)
+      console.log('메모 로드 완료:', songId, savedMemo)
+      setMemo(savedMemo)
+    } catch (error) {
+      console.error('메모 로드 실패:', error)
+      setMemo(null)
     }
   }
 
@@ -227,7 +247,14 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
   return (
     <div className="w-full p-2 border mb-2 rounded-lg bg-muted/50">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium pl-2 text-sm">Inst.</h4>
+        <div className="flex items-center gap-2">
+          <h4 className="font-medium pl-2 text-sm">Inst.</h4>
+          {memo && (
+            <span className="text-xs text-foreground border border-border px-2 py-1 rounded-md bg-background dark:bg-[#171717]">
+              {memo}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 진행률 바 */}

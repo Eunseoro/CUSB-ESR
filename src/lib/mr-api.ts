@@ -51,6 +51,54 @@ export async function uploadMRFile(songId: string, file: File) {
   }
 }
 
+// MR 메모 저장 (DB 사용)
+export async function saveMRMemo(songId: string, memo: string) {
+  try {
+    console.log('메모 저장:', { songId, memo })
+    
+    const response = await fetch('/api/mr-memo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ songId, memo })
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || '메모 저장에 실패했습니다.')
+    }
+
+    console.log('메모 저장 성공')
+    return { success: true, data: result.data }
+  } catch (error) {
+    console.error('메모 저장 실패:', error)
+    return { success: false, error: error instanceof Error ? error.message : '알 수 없는 오류' }
+  }
+}
+
+// MR 메모 불러오기 (DB 사용)
+export async function getMRMemo(songId: string) {
+  try {
+    console.log('메모 불러오기:', songId)
+    
+    const response = await fetch(`/api/mr-memo?songId=${songId}`)
+    const result = await response.json()
+
+    if (!response.ok) {
+      console.error('메모 불러오기 실패:', result.error)
+      return null
+    }
+
+    console.log('메모 불러오기 성공:', result.data?.memo)
+    return result.data?.memo || null
+  } catch (error) {
+    console.error('메모 불러오기 실패:', error)
+    return null
+  }
+}
+
 // MR 파일 삭제 (클라이언트 사이드에서 직접 Supabase 삭제)
 export async function deleteMRFile(songId: string) {
   try {

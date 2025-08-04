@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Upload, Music, Trash2 } from 'lucide-react'
-import { uploadMRFile, deleteMRFile, checkMRFileExists } from '@/lib/mr-api'
+import { uploadMRFile, deleteMRFile, checkMRFileExists, saveMRMemo, getMRMemo } from '@/lib/mr-api'
 import { Song } from '@/types/song'
 
 interface MRUploadDialogProps {
@@ -20,6 +22,8 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
   const [hasMRFile, setHasMRFile] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isChecking, setIsChecking] = useState(false)
+  const [memo, setMemo] = useState('')
+  const [isSavingMemo, setIsSavingMemo] = useState(false)
 
   // MR 파일 존재 여부 확인
   const checkMRExists = async () => {
@@ -35,10 +39,29 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
     }
   }
 
-  // 다이얼로그 열릴 때 MR 파일 존재 여부 확인
+  // 메모 불러오기
+  const loadMRMemo = async () => {
+    try {
+      const savedMemo = await getMRMemo(song.id)
+      setMemo(savedMemo || '')
+    } catch (error) {
+      console.error('메모 불러오기 실패:', error)
+      setMemo('')
+    }
+  }
+
+  // 다이얼로그 열릴 때 MR 파일 존재 여부와 메모 확인
   useEffect(() => {
     if (open) {
-      checkMRExists()
+      // 메모 초기화
+      setMemo('')
+      // MR 파일 확인과 메모 로드를 병렬로 처리
+      Promise.all([
+        checkMRExists(),
+        loadMRMemo()
+      ]).catch(error => {
+        console.error('초기화 중 오류:', error)
+      })
     }
   }, [open, song.id])
 
@@ -46,6 +69,13 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    
+    // 이미 MR 파일이 등록되어 있는지 확인
+    if (hasMRFile) {
+      alert('이미 MR 파일이 등록되어 있습니다. 등록된 파일을 삭제 후 시도해주세요.')
+      e.target.value = '' // 파일 선택 초기화
+      return
+    }
     
     if (!file.type.startsWith('audio/')) {
       alert('오디오 파일만 업로드 가능합니다.')
@@ -63,9 +93,36 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
     setSelectedFile(file)
   }
 
+  // 메모 저장
+  const handleSaveMemo = async () => {
+    setIsSavingMemo(true)
+    try {
+      const result = await saveMRMemo(song.id, memo)
+      if (result.success) {
+        console.log('메모 저장 성공')
+        // 메모 저장 성공 시 부모 컴포넌트에 알림 (refreshTrigger 업데이트)
+        if (onUploadSuccess) onUploadSuccess()
+        // 다이얼로그 닫기
+        onOpenChange(false)
+      } else {
+        console.error('메모 저장 실패:', result.error)
+      }
+    } catch (error) {
+      console.error('메모 저장 오류:', error)
+    } finally {
+      setIsSavingMemo(false)
+    }
+  }
+
   // 파일 업로드
   const handleUpload = async () => {
     if (!selectedFile) return
+
+    // 이미 MR 파일이 등록되어 있는지 확인
+    if (hasMRFile) {
+      alert('이미 MR 파일이 등록되어 있습니다. 등록된 파일을 삭제 후 시도해주세요.')
+      return
+    }
 
     setIsUploading(true)
     try {
@@ -124,6 +181,28 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
         
         <div className="space-y-4">
 
+          {/* 메모 */}
+          <div className="space-y-2">
+            <Label htmlFor="mr-memo">메모</Label>
+            <div className="flex gap-2">
+              <Input
+                id="mr-memo"
+                placeholder="특이사항 기록"
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                onClick={handleSaveMemo}
+                disabled={isSavingMemo}
+                size="sm"
+                variant="outline"
+              >
+                {isSavingMemo ? '저장 중...' : '저장'}
+              </Button>
+            </div>
+          </div>
+
           {/* 현재 MR 파일 상태 */}
           <div className="p-3 border rounded-lg">
             <div className="flex items-center justify-between">
@@ -158,7 +237,7 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
                 variant="outline"
                 size="sm"
                 onClick={() => document.getElementById('mr-file-input')?.click()}
-                disabled={isUploading}
+                disabled={isUploading || hasMRFile}
               >
                 <Upload className="h-4 w-4 mr-2" />
                 파일 선택
@@ -169,11 +248,11 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
                 accept="audio/*"
                 onChange={handleFileSelect}
                 className="hidden"
-                disabled={isUploading}
+                disabled={isUploading || hasMRFile}
               />
               <Button
                 onClick={handleUpload}
-                disabled={!selectedFile || isUploading}
+                disabled={!selectedFile || isUploading || hasMRFile}
                 size="sm"
               >
                 {isUploading ? '업로드 중...' : '업로드'}
