@@ -12,6 +12,12 @@ export async function GET(request: NextRequest) {
     const title = searchParams.get('title') // 제목으로만 검색하는 경우
     const skip = (pageNum - 1) * limit
 
+    // 캐시 헤더 설정 (5분 캐시)
+    const cacheHeaders = {
+      'Cache-Control': 'public, max-age=300, s-maxage=300',
+      'CDN-Cache-Control': 'public, max-age=300'
+    }
+
     const where: Record<string, unknown> = {
       isPublic: true,
     }
@@ -75,10 +81,23 @@ export async function GET(request: NextRequest) {
       const songs = await prisma.song.findMany({
         where,
         orderBy: [{ createdAt: 'desc' }],
-        take: 10
+        take: 10,
+        select: {
+          id: true,
+          title: true,
+          artist: true,
+          videoUrl: true,
+          category: true,
+          createdAt: true,
+          likeCount: true,
+          isFirstVerseOnly: true,
+          isHighDifficulty: true,
+          isLoopStation: true,
+          isMr: true
+        }
       })
       
-      return NextResponse.json(songs)
+      return NextResponse.json(songs, { headers: cacheHeaders })
     }
 
     const [songs, total] = await Promise.all([
@@ -88,6 +107,25 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         distinct: ['id'], // 중복 제거
+        select: {
+          id: true,
+          title: true,
+          artist: true,
+          videoUrl: true,
+          videoUrl2: true,
+          description: true,
+          lyrics: true,
+          category: true,
+          createdAt: true,
+          updatedAt: true,
+          likeCount: true,
+          isFirstVerseOnly: true,
+          isHighDifficulty: true,
+          isLoopStation: true,
+          isMr: true,
+          progress: true,
+          isPublic: true
+        }
       }),
       prisma.song.count({ where }),
     ])
@@ -106,7 +144,7 @@ export async function GET(request: NextRequest) {
         total,
         totalPages: Math.ceil(total / limit),
       },
-    })
+    }, { headers: cacheHeaders })
   } catch (error) {
     console.error('Error fetching songs:', error)
     return NextResponse.json(

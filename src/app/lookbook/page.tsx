@@ -103,8 +103,8 @@ function LookBookContent() {
           onEditExistingImagesChange={handleEditExistingImagesChange}
           saving={saving}
         />
-      )}
-    </div>
+            )}
+          </div>
   )
 }
 
@@ -114,4 +114,4 @@ export default function LookBookPage() {
       <LookBookContent />
     </Suspense>
   )
-}
+} 

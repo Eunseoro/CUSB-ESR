@@ -1,6 +1,7 @@
 // 게시물 목록 컴포넌트 (PostCard 통합)
 'use client'
 
+import React, { memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { LazyImage } from '@/components/LazyImage'
 import { LookBookPost } from '@/types/lookbook'
@@ -16,7 +17,58 @@ interface PostListProps {
   onDelete: (postId: string) => void
 }
 
-export function PostList({
+const PostCard = memo<{
+  post: LookBookPost
+  isAdmin: boolean
+  deletingId: string | null
+  onCardClick: (post: LookBookPost) => void
+  onEdit: (post: LookBookPost) => void
+  onDelete: (postId: string) => void
+}>(({ post, isAdmin, deletingId, onCardClick, onEdit, onDelete }) => (
+  <div
+    className="bg-card rounded-xl shadow p-4 flex gap-4 items-center cursor-pointer hover:shadow-lg transition-colors border border-border dark:bg-neutral-900 dark:border-neutral-800 min-w-0 overflow-hidden"
+    onClick={() => onCardClick(post)}
+  >
+    <LazyImage
+      src={post.images[0]?.imageUrl || '/noimg.png'}
+      alt={post.title}
+      className="w-20 h-20 object-cover rounded-lg mr-2 border border-border dark:border-neutral-700 flex-shrink-0"
+    />
+    <div className="flex-1 min-w-0">
+      <div className="font-bold truncate text-base mb-1 text-foreground dark:text-white">
+        {post.title}
+      </div>
+      <div className="text-sm text-muted-foreground truncate dark:text-gray-300">
+        {post.content}
+      </div>
+    </div>
+    {isAdmin && (
+      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onEdit(post)}
+          className="text-xs"
+        >
+          수정
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onDelete(post.id)}
+          disabled={deletingId === post.id}
+          className="text-xs"
+        >
+          {deletingId === post.id ? '삭제중...' : '삭제'}
+        </Button>
+      </div>
+    )}
+  </div>
+))
+
+PostCard.displayName = 'PostCard'
+
+export const PostList = memo(function PostList({
   posts,
   isAdmin,
   deletingId,
@@ -29,50 +81,15 @@ export function PostList({
   return (
     <div className="flex flex-col gap-2 w-full">
       {posts.map(post => (
-        <div
+        <PostCard
           key={post.id}
-          className="bg-card rounded-xl shadow p-4 flex gap-4 items-center cursor-pointer hover:shadow-lg transition-colors border border-border dark:bg-neutral-900 dark:border-neutral-800 min-w-0 overflow-hidden"
-          onClick={() => onCardClick(post)}
-        >
-          <LazyImage
-            src={post.images[0]?.imageUrl || '/noimg.png'}
-            alt={post.title}
-            className="w-20 h-20 object-cover rounded-lg mr-2 border border-border dark:border-neutral-700 flex-shrink-0"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="font-bold truncate text-base mb-1 text-foreground dark:text-white">
-              {post.title}
-            </div>
-            <div className="text-sm text-muted-foreground truncate dark:text-gray-300">
-              {post.content}
-            </div>
-          </div>
-          {isAdmin && (
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation()
-                  onEdit(post)
-                }}
-              >
-                수정
-              </Button>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation()
-                  onDelete(post.id)
-                }} 
-                disabled={deletingId === post.id}
-              >
-                {deletingId === post.id ? '삭제 중...' : '삭제'}
-              </Button>
-            </div>
-          )}
-        </div>
+          post={post}
+          isAdmin={isAdmin}
+          deletingId={deletingId}
+          onCardClick={onCardClick}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
       
       {/* 로딩 인디케이터 */}
@@ -93,4 +110,4 @@ export function PostList({
       )}
     </div>
   )
-}
+})

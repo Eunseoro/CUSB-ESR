@@ -55,6 +55,16 @@ export function LazyImage({
     setIsLoaded(true)
   }
 
+  // 이미지 로드 최적화를 위한 preload
+  useEffect(() => {
+    if (isInView && !isLoaded && !hasError) {
+      const img = new window.Image()
+      img.onload = handleLoad
+      img.onerror = handleError
+      img.src = src
+    }
+  }, [isInView, isLoaded, hasError, src, handleLoad, handleError])
+
   return (
     <div ref={imgRef} className={className}>
       {isInView && (
