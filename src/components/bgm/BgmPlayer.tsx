@@ -7,8 +7,12 @@ import { BgmTrack, PlaybackMode, BgmPlayerState } from '@/types/bgm'
 import { getBgmLibraryApi } from '@/lib/bgm-api'
 import { MiniPlayer } from './MiniPlayer'
 import { ExpandedPlayer } from './ExpandedPlayer'
+import { useSearchParams } from 'next/navigation'
 
 export function BgmPlayer() {
+  const searchParams = useSearchParams()
+  const isPopup = searchParams?.get('popup') === 'true'
+  
   const [playerState, setPlayerState] = useState<BgmPlayerState>({
     currentTrack: null,
     currentGenre: null,
@@ -277,6 +281,11 @@ export function BgmPlayer() {
       ...prev,
       isExpanded: false
     }))
+  }
+
+  // 팝업 모드일 때 BGM 플레이어 숨기기
+  if (isPopup) {
+    return null
   }
 
   return (

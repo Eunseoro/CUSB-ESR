@@ -1,6 +1,8 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
+import { LazyImage } from '@/components/LazyImage';
+import Image from 'next/image';
 
 interface DraggableImageProps {
   id: string;
@@ -44,6 +46,12 @@ export function DraggableImage({
     onRemove();
   };
 
+  // 이미지 우클릭 방지 (무단 복제 방지)
+  const handleImageContextMenu = (e: React.MouseEvent<HTMLImageElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
     <div className="relative flex items-center">
       <div
@@ -56,11 +64,14 @@ export function DraggableImage({
         {...listeners}
       >
         <div className="flex-shrink-0">
-          <img 
+          <Image 
             src={imageUrl} 
             alt="이미지" 
             className="w-12 h-12 object-cover rounded"
             draggable={false}
+            onContextMenu={handleImageContextMenu}
+            width={48}
+            height={48}
           />
         </div>
         <div className="flex-1 min-w-0">

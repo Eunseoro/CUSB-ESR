@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '30')
     const search = searchParams.get('search') || ''
     const sort = searchParams.get('sort') || 'title'
+    const title = searchParams.get('title') // 제목으로만 검색하는 경우
     const skip = (pageNum - 1) * limit
 
     const where: Record<string, unknown> = {
@@ -23,8 +24,13 @@ export async function GET(request: NextRequest) {
         { artist: { contains: search, mode: 'insensitive' } },
       ]
     }
+    
+    // 제목으로만 검색하는 경우 (팝업에서 사용)
+    if (title) {
+      where.title = { contains: title, mode: 'insensitive' }
+    }
 
-    let orderBy: any[] = []
+    let orderBy: { [key: string]: 'asc' | 'desc' }[] = []
     switch (sort) {
       case 'latest':
         orderBy = [{ createdAt: 'desc' }]
@@ -33,6 +39,9 @@ export async function GET(request: NextRequest) {
         orderBy = [{ createdAt: 'asc' }]
         break
       case 'popular':
+        orderBy = [{ likeCount: 'desc' }, { createdAt: 'desc' }]
+        break
+      case 'likeCount':
         orderBy = [{ likeCount: 'desc' }, { createdAt: 'desc' }]
         break
       case 'title':
@@ -59,6 +68,17 @@ export async function GET(request: NextRequest) {
         break
       default:
         orderBy = [{ createdAt: 'desc' }]
+    }
+
+    // 제목으로만 검색하는 경우 간단한 응답 반환
+    if (title) {
+      const songs = await prisma.song.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }],
+        take: 10
+      })
+      
+      return NextResponse.json(songs)
     }
 
     const [songs, total] = await Promise.all([
@@ -98,9 +118,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // 관리자 인증 확인 (쿠키 기반)
+    // 관리자 인증 확인 (쿠키 기반) - ADMIN 등급만 허용
     const cookie = request.cookies.get('admin_session');
-    const isAdmin = cookie && cookie.value === '1';
+    const isAdmin = cookie && cookie.value === 'admin';
     if (!isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },

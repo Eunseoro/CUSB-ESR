@@ -40,7 +40,7 @@ const DEBOUNCE_DELAY = 300
 const SCROLL_THRESHOLD = 0.8
 const SCROLL_TOP_THRESHOLD = 200
 
-type SortType = 'artist' | 'title' | 'popular' | 'latest' | 'oldest' | 'first-verse' | 'high-difficulty' | 'loop-station' | 'mr'
+type SortType = 'my-likes' | 'artist' | 'title' | 'popular' | 'latest' | 'oldest' | 'first-verse' | 'high-difficulty' | 'loop-station' | 'mr'
 
 export const SongList = forwardRef<SongListRef, SongListProps>(function SongListImpl({ 
   category, 
@@ -56,8 +56,13 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortType>(
     category === 'NEWSONG' ? 'latest' : 
-    category === 'MISSION' ? 'oldest' : 'artist'
+    category === 'MISSION' ? 'oldest' : 'my-likes'
   )
+  
+  // 초기 정렬 상태를 전역으로 설정
+  useEffect(() => {
+    ;(window as any).currentSort = sort
+  }, [sort])
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [showTopBtn, setShowTopBtn] = useState(false)
 
@@ -85,7 +90,8 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
     sort,
     setSongs,
     setLoading,
-    songsPerPage: SONGS_PER_PAGE
+    songsPerPage: SONGS_PER_PAGE,
+    likedSongs
   })
   
   // 메인 데이터 관리 훅
@@ -95,7 +101,8 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
     category,
     search: debouncedSearch,
     fetchSongs,
-    resetPagination
+    resetPagination,
+    likedSongs
   })
 
   // ref 노출
@@ -163,6 +170,7 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
     const removeParentheses = (text: string) => text.replace(/\s*\([^)]*\)/g, '').trim()
     const text = `${removeParentheses(artist)} - ${removeParentheses(title)}`
     
+    // 클립보드에 복사
     navigator.clipboard?.writeText(text).catch(() => {
       // Fallback for older browsers
       const textarea = document.createElement('textarea')
@@ -172,6 +180,34 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
       document.execCommand('copy')
       document.body.removeChild(textarea)
     })
+    
+    // 선곡표 팝업 창에 노래 정보 전달
+    try {
+      // 부모 창이 있으면 부모 창에 메시지 전달 (팝업에서 열린 경우)
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({
+          type: 'ADD_TO_SONGLIST',
+          artistTitle: text
+        }, '*')
+      }
+      
+      // localStorage를 통해 간접적으로 통신
+      const songlistData = {
+        type: 'ADD_TO_SONGLIST',
+        artistTitle: text,
+        timestamp: Date.now()
+      }
+      localStorage.setItem('songlist_add_request', JSON.stringify(songlistData))
+      
+      // localStorage 이벤트를 트리거
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'songlist_add_request',
+        newValue: JSON.stringify(songlistData)
+      }))
+      
+    } catch (error) {
+      console.log('선곡표 팝업 창에 메시지 전달 실패:', error)
+    }
     
     setCopiedId(songId)
   }, [])
@@ -187,6 +223,8 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
   // 정렬 변경 핸들러
   const handleSortChange = useCallback((value: SortType) => {
     setSort(value)
+    // 현재 정렬 상태를 전역으로 설정 (스크롤 위치 유지를 위해)
+    ;(window as any).currentSort = value
     resetPagination()
     setSongs([])
   }, [resetPagination, setSongs])
@@ -259,6 +297,7 @@ const SearchAndSortControls = ({ search, setSearch, sort, onSortChange }: Search
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="my-likes">💕나의 좋아요</SelectItem>
             <SelectItem value="artist">아티스트순</SelectItem>
             <SelectItem value="title">제목순</SelectItem>
             <SelectItem value="popular">💖 인기순</SelectItem>

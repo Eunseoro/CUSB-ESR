@@ -47,14 +47,19 @@ export default function VisitorStatisticsPage() {
     }
   }, [isAdmin])
 
-  // 날짜 기반 기간 텍스트는 클라이언트에서만 계산
+  // 날짜 기반 기간 텍스트는 클라이언트에서만 계산 (한국 시간대 기준)
   useEffect(() => {
-    const now = new Date()
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }))
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     function formatDate(date: Date) {
-      return date.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')
+      return date.toLocaleDateString('ko-KR', { 
+        timeZone: 'Asia/Seoul',
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit' 
+      }).replace(/\. /g, '.').replace(/\.$/, '')
     }
     setPeriods({
       today: formatDate(today),

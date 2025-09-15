@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Song } from '@/types/song'
 import { fetchLikedSongsApi, handleLikeApi } from '@/lib/song-api'
 
-export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: Song[]) => Song[])) => void) => {
+export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: Song[]) => Song[])) => void, listRef?: React.RefObject<HTMLDivElement | null>) => {
   const [likedSongs, setLikedSongs] = useState<Set<string>>(new Set())
   const [updatingLikes, setUpdatingLikes] = useState<Set<string>>(new Set())
   const likeRequestTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
   // localStorage에서 좋아요 상태 로드
-  const loadLikedSongsFromStorage = () => {
+  const loadLikedSongsFromStorage = useCallback(() => {
     try {
       const stored = localStorage.getItem('likedSongs')
       if (!stored) {
@@ -27,10 +27,10 @@ export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: 
       localStorage.removeItem('likedSongs')
       setLikedSongs(new Set())
     }
-  }
+  }, [])
 
   // 초기 좋아요 상태 fetch
-  const fetchInitialLikedSongs = async () => {
+  const fetchInitialLikedSongs = useCallback(async () => {
     try {
       if (!songs || songs.length === 0) return
       const likedStates = await fetchLikedSongsApi(songs)
@@ -46,7 +46,7 @@ export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: 
     } catch (error) {
       console.error('Error fetching liked songs:', error)
     }
-  }
+  }, [songs])
 
   // 좋아요 토글 핸들러
   const handleLike = async (songId: string) => {
@@ -74,16 +74,37 @@ export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: 
     }
     setLikedSongs(optimisticLikedSongs)
     
+    // 스크롤 위치 저장 (my-likes 정렬일 때만)
+    const currentSort = (window as any).currentSort || ''
+    const shouldPreserveScroll = currentSort === 'my-likes'
+    let savedScrollTop = 0
+    if (shouldPreserveScroll && listRef?.current) {
+      savedScrollTop = listRef.current.scrollTop
+    }
+
     // 낙관적 카운트 업데이트
-    setSongs((prev: Song[]) => prev.map((song: Song) => {
-      if (song.id === songId) {
-        return {
-          ...song,
-          likeCount: isLiked ? Math.max(0, (song.likeCount || 1) - 1) : (song.likeCount || 0) + 1
+    setSongs((prev: Song[]) => {
+      const updatedSongs = prev.map((song: Song) => {
+        if (song.id === songId) {
+          return {
+            ...song,
+            likeCount: isLiked ? Math.max(0, (song.likeCount || 1) - 1) : (song.likeCount || 0) + 1
+          }
         }
+        return song
+      })
+      
+      // 스크롤 위치 복원 (다음 렌더링 사이클에서)
+      if (shouldPreserveScroll && listRef?.current) {
+        setTimeout(() => {
+          if (listRef.current) {
+            listRef.current.scrollTop = savedScrollTop
+          }
+        }, 0)
       }
-      return song
-    }))
+      
+      return updatedSongs
+    })
     
     // 디바운싱 적용 (각 곡별로 독립적)
     const timeout = setTimeout(async () => {
@@ -161,7 +182,7 @@ export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: 
   }
 
   // 초기화 함수
-  const initializeLikedSongs = async () => {
+  const initializeLikedSongs = useCallback(async () => {
     if (songs && songs.length > 0) {
       // 서버에서 최신 상태를 가져옴
       await fetchInitialLikedSongs()
@@ -169,7 +190,7 @@ export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: 
       // 곡이 없으면 localStorage에서 임시로 로드
       loadLikedSongsFromStorage()
     }
-  }
+  }, [songs, fetchInitialLikedSongs, loadLikedSongsFromStorage])
 
   // 클린업
   useEffect(() => {
@@ -180,7 +201,7 @@ export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: 
       })
       likeRequestTimeouts.current.clear()
     }
-  }, [])
+  }, [likeRequestTimeouts])
 
   return {
     likedSongs,

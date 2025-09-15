@@ -229,15 +229,8 @@ export default function HomePage() {
               </div>
               <div>
                 <h4 className="font-semibold mb-1">Q: 이미 신청곡이 많이 밀려있어요, 몇 곡까지 신청이 가능한가요?</h4>
-                <p className="text-sm mb-7 text-muted-foreground">
+                <p className="text-sm mb-2 text-muted-foreground">
                   A: 돈미쥐💸 유할매는 신청곡🧀을 거절하지 않지만, 상식적인 범위는 지켜주세요🤣
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-1">Q: 신곡 업데이트 주기는 어떻게 되나요?</h4>
-                <p className="text-sm mb-1 text-muted-foreground">
-                  A: 특이사항(대형서버 참여 등)이 없을 경우, 매달 업데이트 될 예정입니다
                 </p>
               </div>
             </div>

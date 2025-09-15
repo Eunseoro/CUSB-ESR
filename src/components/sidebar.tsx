@@ -3,11 +3,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Music, Music2, Star, Info, Menu, Trophy, SquarePen, ChartNoAxesColumn, Shirt, Shuffle, CircleDashed } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
+import Image from 'next/image'
 import { getCategoryLabel } from '@/lib/song-utils'
 
 const menuItems = [
@@ -25,7 +26,14 @@ const menuItems = [
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const isPopup = searchParams?.get('popup') === 'true'
   const { isAdmin } = useAdminAuth();
+
+  // 팝업 모드일 때 사이드바 숨기기
+  if (isPopup) {
+    return null
+  }
 
   return (
     <>

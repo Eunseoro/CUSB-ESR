@@ -73,6 +73,16 @@ export default function RoulettePage() {
         })
       })
       let filtered = Object.values(merged)
+      
+      // MISSION 카테고리가 포함된 곡 제외
+      filtered = filtered.filter(song => {
+        if (!song.categories || song.categories.length === 0) {
+          return false
+        }
+        // MISSION 카테고리가 포함된 곡은 룰렛에서 제외
+        return !song.categories.includes('MISSION')
+      })
+      
       // 고급신청 필터 적용
       if (secondary.advanced) {
         // 고급신청 필터가 활성화된 경우: 고난이도 또는 루프스테이션 중 하나라도 TRUE인 곡만 추첨 대상

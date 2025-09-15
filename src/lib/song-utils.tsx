@@ -2,6 +2,7 @@
 import React from 'react'
 import { BgmTag } from '@/types/bgm'
 import { Song, SongCategory } from '@/types/song'
+import Image from 'next/image'
 
 // 날짜를 YYYY.MM.DD 포맷으로 반환
 export function formatDate(dateString: string): string {
@@ -109,7 +110,7 @@ export function filterSongsByCategory(songs: Song[], targetCategory: SongCategor
 export function FirstVerseIcon() {
   return (
     <span className="inline-flex items-center text-m" title="1절만">
-      <img src="/icons/1st-verse.webp" className="h-5 w-5 mr-1"/>
+      <Image src="/icons/1st-verse.webp" alt="" className="h-5 w-5 mr-1" width={20} height={20}/>
     </span>
   )
 }
@@ -132,7 +133,7 @@ export function LoopStationIcon() {
 export function MrIcon() {
   return (
     <span className="inline-flex items-center text-m" title="MR">
-      <img src="/icons/mr.webp" className="h-5 w-5 mr-1"/>
+      <Image src="/icons/mr.webp" alt="" className="h-5 w-5 mr-1" width={20} height={20}/>
     </span>
   )
 } 

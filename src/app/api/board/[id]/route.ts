@@ -29,7 +29,7 @@ export async function DELETE(
     const { id } = await params;
     if (!id) return NextResponse.json({ error: 'No id' }, { status: 400 });
     const cookie = req.cookies.get('admin_session');
-    const isAdmin = cookie && cookie.value === '1';
+    const isAdmin = cookie && cookie.value === 'admin';
     const { userKey } = await req.json();
     const entry = await prisma.guestbook.findUnique({ where: { id } });
     if (!entry) return NextResponse.json({ error: 'Not found' }, { status: 404 });

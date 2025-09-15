@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2, Shield } from 'lucide-react'
-import { verifyAdminPassword, setAdminAuthenticated } from '@/lib/auth'
+import { verifyAdminPassword } from '@/lib/auth'
 
 interface LoginDialogProps {
   children?: React.ReactNode
@@ -32,7 +32,6 @@ export function LoginDialog({ children, onSuccess }: LoginDialogProps) {
       });
       const data = await res.json();
       if (data.ok) {
-        setAdminAuthenticated(true);
         setOpen(false);
         setPassword('');
         setError('');

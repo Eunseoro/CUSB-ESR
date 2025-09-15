@@ -10,10 +10,48 @@ import { SplitLayout } from '@/components/split-layout'
 export default function NewsongPage() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
-  const [loading, setLoading] = useState(false)
-  const [search, setSearch] = useState('')
-  const [sort, setSort] = useState<'title' | 'latest' | 'popular'>('title')
   const songListRef = useRef<SongListRef>(null)
+
+  // 팝업 창에서 오는 메시지 처리
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data.type === 'UPDATE_SELECTED_SONG') {
+        const { artistTitle } = event.data
+        console.log('팝업에서 받은 노래 정보:', artistTitle)
+        
+        try {
+          // '아티스트 - 제목' 형식 파싱
+          const parts = artistTitle.split(' - ')
+          if (parts.length !== 2) {
+            console.log('올바른 형식이 아닙니다:', artistTitle)
+            return
+          }
+
+          const title = parts[1].trim()
+
+          // 제목만으로 노래 검색 API 호출 (성능 최적화)
+          const response = await fetch(`/api/songs?title=${encodeURIComponent(title)}`)
+          
+          if (response.ok) {
+            const songs = await response.json()
+            if (songs.length > 0) {
+              setSelectedSong(songs[0])
+              console.log('선택된 노래 업데이트:', songs[0])
+            } else {
+              console.log('노래를 찾을 수 없습니다:', title)
+            }
+          } else {
+            console.error('노래 검색 실패')
+          }
+        } catch (error) {
+          console.error('노래 업데이트 중 오류:', error)
+        }
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
 
   // 신곡 탭 진입 시 정렬을 최신순으로 강제
   useEffect(() => {

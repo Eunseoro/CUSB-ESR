@@ -84,12 +84,14 @@ export const SongItem = React.memo<SongItemProps>(({
       return currGroup !== prevGroup ? currGroup : null
     }
 
-    if (sort === 'first-verse' || sort === 'high-difficulty' || sort === 'loop-station' || sort === 'mr') {
+    if (sort === 'first-verse' || sort === 'high-difficulty' || sort === 'loop-station' || sort === 'mr' || sort === 'my-likes') {
       const getConditionStatus = (song: Song) => {
         if (sort === 'first-verse') return song.isFirstVerseOnly ? '1절만' : '일반'
         if (sort === 'high-difficulty') return song.isHighDifficulty ? '🔥' : '일반'
         if (sort === 'loop-station') return song.isLoopStation ? '⚡' : '일반'
-        return song.isMr ? 'MR' : '일반'
+        if (sort === 'mr') return song.isMr ? 'MR' : '일반'
+        if (sort === 'my-likes') {return likedSongs.has(song.id) ? null : '💔'}
+        return '일반'
       }
       const currStatus = getConditionStatus(song)
       const prevStatus = getConditionStatus(prevSong)

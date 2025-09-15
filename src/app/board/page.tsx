@@ -1,6 +1,6 @@
 "use client"
 // 이 파일은 게시판(Board) 페이지입니다.
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Board } from '@/types/board'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -37,26 +37,87 @@ export default function BoardPage() {
   const [userKey, setUserKey] = useState('')
   const [pinnedIds, setPinnedIds] = useState<string[]>([])
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loading, setLoading] = useState(false)
+
+  const fetchList = useCallback(async (page: number = 1, isInitial: boolean = false, retryCount: number = 0) => {
+    if (loading) return
+    
+    setLoading(true)
+    try {
+      const limit = 10 // 모든 페이지에서 10개씩 로드
+      const data = await fetchBoardList(page, limit)
+      
+      if (isInitial) {
+        setList(data)
+      } else {
+        // 중복 제거 로직 추가
+        setList(prev => {
+          const existingIds = new Set(prev.map(item => item.id))
+          const newItems = data.filter(item => !existingIds.has(item.id))
+          return [...prev, ...newItems]
+        })
+      }
+      
+      // 더 이상 로드할 데이터가 없으면 hasMore를 false로 설정
+      setHasMore(data.length === limit)
+      setCurrentPage(page)
+    } catch (e) {
+      console.error('게시물 로드 실패:', e)
+      
+      // 재시도 로직 (최대 3회)
+      if (retryCount < 3) {
+        console.log(`재시도 중... (${retryCount + 1}/3)`)
+        setTimeout(() => {
+          fetchList(page, isInitial, retryCount + 1)
+        }, 1000 * (retryCount + 1)) // 1초, 2초, 3초 간격으로 재시도
+        return
+      }
+      
+      // 최대 재시도 횟수 초과 시 hasMore를 false로 설정하여 무한 로딩 방지
+      setHasMore(false)
+    } finally {
+      setLoading(false)
+    }
+  }, []) // loading 의존성 제거
+
+  const fetchPinned = useCallback(async () => {
+    try {
+      const ids = await getPinnedGuestbookIds()
+      setPinnedIds(ids)
+    } catch (e) {
+      console.error('고정 게시물 로드 실패:', e)
+      setPinnedIds([])
+    }
+  }, [])
 
   useEffect(() => {
     setUserKey(getUserKey())
-    fetchList()
+    fetchList(1, true)
     fetchPinned()
-  }, [])
+  }, []) // 의존성 배열을 빈 배열로 변경하여 한 번만 실행
 
-  async function fetchList() {
-    try {
-      const data = await fetchBoardList()
-      setList(data)
-    } catch (e) {
-      // 에러 처리 필요시 추가
+  // 무한스크롤 감지
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loading || !hasMore) return
+      
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+      const windowHeight = window.innerHeight
+      const documentHeight = document.documentElement.scrollHeight
+      
+      // 80% 스크롤 시 다음 페이지 로드
+      if (scrollTop + windowHeight >= documentHeight * 0.8) {
+        fetchList(currentPage + 1, false)
+      }
     }
-  }
 
-  async function fetchPinned() {
-    const ids = await getPinnedGuestbookIds()
-    setPinnedIds(ids)
-  }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [loading, hasMore, currentPage]) // fetchList 의존성 제거
 
   async function handlePin(id: string, checked: boolean) {
     let newIds: string[]
@@ -75,7 +136,10 @@ export default function BoardPage() {
       await addBoard(author, content, userKey)
       setAuthor('')
       setContent('')
-      fetchList()
+      // 새 게시물 추가 후 전체 목록 새로고침
+      setCurrentPage(1)
+      setHasMore(true)
+      fetchList(1, true)
     } catch (e) {
       // 에러 처리 필요시 추가
     }
@@ -87,7 +151,10 @@ export default function BoardPage() {
     try {
       await deleteBoard(id, userKey)
       setDeletingId(null);
-      fetchList()
+      // 게시물 삭제 후 전체 목록 새로고침
+      setCurrentPage(1)
+      setHasMore(true)
+      fetchList(1, true)
     } catch (e) {
       setDeletingId(null);
       // 에러 처리 필요시 추가
@@ -95,7 +162,7 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="w-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto p-2 md:p-4 pb-20">
+    <div className="w-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto p-2 md:p-4 pb-24 md:pb-16">
       <h1 className="text-2xl font-bold mb-1">쥐수게시판</h1>
       <div className="text-muted-foreground mb-6">
         <p>방명록 & 수다 & 버그신고 & 건의사항 등 자유롭게 사용하는 게시판입니다.</p>
@@ -120,8 +187,7 @@ export default function BoardPage() {
           <Button onClick={handleSubmit} disabled={!author.trim() || !content.trim()}>등록</Button>
         </CardContent>
       </Card>
-      <div className="space-y-2 w-full">
-        {list.length === 0 && <div className="text-center text-muted-foreground">로딩 중...</div>}
+      <div className="space-y-2 w-full mb-8">
         {/* 고정된 게시글 먼저 렌더링 */}
         {pinnedIds.length > 0 && (
           <>
@@ -130,7 +196,7 @@ export default function BoardPage() {
               const pinned = list.find(item => item.id === pid)
               if (!pinned) return null
               return (
-                <div key={pinned.id}>
+                <div key={`pinned-${pinned.id}`}>
                   <Card
                     className="w-full overflow-hidden animate-pulse-glow border-2 border-indigo-400 shadow-lg"
                   >
@@ -191,7 +257,7 @@ export default function BoardPage() {
           const prevDay = idx > 0 ? getDay(arr[idx-1].createdAt) : null
           const showDivider = idx === 0 || currDay !== prevDay
           return (
-            <div key={item.id}>
+            <div key={`normal-${item.id}`}>
               {showDivider && <GroupDivider label={currDay} />}
               <Card
                 className="w-full overflow-hidden"
@@ -239,6 +305,23 @@ export default function BoardPage() {
             </div>
           )
         })}
+        
+        {/* 로딩 인디케이터 */}
+        {loading && (
+          <div className="text-center text-muted-foreground py-4">
+            <div className="inline-flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              로딩 중...
+            </div>
+          </div>
+        )}
+        
+        {/* 더 이상 로드할 게시물이 없을 때 */}
+        {!hasMore && list.length > 0 && (
+          <div className="text-center text-muted-foreground py-4">
+            모든 게시물을 불러왔습니다.
+          </div>
+        )}
       </div>
     </div>
   )

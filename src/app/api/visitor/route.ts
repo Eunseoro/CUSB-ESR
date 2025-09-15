@@ -1,33 +1,14 @@
 // 방문자 집계 API: 방문 시 카운트 증가(POST), 관리자 인증 시 통계 반환(GET)
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-// import { PrismaClient } from '@prisma/client' // 불필요하므로 주석 처리 또는 삭제
+import { getKoreanTodayDate, getKoreanWeekStartDate, getKoreanMonthStartDate } from '@/lib/timezone'
 
 // 관리자 인증 헤더
 const ADMIN_HEADER = 'x-admin-auth'
 
-// 오늘 날짜(YYYY-MM-DD) 반환 함수
-function getTodayDate() {
-  const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate())
-}
-
-// 이번 주 시작 날짜(일요일)
-function getWeekStartDate() {
-  const now = new Date()
-  const day = now.getDay()
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - day)
-}
-
-// 이번 달 시작 날짜
-function getMonthStartDate() {
-  const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth(), 1)
-}
-
 // 방문 시: 오늘 카운트 upsert
 export async function POST() {
-  const today = getTodayDate()
+  const today = getKoreanTodayDate()
   await prisma.visitorCount.upsert({
     where: { date: today },
     update: { count: { increment: 1 } },
@@ -40,7 +21,7 @@ export async function POST() {
 export async function GET(req: NextRequest) {
   // 쿠키 기반 인증 확인 (다른 API들과 일관성 유지)
   const cookie = req.cookies.get('admin_session');
-  const isAdmin = cookie && cookie.value === '1';
+  const isAdmin = cookie && cookie.value === 'admin';
   
   if (!isAdmin) {
     // 인증이 없으면 기본값 반환
@@ -54,9 +35,9 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  const today = getTodayDate()
-  const weekStart = getWeekStartDate()
-  const monthStart = getMonthStartDate()
+  const today = getKoreanTodayDate()
+  const weekStart = getKoreanWeekStartDate()
+  const monthStart = getKoreanMonthStartDate()
 
   // 오늘 방문자 수
   const todayCount = await prisma.visitorCount.findUnique({ where: { date: today } })

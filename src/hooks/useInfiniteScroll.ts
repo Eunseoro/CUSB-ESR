@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react'
 import { Song } from '@/types/song'
 import { fetchSongsApi } from '@/lib/song-api'
-import { filterSongsByCategory } from '@/lib/song-utils'
+import { filterSongsByCategory, getKoreanSortKey } from '@/lib/song-utils'
 
 interface UseInfiniteScrollProps {
   category?: string
@@ -11,6 +11,7 @@ interface UseInfiniteScrollProps {
   setSongs: (songs: Song[] | ((prev: Song[]) => Song[])) => void
   setLoading: (loading: boolean) => void
   songsPerPage: number
+  likedSongs?: Set<string>
 }
 
 export const useInfiniteScroll = ({ 
@@ -19,12 +20,14 @@ export const useInfiniteScroll = ({
   sort, 
   setSongs, 
   setLoading, 
-  songsPerPage 
+  songsPerPage,
+  likedSongs
 }: UseInfiniteScrollProps) => {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [allSongs, setAllSongs] = useState<Song[]>([]) // 모든 곡을 저장
+  const [sortedSongs, setSortedSongs] = useState<Song[]>([]) // 정렬된 곡들 저장
   const [displayedCount, setDisplayedCount] = useState(songsPerPage) // 현재 표시된 곡 수
 
   const fetchSongs = useCallback(async (pageNum: number, reset = false, abortController?: AbortController) => {
@@ -43,7 +46,7 @@ export const useInfiniteScroll = ({
           search,
           pageNum: 1,
           limit,
-          sort,
+          sort: sort === 'my-likes' ? 'likeCount' : sort, // my-likes는 좋아요순으로 서버에서 정렬
           signal: controller.signal
         })
         
@@ -63,20 +66,38 @@ export const useInfiniteScroll = ({
           filteredSongs = filterSongsByCategory(data.songs, category as any)
         }
 
+        // 클라이언트 사이드 정렬이 필요한 경우 정렬 적용
+        let finalSongs = filteredSongs
+        if (sort === 'artist' || sort === 'title') {
+          finalSongs = [...filteredSongs].sort((a, b) => {
+            const aKey = getKoreanSortKey(sort === 'artist' ? a.artist : a.title)
+            const bKey = getKoreanSortKey(sort === 'artist' ? b.artist : b.title)
+            
+            if (aKey !== bKey) {
+              return aKey.localeCompare(bKey)
+            }
+            
+            const aKey2 = getKoreanSortKey(sort === 'artist' ? a.title : a.artist)
+            const bKey2 = getKoreanSortKey(sort === 'artist' ? b.title : b.artist)
+            return aKey2.localeCompare(bKey2)
+          })
+        }
+        
         // 초기 로딩 시 모든 곡을 저장하고 첫 30곡만 표시
         setAllSongs(filteredSongs)
-        setSongs(filteredSongs.slice(0, songsPerPage))
-        setHasMore(filteredSongs.length > songsPerPage)
+        setSortedSongs(finalSongs)
+        setSongs(finalSongs.slice(0, songsPerPage))
+        setHasMore(finalSongs.length > songsPerPage)
         setPage(1)
       } else {
         // 스크롤 시에는 API 호출 없이 메모리에서 다음 30곡을 표시
         setLoadingMore(true)
         
         const nextCount = displayedCount + songsPerPage
-        const nextSongs = allSongs.slice(0, nextCount)
+        const nextSongs = sortedSongs.slice(0, nextCount)
         setSongs(nextSongs)
         setDisplayedCount(nextCount)
-        setHasMore(nextCount < allSongs.length)
+        setHasMore(nextCount < sortedSongs.length)
         setPage(pageNum)
       }
     } catch (error) {
@@ -86,6 +107,7 @@ export const useInfiniteScroll = ({
       if (reset) {
         setSongs([])
         setAllSongs([])
+        setSortedSongs([])
       }
       setHasMore(false)
       setPage(1)
@@ -96,7 +118,7 @@ export const useInfiniteScroll = ({
         setLoadingMore(false)
       }
     }
-  }, [category, search, sort, setSongs, setLoading, songsPerPage, allSongs, displayedCount])
+  }, [category, search, sort, songsPerPage])
 
   const loadMoreSongs = useCallback(() => {
     if (!hasMore || loadingMore) return
@@ -104,20 +126,21 @@ export const useInfiniteScroll = ({
     setLoadingMore(true)
     
     const nextCount = displayedCount + songsPerPage
-    const nextSongs = allSongs.slice(0, nextCount)
+    const nextSongs = sortedSongs.slice(0, nextCount)
     setSongs(nextSongs)
     setDisplayedCount(nextCount)
-    setHasMore(nextCount < allSongs.length)
+    setHasMore(nextCount < sortedSongs.length)
     setPage(page + 1)
     
     setLoadingMore(false)
-  }, [hasMore, loadingMore, displayedCount, songsPerPage, allSongs, setSongs, page])
+  }, [hasMore, loadingMore, displayedCount, songsPerPage, sortedSongs, page])
 
   const resetPagination = useCallback(() => {
     setPage(1)
     setHasMore(true)
     setDisplayedCount(songsPerPage)
     setAllSongs([])
+    setSortedSongs([])
   }, [songsPerPage])
 
   return {
