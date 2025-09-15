@@ -1,6 +1,6 @@
 "use client"
 // 방문자 통계 관리자 페이지: 인증된 관리자만 접근 가능, 미인증 시 안내
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { CalendarDays, BarChart2, Users, Hash, Divide, Shield } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,7 +14,7 @@ interface VisitorStats {
   avg: number
 }
 
-export default function VisitorStatisticsPage() {
+function VisitorStatisticsContent() {
   // 통계 데이터
   const [stats, setStats] = useState<VisitorStats | null>(null)
   // 로딩 상태
@@ -117,5 +117,13 @@ export default function VisitorStatisticsPage() {
         ))}
       </div>
     </div>
+  )
+}
+
+export default function VisitorStatisticsPage() {
+  return (
+    <Suspense fallback={<div>로딩 중...</div>}>
+      <VisitorStatisticsContent />
+    </Suspense>
   )
 } 

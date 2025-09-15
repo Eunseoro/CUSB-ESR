@@ -74,9 +74,7 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
     if (!songId) return
     
     try {
-      console.log('메모 로드 시작:', songId)
       const savedMemo = await getMRMemo(songId)
-      console.log('메모 로드 완료:', songId, savedMemo)
       setMemo(savedMemo)
     } catch (error) {
       console.error('메모 로드 실패:', error)

@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('MR 업로드 API 호출 시작')
-    console.log('요청 URL:', req.url)
-    console.log('요청 메서드:', req.method)
-    console.log('요청 헤더:', Object.fromEntries(req.headers.entries()))
-    
-    // Supabase 클라이언트 상태 확인
-    console.log('Supabase 클라이언트 상태:', {
-      hasSupabaseAdmin: !!supabaseAdmin,
-      hasStorage: !!supabaseAdmin?.storage
-    })
-    
     if (!supabaseAdmin) {
       console.error('Supabase 관리자 클라이언트가 초기화되지 않았습니다.')
       return NextResponse.json({ 
@@ -25,15 +13,6 @@ export async function POST(req: NextRequest) {
     // 환경변수 검증
     const supabaseUrl = process.env.SUPA__SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPA__SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-    
-    console.log('환경변수 확인:', {
-      hasUrl: !!supabaseUrl,
-      hasServiceKey: !!supabaseServiceKey,
-      url: supabaseUrl ? '설정됨' : '누락',
-      serviceKey: supabaseServiceKey ? '설정됨' : '누락',
-      urlLength: supabaseUrl?.length,
-      serviceKeyLength: supabaseServiceKey?.length
-    })
     
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('Supabase 환경변수 누락:', { 
@@ -48,8 +27,6 @@ export async function POST(req: NextRequest) {
     // 관리자 인증 확인
     const cookie = req.cookies.get('admin_session')
     const isAdmin = cookie && cookie.value === '1'
-    
-    console.log('관리자 인증 확인:', { isAdmin, cookieValue: cookie?.value })
     
     if (!isAdmin) {
       return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })

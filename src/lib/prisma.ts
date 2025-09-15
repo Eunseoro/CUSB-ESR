@@ -41,7 +41,6 @@ export async function ensureConnection() {
     try {
       await prisma.$connect()
       isConnected = true
-      console.log('Prisma 데이터베이스 연결 성공')
     } catch (error) {
       console.error('Prisma 데이터베이스 연결 실패:', error)
       isConnected = false

@@ -1,12 +1,13 @@
 "use client"
 
+import { Suspense } from "react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import { PostForm } from "@/components/PostForm"
 import { PostList } from "@/components/PostList"
 import { PostModal } from "@/components/PostModal"
 import { useLookbook } from "@/hooks/useLookbook"
 
-export default function LookBookPage() {
+function LookBookContent() {
   const { isAdmin } = useAdminAuth()
   const {
     // 상태
@@ -14,7 +15,6 @@ export default function LookBookPage() {
     selected,
     showModal,
     modalClosing,
-    overlayVisible,
     deletingId,
     loading,
     hasMore,
@@ -26,7 +26,6 @@ export default function LookBookPage() {
     editForm,
     editImageFiles,
     editExistingImages,
-    deletedImageIds,
     
     // 핸들러
     handleCardClick,
@@ -106,5 +105,13 @@ export default function LookBookPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function LookBookPage() {
+  return (
+    <Suspense fallback={<div>로딩 중...</div>}>
+      <LookBookContent />
+    </Suspense>
   )
 }

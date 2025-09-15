@@ -2,8 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-const ADMIN_HEADER = 'x-admin-auth'
-
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

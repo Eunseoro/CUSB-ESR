@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { SongRequest } from '@/types/song-request'
 import { getSongRequests, addSongRequest } from '@/lib/song-request-utils'
 
-export default function SongListPage() {
+function SongListContent() {
   const searchParams = useSearchParams()
   const isPopup = searchParams?.get('popup') === 'true'
   const [requests, setRequests] = useState<SongRequest[]>([])
@@ -444,5 +444,13 @@ export default function SongListPage() {
         </table>
       </div>
     </div>
+  )
+}
+
+export default function SongListPage() {
+  return (
+    <Suspense fallback={<div>로딩 중...</div>}>
+      <SongListContent />
+    </Suspense>
   )
 }

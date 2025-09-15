@@ -8,6 +8,7 @@ import { Header } from '@/components/header'
 import { TopButton } from '@/components/top-button'
 import { BgmPlayer } from '@/components/bgm/BgmPlayer'
 import { isAdminAuthenticated } from '@/lib/auth'
+import { Suspense } from 'react'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -26,9 +27,13 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <div className="min-h-screen flex flex-col">
-            <Header />
+            <Suspense fallback={<div>로딩 중...</div>}>
+              <Header />
+            </Suspense>
             <div className="flex flex-1 overflow-hidden">
-              <Sidebar />
+              <Suspense fallback={<div>로딩 중...</div>}>
+                <Sidebar />
+              </Suspense>
               <main className="flex-1 flex flex-col md:flex-row md:ml-16">
                 {children}
               </main>
@@ -37,7 +42,9 @@ export default function RootLayout({
               <a href="/admin/statistics" style={{ marginLeft: 16, color: '#0070f3', fontWeight: 'bold' }}>방문자 통계</a>
             )}
             <TopButton />
-            <BgmPlayer />
+            <Suspense fallback={<div>로딩 중...</div>}>
+              <BgmPlayer />
+            </Suspense>
           </div>
         </Providers>
       </body>

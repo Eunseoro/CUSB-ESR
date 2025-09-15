@@ -124,7 +124,7 @@ async function uploadImagesSequentially(
     const batchResults = await Promise.all(batchPromises);
     
     // 배치 DB 저장 (트랜잭션 최적화)
-    const batchCreates = await prisma.lookBookPostImage.createMany({
+    await prisma.lookBookPostImage.createMany({
       data: batchResults,
       skipDuplicates: false
     });
