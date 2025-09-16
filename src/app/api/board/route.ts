@@ -44,16 +44,10 @@ export async function POST(req: NextRequest) {
   try {
     const prisma = await ensureConnection()
     
-    // 방명록 등록 (1000개 초과 시 과거순 자동 삭제)
+    // 방명록 등록
     const { author, content, userKey } = await req.json()
     if (!author || !content || !userKey) {
       return NextResponse.json({ error: '작성자, 내용, userKey는 필수입니다.' }, { status: 400 })
-    }
-    // 1000개 초과 시 가장 오래된 글 삭제
-    const count = await prisma.guestbook.count()
-    if (count >= 1000) {
-      const oldest = await prisma.guestbook.findFirst({ orderBy: { createdAt: 'asc' } })
-      if (oldest) await prisma.guestbook.delete({ where: { id: oldest.id } })
     }
     const entry = await prisma.guestbook.create({ data: { author, content, userKey } })
     return NextResponse.json(entry)

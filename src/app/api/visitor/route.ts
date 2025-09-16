@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
     // 인증이 없으면 기본값 반환
     return NextResponse.json({
       today: 0,
+      yesterday: 0,
       week: 0,
       month: 0,
       total: 0,
@@ -35,12 +36,29 @@ export async function GET(req: NextRequest) {
     })
   }
 
+  const { searchParams } = new URL(req.url)
+  const specificDate = searchParams.get('date')
+  
+  // 특정 날짜 조회 요청인 경우
+  if (specificDate) {
+    const targetDate = new Date(specificDate)
+    const count = await prisma.visitorCount.findUnique({ where: { date: targetDate } })
+    return NextResponse.json({
+      date: specificDate,
+      count: count?.count || 0
+    })
+  }
+
   const today = getKoreanTodayDate()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
   const weekStart = getKoreanWeekStartDate()
   const monthStart = getKoreanMonthStartDate()
 
   // 오늘 방문자 수
   const todayCount = await prisma.visitorCount.findUnique({ where: { date: today } })
+  // 어제 방문자 수
+  const yesterdayCount = await prisma.visitorCount.findUnique({ where: { date: yesterday } })
   // 이번 주 방문자 수
   const weekCounts = await prisma.visitorCount.findMany({ where: { date: { gte: weekStart } } })
   const weekTotal = weekCounts.reduce((sum: number, v: { count: number }) => sum + v.count, 0)
@@ -55,6 +73,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     today: todayCount?.count || 0,
+    yesterday: yesterdayCount?.count || 0,
     week: weekTotal,
     month: monthTotal,
     total,

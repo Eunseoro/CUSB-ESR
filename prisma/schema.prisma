@@ -144,6 +144,25 @@ model MRMemo {
   @@map("mr_memo")
 }
 
+model CollaborationMemo {
+  id          String   @id @default(cuid())
+  target      String   // 대상 (제작자, 유할매, 할동부 등)
+  content     String   // 메모 내용
+  status      String   @default("pending") // pending, approved, rejected
+  color       String   @default("yellow") // yellow, green, red
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  comments    CollaborationMemoComment[]
+}
+
+model CollaborationMemoComment {
+  id        String   @id @default(cuid())
+  memoId    String
+  content   String
+  createdAt DateTime @default(now())
+  memo      CollaborationMemo @relation(fields: [memoId], references: [id], onDelete: Cascade)
+}
+
 enum BgmGenre {
   INST
   K_POP
