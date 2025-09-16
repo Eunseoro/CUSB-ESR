@@ -4,7 +4,6 @@ import { prisma } from '@/lib/prisma'
 import { getKoreanTodayDate, getKoreanWeekStartDate, getKoreanMonthStartDate } from '@/lib/timezone'
 
 // 관리자 인증 헤더
-const ADMIN_HEADER = 'x-admin-auth'
 
 // 방문 시: 오늘 카운트 upsert
 export async function POST() {

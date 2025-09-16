@@ -56,8 +56,8 @@ export default function NewsongPage() {
   // 신곡 탭 진입 시 정렬을 최신순으로 강제
   useEffect(() => {
     // SongList 내부에 setSort가 있으면 ref로 접근
-    if (songListRef.current && (songListRef.current as any).setSort) {
-      (songListRef.current as any).setSort('latest')
+    if (songListRef.current && 'setSort' in songListRef.current) {
+      (songListRef.current as { setSort: (sort: string) => void }).setSort('latest')
     }
   }, [])
 

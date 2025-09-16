@@ -383,7 +383,17 @@ export function ExpandedPlayer({
   }
 
   // 장르 목록
-  const genres: BgmGenre[] = ['INST', 'K-POP', 'J-POP', 'POP', '탑골가요', 'ETC']
+  const genres: BgmGenre[] = ['INST', 'K_POP', 'J_POP', 'POP', 'TOPGOL', 'ETC']
+  
+  // 장르 표시명 매핑
+  const genreLabels: { [key in BgmGenre]: string } = {
+    'INST': 'Inst.',
+    'K_POP': 'K-POP',
+    'J_POP': 'J-POP',
+    'POP': 'POP',
+    'TOPGOL': '탑골가요',
+    'ETC': 'ETC'
+  }
 
   return (
     <>
@@ -440,7 +450,7 @@ export function ExpandedPlayer({
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {genre}
+                  {genreLabels[genre]}
                 </button>
               ))}
             </div>

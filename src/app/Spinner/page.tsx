@@ -32,14 +32,11 @@ export default function SpinnerPage() {
   const [initialSpeed, setInitialSpeed] = useState(0); // 감속 시작 시의 속도
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bufferCanvasRef = useRef<HTMLCanvasElement | null>(null); // 버퍼용
-  const animRef = useRef<number | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
   // 전체 count 합
   const totalCount = items.reduce((sum, item) => sum + item.count, 0);
   const [isMobile, setIsMobile] = useState(false);
-  const [spinStartTime, setSpinStartTime] = useState<number | null>(null);
-  const [spinTarget, setSpinTarget] = useState<number | null>(null);
   const [history, setHistory] = useState<SpinnerHistoryItem[]>([]);
   useEffect(() => {
     const checkMobile = () => {
@@ -110,17 +107,17 @@ export default function SpinnerPage() {
     if (e.key === 'Enter') handleAdd();
   };
 
-  // 항목별 각도 범위 계산 함수
-  function getAngleRanges(items: Item[], totalCount: number) {
-    const arc = 2 * Math.PI / totalCount;
-    let acc = 0;
-    return items.map(item => {
-      const start = acc * arc;
-      const end = (acc + item.count) * arc;
-      acc += item.count;
-      return { start, end };
-    });
-  }
+  // 항목별 각도 범위 계산 함수 (사용하지 않음)
+  // function getAngleRanges(items: Item[], totalCount: number) {
+  //   const arc = 2 * Math.PI / totalCount;
+  //   let acc = 0;
+  //   return items.map(item => {
+  //     const start = acc * arc;
+  //     const end = (acc + item.count) * arc;
+  //     acc += item.count;
+  //     return { start, end };
+  //   });
+  // }
 
   // 빠른 무한 회전 시작
   const handleSpin = () => {
@@ -153,10 +150,9 @@ export default function SpinnerPage() {
       const duration = 11300;
       const start = stopStartTime;
       const initSpeed = initialSpeed;
-      let lastTimestamp = start;
       const animate = (timestamp: number) => {
         const elapsed = timestamp - start;
-        let t = Math.min(elapsed / duration, 1);
+        const t = Math.min(elapsed / duration, 1);
         // ease-out: 속도가 점점 줄어듦
         const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3);
         const currentSpeed = initSpeed * (1 - easeOutCubic(t));
@@ -285,7 +281,7 @@ export default function SpinnerPage() {
     let acc = 0;
     // 12시 방향이 0도이므로, angle을 시계방향으로 회전한 만큼 보정
     // 실제 12시 방향에 오는 각도는 -angle (시계방향 회전)
-    let pointerAngle = ((-angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    const pointerAngle = ((-angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
     for (let i = 0; i < items.length; i++) {
       const start = (acc / total) * 2 * Math.PI;
       const end = ((acc + items[i].count) / total) * 2 * Math.PI;

@@ -27,6 +27,7 @@ model Song {
   category         String
   isMr             Boolean    @default(false)
   likes            SongLike[]
+  scoreImages      ScoreImage[]
 
   @@index([category])
   @@index([createdAt])
@@ -145,21 +146,21 @@ model MRMemo {
 }
 
 model CollaborationMemo {
-  id          String   @id @default(cuid())
-  target      String   // 대상 (제작자, 유할매, 할동부 등)
-  content     String   // 메모 내용
-  status      String   @default("pending") // pending, approved, rejected
-  color       String   @default("yellow") // yellow, green, red
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  comments    CollaborationMemoComment[]
+  id        String                     @id @default(cuid())
+  target    String
+  content   String
+  status    String                     @default("pending")
+  color     String                     @default("yellow")
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
+  comments  CollaborationMemoComment[]
 }
 
 model CollaborationMemoComment {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   memoId    String
   content   String
-  createdAt DateTime @default(now())
+  createdAt DateTime          @default(now())
   memo      CollaborationMemo @relation(fields: [memoId], references: [id], onDelete: Cascade)
 }
 
@@ -170,4 +171,17 @@ enum BgmGenre {
   POP
   ETC
   TOPGOL
+}
+
+model ScoreImage {
+  id        String   @id @default(cuid())
+  songId    String
+  imageUrl  String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@index([songId])
+  @@index([order])
 }

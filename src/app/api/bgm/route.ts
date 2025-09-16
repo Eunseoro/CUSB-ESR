@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { BgmGenre } from '@prisma/client'
+import { BgmTrack } from '@/types/bgm'
 
 // YouTube URL에서 비디오 ID 추출
 function extractVideoId(url: string): string | null {
@@ -36,10 +37,11 @@ function convertPrismaGenreToClient(genre: string): string {
   
   // 특별한 변환 규칙
   if (genreString === 'TOPGOL') {
-    return '탑골가요'
+    return 'TOPGOL'
   }
   
-  return genreString.replace('_', '-')
+  // 언더스코어를 그대로 유지 (클라이언트에서도 언더스코어 사용)
+  return genreString
 }
 
 // YouTube API에서 비디오 정보 가져오기 (API 키가 있을 때만)
@@ -107,7 +109,7 @@ export async function GET() {
     })
 
     // 장르별로 그룹화 (클라이언트 타입으로 변환)
-    const library: { [genre: string]: any[] } = {}
+    const library: { [genre: string]: BgmTrack[] } = {}
     bgmTracks.forEach((track) => {
       const clientGenre = convertPrismaGenreToClient(track.genre)
       if (!library[clientGenre]) {
@@ -115,7 +117,7 @@ export async function GET() {
       }
       library[clientGenre].push({
         ...track,
-        genre: clientGenre
+        genre: clientGenre as BgmGenre
       })
     })
 
@@ -123,8 +125,6 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching BGM library:', error)
     return NextResponse.json({ error: 'Failed to fetch BGM library' }, { status: 500 })
-  } finally {
-    await prisma.$disconnect()
   }
 }
 

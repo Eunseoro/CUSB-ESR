@@ -1,16 +1,18 @@
 // BGM 관련 타입 정의
 export interface BgmTrack {
   id: string
-  title?: string              // 자동 추출 또는 수동 입력
+  title?: string | null       // 자동 추출 또는 수동 입력
   videoUrl: string
   genre: BgmGenre
   tags: string[]              // 태그 배열
-  duration?: number
-  thumbnail?: string
+  duration?: number | null
+  thumbnail?: string | null
   createdAt: Date
+  updatedAt: Date
+  order: number
 }
 
-export type BgmGenre = 'INST' | 'K-POP' | 'J-POP' | 'POP' | '탑골가요' | 'ETC'
+export type BgmGenre = 'INST' | 'K_POP' | 'J_POP' | 'POP' | 'TOPGOL' | 'ETC'
 
 // 태그 타입 정의
 export type BgmTag = '신나는' | '잔잔한' | '멋있는' | '감성적인' | '재밌는' | '애니메이션'

@@ -3,10 +3,9 @@ import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
-  connectionTimer: NodeJS.Timeout | undefined
 }
 
-// 무료 플랜 최적화: 연결 풀 최소화 설정
+// 단순한 Prisma 설정
 const prismaConfig = {
   log: ['error'] as any,
   errorFormat: (process.env.NODE_ENV === 'production' ? 'minimal' : 'pretty') as any,
@@ -21,7 +20,7 @@ const prismaConfig = {
 let prisma: PrismaClient
 
 if (process.env.NODE_ENV === 'production') {
-  // 프로덕션: 매번 새 인스턴스 생성 (연결 유지 최소화)
+  // 프로덕션: 매번 새 인스턴스 생성
   prisma = new PrismaClient(prismaConfig)
 } else {
   // 개발: 전역 인스턴스 재사용
@@ -31,79 +30,58 @@ if (process.env.NODE_ENV === 'production') {
   prisma = globalForPrisma.prisma
 }
 
-// 연결 상태 관리 (전역 접근 가능)
-let isConnected = false
-
-// 연결 상태를 외부에서 수정할 수 있는 함수
-export function setConnectionStatus(status: boolean) {
-  isConnected = status
-}
-
-export function getConnectionStatus() {
-  return isConnected
-}
-let connectionTimer: NodeJS.Timeout | null = null
+// 단순한 연결 관리
+let lastUsed = Date.now()
+let disconnectTimer: NodeJS.Timeout | null = null
 
 // 5분 후 자동 연결 해제
-const CONNECTION_TIMEOUT = 5 * 60 * 1000 // 5분
+const DISCONNECT_DELAY = 5 * 60 * 1000 // 5분
 
-function resetConnectionTimer() {
+function scheduleDisconnect() {
   // 기존 타이머 클리어
-  if (connectionTimer) {
-    clearTimeout(connectionTimer)
+  if (disconnectTimer) {
+    clearTimeout(disconnectTimer)
   }
   
-  // 새 타이머 설정 (5분 후 연결 해제)
-  connectionTimer = setTimeout(async () => {
+  // 새 타이머 설정
+  disconnectTimer = setTimeout(async () => {
     try {
       await prisma.$disconnect()
-      isConnected = false
       console.log('5분 비활성으로 인한 데이터베이스 연결 해제')
     } catch (error) {
       console.error('자동 연결 해제 실패:', error)
     }
-  }, CONNECTION_TIMEOUT)
+  }, DISCONNECT_DELAY)
 }
 
-// 무료 플랜 최적화: 5분간 연결 유지 후 자동 해제
+// 연결 보장 함수
 export async function ensureConnection() {
   try {
-    // 연결이 끊어져 있으면 재연결
-    if (!isConnected) {
-      await prisma.$connect()
-      isConnected = true
-      console.log('데이터베이스 연결됨')
-    }
+    // 마지막 사용 시간 업데이트
+    lastUsed = Date.now()
     
-    // 타이머 리셋 (사용 중이므로 5분 연장)
-    resetConnectionTimer()
+    // 연결 해제 타이머 리셋
+    scheduleDisconnect()
     
     return prisma
   } catch (error) {
-    console.error('Prisma 데이터베이스 연결 실패:', error)
-    isConnected = false
+    console.error('데이터베이스 연결 실패:', error)
     throw error
   }
 }
 
-// 수동 연결 해제 함수
+// 수동 연결 해제
 export async function disconnectPrisma() {
   try {
-    // 타이머 클리어
-    if (connectionTimer) {
-      clearTimeout(connectionTimer)
-      connectionTimer = null
+    if (disconnectTimer) {
+      clearTimeout(disconnectTimer)
+      disconnectTimer = null
     }
-    
     await prisma.$disconnect()
-    isConnected = false
     console.log('데이터베이스 연결 해제됨')
   } catch (error) {
     console.error('데이터베이스 연결 해제 실패:', error)
   }
 }
 
-export { prisma } 
-
-// PinnedGuestbook 모델이 인식되지 않는 경우, 아래 명령어로 prisma client를 재생성하세요:
-// npx prisma generate --schema=prisma/schema.prisma 
+export { prisma }

@@ -1,6 +1,6 @@
 // 협업 메모 API: 메모 생성, 조회, 수정, 삭제
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma, setConnectionStatus } from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 
 // 메모 목록 조회
 export async function GET() {
@@ -15,14 +15,10 @@ export async function GET() {
     })
     
     return NextResponse.json(memos)
-  } catch (error) {
-    console.error('메모 조회 오류:', error)
-    
-    // 에러 발생 시 연결 상태 리셋
-    setConnectionStatus(false)
-    
-    return NextResponse.json({ error: '메모 조회에 실패했습니다.' }, { status: 500 })
-  }
+              } catch (error) {
+                console.error('메모 조회 오류:', error)
+                return NextResponse.json({ error: '메모 조회에 실패했습니다.' }, { status: 500 })
+              }
 }
 
 // 새 메모 생성
@@ -44,12 +40,8 @@ export async function POST(req: NextRequest) {
     })
     
     return NextResponse.json(memo)
-  } catch (error) {
-    console.error('메모 생성 오류:', error)
-    
-    // 에러 발생 시 연결 상태 리셋
-    setConnectionStatus(false)
-    
-    return NextResponse.json({ error: '메모 생성에 실패했습니다.' }, { status: 500 })
-  }
+              } catch (error) {
+                console.error('메모 생성 오류:', error)
+                return NextResponse.json({ error: '메모 생성에 실패했습니다.' }, { status: 500 })
+              }
 }

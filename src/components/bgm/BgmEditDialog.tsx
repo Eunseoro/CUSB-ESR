@@ -41,10 +41,10 @@ export function BgmEditDialog({
   // BGM 장르 옵션
   const bgmGenres: { value: BgmGenre; label: string }[] = [
     { value: 'INST', label: 'Inst.' },
-    { value: 'K-POP', label: 'K-POP' },
-    { value: 'J-POP', label: 'J-POP' },
+    { value: 'K_POP', label: 'K-POP' },
+    { value: 'J_POP', label: 'J-POP' },
     { value: 'POP', label: 'POP' },
-    { value: '탑골가요', label: '탑골가요' },
+    { value: 'TOPGOL', label: '탑골가요' },
     { value: 'ETC', label: 'ETC' }
   ]
 

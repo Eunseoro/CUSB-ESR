@@ -5,7 +5,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 // Supabase 클라이언트를 안전하게 초기화
-let supabase: any = null
+let supabase: ReturnType<typeof createClient> | null = null
 
 try {
   if (!supabaseUrl) {

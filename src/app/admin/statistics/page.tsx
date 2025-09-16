@@ -4,8 +4,6 @@ import { useEffect, useState, Suspense } from 'react'
 import { CalendarDays, BarChart2, Users, Hash, Divide, Shield, Clock, Calendar as CalendarIcon } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { CollaborationMemo } from '@/components/collaboration-memo'
 import { Calendar } from '@/components/calendar'
 
@@ -119,7 +117,7 @@ function VisitorStatisticsContent() {
       } else {
         setDateQueryResult(data)
       }
-    } catch (e) {
+    } catch {
       setError('날짜별 조회에 실패했습니다.')
     } finally {
       setDateQueryLoading(false)

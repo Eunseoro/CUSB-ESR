@@ -158,13 +158,82 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
                     </span>
                   </div>
                 </div>
-                {/* URL 스위치: 우상단 */}
-                {song.videoUrl2 && (
-                  <div className="flex flex-col items-center gap-1 border border-gray-300 rounded-md p-2 bg-white/70 dark:bg-[#171717] shadow-sm">
-                    <span className="text-xs font-semibold text-black dark:text-white">Cover</span>
-                    <Switch checked={useAltUrl} onCheckedChange={setUseAltUrl} />
-                  </div>
-                )}
+                {/* URL 스위치와 그림일기 버튼: 우상단 */}
+                <div className="flex items-center gap-2">
+                  {/* 그림일기 버튼 */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        if (song) {
+                          // 저장된 창 위치와 크기 불러오기
+                          const savedPosition = localStorage.getItem('scoreWindowPosition')
+                          let windowFeatures = 'width=1600,height=1024,scrollbars=yes,resizable=yes'
+                          
+                          if (savedPosition) {
+                            try {
+                              const { x, y, width, height } = JSON.parse(savedPosition)
+                              windowFeatures = `width=${width},height=${height},left=${x},top=${y},scrollbars=yes,resizable=yes`
+                            } catch (error) {
+                              console.warn('저장된 창 위치 정보를 불러올 수 없습니다:', error)
+                            }
+                          }
+                          
+                          const newWindow = window.open(
+                            `/score-upload?songId=${song.id}&popup=true`,
+                            'scoreUpload',
+                            windowFeatures
+                          )
+                          
+                          // 창이 닫힐 때 위치와 크기 저장
+                          if (newWindow) {
+                            const savePosition = () => {
+                              try {
+                                const position = {
+                                  x: newWindow.screenX,
+                                  y: newWindow.screenY,
+                                  width: newWindow.outerWidth,
+                                  height: newWindow.outerHeight
+                                }
+                                localStorage.setItem('scoreWindowPosition', JSON.stringify(position))
+                              } catch (error) {
+                                console.warn('창 위치 정보를 저장할 수 없습니다:', error)
+                              }
+                            }
+                            
+                            // 창이 닫힐 때 위치 저장
+                            const checkClosed = setInterval(() => {
+                              if (newWindow.closed) {
+                                clearInterval(checkClosed)
+                                savePosition()
+                              }
+                            }, 1000)
+                            
+                            // 창 크기 변경 시 위치 저장 (디바운스)
+                            let resizeTimeout: NodeJS.Timeout
+                            const handleResize = () => {
+                              clearTimeout(resizeTimeout)
+                              resizeTimeout = setTimeout(savePosition, 500)
+                            }
+                            
+                            newWindow.addEventListener('resize', handleResize)
+                            newWindow.addEventListener('move', handleResize)
+                          }
+                        }
+                      }}
+                      className="flex flex-col items-center gap-1 border border-gray-300 rounded-md p-0 bg-white/70 dark:bg-[#171717] shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors h-15 w-15 justify-center"
+                    >
+                      <span className="text-xs font-semibold text-black dark:text-white">그림일기</span>
+                    </button>
+                  )}
+                  
+                  {/* URL 스위치 */}
+                  {song.videoUrl2 && (
+                    <div className="flex flex-col items-center gap-1 border border-gray-300 rounded-md p-2 bg-white/70 dark:bg-[#171717] shadow-sm">
+                      <span className="text-xs font-semibold text-black dark:text-white">Cover</span>
+                      <Switch checked={useAltUrl} onCheckedChange={setUseAltUrl} />
+                    </div>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -239,6 +308,7 @@ export function VideoPlayer({ song, onSongUpdate, onSongDelete }: VideoPlayerPro
           </Card>
         )}
       </div>
+      
     </div>
   )
 } 

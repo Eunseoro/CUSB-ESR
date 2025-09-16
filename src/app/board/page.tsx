@@ -82,7 +82,7 @@ export default function BoardPage() {
     } finally {
       setLoading(false)
     }
-  }, []) // loading 의존성 제거
+  }, [loading]) // loading 의존성 추가
 
   const fetchPinned = useCallback(async () => {
     try {
@@ -98,7 +98,7 @@ export default function BoardPage() {
     setUserKey(getUserKey())
     fetchList(1, true)
     fetchPinned()
-  }, []) // 의존성 배열을 빈 배열로 변경하여 한 번만 실행
+  }, [fetchList, fetchPinned]) // 의존성 추가
 
   // 무한스크롤 감지
   useEffect(() => {
@@ -140,7 +140,7 @@ export default function BoardPage() {
       setCurrentPage(1)
       setHasMore(true)
       fetchList(1, true)
-    } catch (e) {
+    } catch {
       // 에러 처리 필요시 추가
     }
   }
@@ -155,7 +155,7 @@ export default function BoardPage() {
       setCurrentPage(1)
       setHasMore(true)
       fetchList(1, true)
-    } catch (e) {
+    } catch {
       setDeletingId(null);
       // 에러 처리 필요시 추가
     }

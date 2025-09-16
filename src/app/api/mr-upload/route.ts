@@ -65,6 +65,10 @@ export async function POST(req: NextRequest) {
     console.log('MR 파일 업로드 시작:', { songId, fileExtension, fileSize: file.size })
     
     // Supabase에 업로드 (관리자 클라이언트 사용)
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized')
+    }
+    
     const { data, error } = await supabaseAdmin.storage
       .from('mr-files')
       .upload(`${songId}.${fileExtension}`, file, {
@@ -107,6 +111,10 @@ export async function DELETE(req: NextRequest) {
     let existingFile = null
     
     for (const ext of extensions) {
+      if (!supabaseAdmin) {
+        throw new Error('Supabase admin client not initialized')
+      }
+      
       const { data, error } = await supabaseAdmin.storage
         .from('mr-files')
         .list('', {
@@ -124,6 +132,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     // 실제 파일 삭제
+    if (!supabaseAdmin) {
+      throw new Error('Supabase admin client not initialized')
+    }
+    
     const { error: deleteError } = await supabaseAdmin.storage
       .from('mr-files')
       .remove([existingFile])

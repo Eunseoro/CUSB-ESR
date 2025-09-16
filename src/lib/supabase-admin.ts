@@ -5,7 +5,7 @@ const supabaseUrl = process.env.SUPA__SUPABASE_URL || process.env.NEXT_PUBLIC_SU
 const supabaseServiceKey = process.env.SUPA__SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // 환경변수 검증 및 안전한 클라이언트 초기화
-let supabaseAdmin: any = null
+let supabaseAdmin: ReturnType<typeof createClient> | null = null
 
 if (supabaseUrl && supabaseServiceKey) {
   try {
