@@ -1,6 +1,6 @@
 // 이 파일은 방명록(Guestbook) API 라우트입니다.
 import { NextRequest, NextResponse } from 'next/server'
-import { ensureConnection } from '@/lib/prisma'
+import { ensureConnection, setConnectionStatus } from '@/lib/prisma'
 
 // Next.js 15에서 bodyParser 설정
 export const runtime = 'nodejs';
@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Board API 에러:', error)
     
+    // 에러 발생 시 연결 상태 리셋
+    setConnectionStatus(false)
+    
     // Prisma 연결 에러인 경우 특별 처리
     if (error instanceof Error && error.message.includes('Engine is not yet connected')) {
       console.error('Prisma 엔진 연결 실패 - 재시도 필요')
@@ -50,9 +53,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '작성자, 내용, userKey는 필수입니다.' }, { status: 400 })
     }
     const entry = await prisma.guestbook.create({ data: { author, content, userKey } })
+    
     return NextResponse.json(entry)
   } catch (error) {
     console.error('Board POST API 에러:', error)
+    
+    // 에러 발생 시 연결 상태 리셋
+    setConnectionStatus(false)
     
     // Prisma 연결 에러인 경우 특별 처리
     if (error instanceof Error && error.message.includes('Engine is not yet connected')) {
