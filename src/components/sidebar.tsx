@@ -184,7 +184,7 @@ export function Sidebar() {
                 >
                   <ChartNoAxesColumn className="h-5 w-5 shrink-0" />
                   <span className="whitespace-nowrap transition-opacity md:opacity-0 md:group-hover/sidebar:opacity-100">
-                    통계
+                    관리 도구
                   </span>
                 </Link>
               )}

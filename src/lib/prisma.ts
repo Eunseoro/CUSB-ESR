@@ -54,7 +54,7 @@ function scheduleDisconnect() {
   }, DISCONNECT_DELAY)
 }
 
-// 연결 보장 함수
+// 연결 보장 함수 - 단순화
 export async function ensureConnection() {
   try {
     // 마지막 사용 시간 업데이트
@@ -63,6 +63,7 @@ export async function ensureConnection() {
     // 연결 해제 타이머 리셋
     scheduleDisconnect()
     
+    // 단순히 prisma 인스턴스 반환 (연결은 필요할 때 자동으로 이루어짐)
     return prisma
   } catch (error) {
     console.error('데이터베이스 연결 실패:', error)

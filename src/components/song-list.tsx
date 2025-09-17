@@ -298,9 +298,9 @@ const SearchAndSortControls = ({ search, setSearch, sort, onSortChange }: Search
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="my-likes">💕나의 좋아요</SelectItem>
+            <SelectItem value="popular">💖 인기순</SelectItem>
             <SelectItem value="artist">아티스트순</SelectItem>
             <SelectItem value="title">제목순</SelectItem>
-            <SelectItem value="popular">💖 인기순</SelectItem>
             <SelectItem value="latest">최신순</SelectItem>
             <SelectItem value="oldest">과거순</SelectItem>
         <SelectItem value="first-verse">
