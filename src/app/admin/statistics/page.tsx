@@ -233,7 +233,10 @@ function VisitorStatisticsContent() {
       {/* 협업 메모 섹션 */}
       <Card>
         <CardHeader>
-          <CardTitle>협업 메모</CardTitle>
+          <CardTitle className="flex items-center gap-3">
+            협업 메모
+            <span className="text-xs text-gray-500 font-normal">긴급 사항은 디스코드 DM으로 요청주세요. 1~2일 내 처리하겠습니다. (ex. 노래 리스트가 없어졌어요, MR이 재생되지 않아요 등)</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <CollaborationMemo />

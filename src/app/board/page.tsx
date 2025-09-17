@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Board } from '@/types/board'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { fetchBoardList, addBoard, deleteBoard, getPinnedGuestbookIds, setPinnedGuestbookIds } from '@/lib/board-api'
+import { fetchBoardList, addBoard, deleteBoard, getPinnedGuestbookIds, setPinnedGuestbookIds, fetchBoardById } from '@/lib/board-api'
 import { formatDate } from '@/lib/song-utils'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 
@@ -32,6 +32,7 @@ const GroupDivider = ({ label }: { label: string }) => (
 export default function BoardPage() {
   const { isAdmin } = useAdminAuth()
   const [list, setList] = useState<Board[]>([])
+  const [pinnedBoards, setPinnedBoards] = useState<Board[]>([]) // pinned 게시물을 별도로 관리
   const [author, setAuthor] = useState('')
   const [content, setContent] = useState('')
   const [userKey, setUserKey] = useState('')
@@ -43,7 +44,7 @@ export default function BoardPage() {
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
 
-  const fetchList = useCallback(async (page: number = 1, isInitial: boolean = false, retryCount: number = 0) => {
+  const fetchList = async (page: number = 1, isInitial: boolean = false, retryCount: number = 0) => {
     if (loading) return
     
     setLoading(true)
@@ -51,10 +52,24 @@ export default function BoardPage() {
       const limit = 10 // 모든 페이지에서 10개씩 로드
       const data = await fetchBoardList(page, limit)
       
+      // 데이터가 없거나 빈 배열인 경우 처리
+      if (!data || data.length === 0) {
+        if (isInitial) {
+          setList([])
+        }
+        setHasMore(false)
+        return
+      }
+      
       if (isInitial) {
-        setList(data)
+        // 초기 로딩 시에는 pinned 게시물과 중복 제거
+        setList(prev => {
+          const existingIds = new Set(prev.map(item => item.id))
+          const newItems = data.filter(item => !existingIds.has(item.id))
+          return [...prev, ...newItems]
+        })
       } else {
-        // 중복 제거 로직 추가
+        // 무한스크롤 시 중복 제거 로직 추가 (일반 게시물만)
         setList(prev => {
           const existingIds = new Set(prev.map(item => item.id))
           const newItems = data.filter(item => !existingIds.has(item.id))
@@ -68,37 +83,87 @@ export default function BoardPage() {
     } catch (e) {
       console.error('게시물 로드 실패:', e)
       
-      // 재시도 로직 (최대 3회)
-      if (retryCount < 3) {
-        console.log(`재시도 중... (${retryCount + 1}/3)`)
+      // 재시도 로직 (최대 1회로 제한)
+      if (retryCount < 1) {
+        console.log(`재시도 중... (${retryCount + 1}/1)`)
         setTimeout(() => {
           fetchList(page, isInitial, retryCount + 1)
-        }, 1000 * (retryCount + 1)) // 1초, 2초, 3초 간격으로 재시도
+        }, 3000) // 3초 간격으로 재시도
         return
       }
       
       // 최대 재시도 횟수 초과 시 hasMore를 false로 설정하여 무한 로딩 방지
       setHasMore(false)
+      
+      // 초기 로딩 실패 시 빈 배열 설정
+      if (isInitial) {
+        setList([])
+      }
     } finally {
       setLoading(false)
     }
-  }, [loading]) // loading 의존성 추가
+  }
 
-  const fetchPinned = useCallback(async () => {
+  const fetchPinned = async (retryCount: number = 0) => {
     try {
       const ids = await getPinnedGuestbookIds()
+      
+      // ids가 없거나 빈 배열인 경우 처리
+      if (!ids || ids.length === 0) {
+        setPinnedIds([])
+        setPinnedBoards([])
+        return
+      }
+      
       setPinnedIds(ids)
+      
+      // pinned 게시물들을 개별적으로 로드하여 별도 상태에 저장
+      const pinnedBoards = await Promise.all(
+        ids.map(async (id) => {
+          try {
+            return await fetchBoardById(id)
+          } catch (error) {
+            console.error(`Pinned 게시물 ${id} 로드 실패:`, error)
+            return null
+          }
+        })
+      )
+      
+      const validPinnedBoards = pinnedBoards.filter(board => board !== null) as Board[]
+      setPinnedBoards(validPinnedBoards)
     } catch (e) {
       console.error('고정 게시물 로드 실패:', e)
+      
+      // 재시도 로직 (최대 1회로 제한)
+      if (retryCount < 1) {
+        console.log(`고정 게시물 재시도 중... (${retryCount + 1}/1)`)
+        setTimeout(() => {
+          fetchPinned(retryCount + 1)
+        }, 3000) // 3초 간격으로 재시도
+        return
+      }
+      
       setPinnedIds([])
+      setPinnedBoards([])
     }
-  }, [])
+  }
 
   useEffect(() => {
-    setUserKey(getUserKey())
-    fetchList(1, true)
-    fetchPinned()
-  }, [fetchList, fetchPinned]) // 의존성 추가
+    const initializeBoard = async () => {
+      try {
+        setUserKey(getUserKey())
+        
+        // pinned 게시물을 먼저 로드
+        await fetchPinned()
+        
+        // 그 다음 일반 게시물 로드 (pinned와 중복 제거)
+        await fetchList(1, true)
+      } catch (error) {
+        console.error('게시판 초기화 실패:', error)
+      }
+    }
+    initializeBoard()
+  }, []) // 의존성 제거
 
   // 무한스크롤 감지
   useEffect(() => {
@@ -127,21 +192,36 @@ export default function BoardPage() {
       newIds = pinnedIds.filter(x => x !== id)
     }
     await setPinnedGuestbookIds(newIds)
-    await fetchPinned() // 서버와 동기화
+    
+    // pinned 상태 업데이트
+    if (checked) {
+      // pinned 추가: 일반 게시물에서 찾아서 pinnedBoards에 추가
+      const boardToPin = list.find(item => item.id === id)
+      if (boardToPin) {
+        setPinnedBoards(prev => [...prev, boardToPin])
+      }
+    } else {
+      // pinned 제거: pinnedBoards에서 제거
+      setPinnedBoards(prev => prev.filter(item => item.id !== id))
+    }
+    
+    setPinnedIds(newIds)
   }
 
   async function handleSubmit() {
     if (!author.trim() || !content.trim()) return
     try {
-      await addBoard(author, content, userKey)
+      const newBoard = await addBoard(author, content, userKey)
+      
+      // 새 게시물이 pinned 게시물이 아닌 경우에만 일반 리스트에 추가
+      if (!pinnedIds.includes(newBoard.id)) {
+        setList(prev => [newBoard, ...prev])
+      }
+      
       setAuthor('')
       setContent('')
-      // 새 게시물 추가 후 전체 목록 새로고침
-      setCurrentPage(1)
-      setHasMore(true)
-      fetchList(1, true)
-    } catch {
-      // 에러 처리 필요시 추가
+    } catch (error) {
+      console.error('게시물 등록 실패:', error)
     }
   }
 
@@ -151,13 +231,22 @@ export default function BoardPage() {
     try {
       await deleteBoard(id, userKey)
       setDeletingId(null);
-      // 게시물 삭제 후 전체 목록 새로고침
-      setCurrentPage(1)
-      setHasMore(true)
-      fetchList(1, true)
-    } catch {
+      
+      // pinned 게시물에서도 제거
+      setPinnedBoards(prev => prev.filter(item => item.id !== id))
+      setPinnedIds(prev => prev.filter(pid => pid !== id))
+      
+      // 일반 게시물에서도 제거
+      setList(prev => prev.filter(item => item.id !== id))
+      
+      // 삭제된 게시물이 pinned였다면 서버의 pinned 목록도 업데이트
+      if (pinnedIds.includes(id)) {
+        const updatedPinnedIds = pinnedIds.filter(pid => pid !== id)
+        await setPinnedGuestbookIds(updatedPinnedIds)
+      }
+    } catch (error) {
       setDeletingId(null);
-      // 에러 처리 필요시 추가
+      console.error('게시물 삭제 실패:', error)
     }
   }
 
@@ -189,61 +278,57 @@ export default function BoardPage() {
       </Card>
       <div className="space-y-2 w-full mb-8">
         {/* 고정된 게시글 먼저 렌더링 */}
-        {pinnedIds.length > 0 && (
+        {pinnedBoards.length > 0 && (
           <>
             <GroupDivider label={"고정됨"} />
-            {pinnedIds.map(pid => {
-              const pinned = list.find(item => item.id === pid)
-              if (!pinned) return null
-              return (
-                <div key={`pinned-${pinned.id}`}>
-                  <Card
-                    className="w-full overflow-hidden animate-pulse-glow border-2 border-indigo-400 shadow-lg"
-                  >
-                    <CardHeader className="pb-0 pt-2 -my-5">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base leading-tight flex items-center gap-1 min-w-0 flex-1">
-                          {pinned.author}
-                        </CardTitle>
-                        <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap flex-shrink-0">{formatDate(pinned.createdAt)}</span>
+            {pinnedBoards.map(pinned => (
+              <div key={`pinned-${pinned.id}`}>
+                <Card
+                  className="w-full overflow-hidden animate-pulse-glow border-2 border-indigo-400 shadow-lg"
+                >
+                  <CardHeader className="pb-0 pt-2 -my-5">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base leading-tight flex items-center gap-1 min-w-0 flex-1">
+                        {pinned.author}
+                      </CardTitle>
+                      <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap flex-shrink-0">{formatDate(pinned.createdAt)}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-2 px-2 md:px-6 pb-0 my-[-6px]">
+                    <div className="flex w-full items-start gap-2">
+                      <div className="flex-1 text-sm whitespace-pre-line mb-0 min-h-[32px] overflow-hidden">
+                        {pinned.content}
                       </div>
-                    </CardHeader>
-                    <CardContent className="p-2 px-2 md:px-6 pb-0 my-[-6px]">
-                      <div className="flex w-full items-start gap-2">
-                        <div className="flex-1 text-sm whitespace-pre-line mb-0 min-h-[32px] overflow-hidden">
-                          {pinned.content}
-                        </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          {/* 고정 체크박스 (관리자만) */}
-                          {isAdmin && (
-                            <input
-                              type="checkbox"
-                              checked={pinnedIds.includes(pinned.id)}
-                              onChange={e => handlePin(pinned.id, e.target.checked)}
-                              className="accent-purple-500 cursor-pointer"
-                              style={{ width: '18px', height: '18px' }}
-                              title="상단 고정 해제"
-                            />
-                          )}
-                          {(isAdmin || pinned.userKey === userKey) && (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="rounded-full px-2 md:px-4 text-xs"
-                              title="삭제"
-                              onClick={e => {e.stopPropagation(); handleDelete(pinned.id)}}
-                              disabled={deletingId === pinned.id}
-                            >
-                              {deletingId === pinned.id ? '삭제 중...' : '삭제'}
-                            </Button>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* 고정 체크박스 (관리자만) */}
+                        {isAdmin && (
+                          <input
+                            type="checkbox"
+                            checked={pinnedIds.includes(pinned.id)}
+                            onChange={e => handlePin(pinned.id, e.target.checked)}
+                            className="accent-purple-500 cursor-pointer"
+                            style={{ width: '18px', height: '18px' }}
+                            title="상단 고정 해제"
+                          />
+                        )}
+                        {(isAdmin || pinned.userKey === userKey) && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="rounded-full px-2 md:px-4 text-xs"
+                            title="삭제"
+                            onClick={e => {e.stopPropagation(); handleDelete(pinned.id)}}
+                            disabled={deletingId === pinned.id}
+                          >
+                            {deletingId === pinned.id ? '삭제 중...' : '삭제'}
+                          </Button>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )
-            })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
           </>
         )}
         {/* 나머지 게시글 */}

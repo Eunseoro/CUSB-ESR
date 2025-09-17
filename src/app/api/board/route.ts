@@ -7,8 +7,9 @@ export const runtime = 'nodejs';
 export const maxDuration = 300; // 5분 타임아웃
 
 export async function GET(request: NextRequest) {
+  let prisma
   try {
-    const prisma = await ensureConnection()
+    prisma = await ensureConnection()
     
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
@@ -23,21 +24,30 @@ export async function GET(request: NextRequest) {
     })
     
     return NextResponse.json(list)
-              } catch (error) {
-                console.error('Board API 에러:', error)
+  } catch (error) {
+    console.error('Board API 에러:', error)
 
-                // Prisma 연결 에러인 경우 특별 처리
-                if (error instanceof Error && error.message.includes('Engine is not yet connected')) {
-                  console.error('Prisma 엔진 연결 실패 - 재시도 필요')
-                  return NextResponse.json({
-                    error: '데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해주세요.'
-                  }, { status: 503 })
-                }
+    // Prisma 연결 에러인 경우 특별 처리
+    if (error instanceof Error && (
+      error.message.includes('Engine is not yet connected') || 
+      error.message.includes('Response from the Engine was empty') ||
+      error.message.includes('Invalid `prisma.guestbook.findMany()` invocation')
+    )) {
+      console.error('Prisma 엔진 연결 실패 - 빈 배열 반환')
+      return NextResponse.json([]) // 빈 배열 반환으로 무한 재시도 방지
+    }
 
-                return NextResponse.json({
-                  error: '게시물을 불러오는데 실패했습니다.'
-                }, { status: 500 })
-              }
+    return NextResponse.json([]) // 에러 시 빈 배열 반환
+  } finally {
+    // 연결 정리 (프로덕션이 아닌 경우에만)
+    if (prisma && process.env.NODE_ENV !== 'production') {
+      try {
+        await prisma.$disconnect()
+      } catch (e) {
+        // 연결 해제 실패는 무시
+      }
+    }
+  }
 }
 
 export async function POST(req: NextRequest) {

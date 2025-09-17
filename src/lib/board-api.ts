@@ -32,10 +32,18 @@ export async function deleteBoard(id: string, userKey: string) {
 
 // 상단 고정 Guestbook id 목록 조회
 export async function getPinnedGuestbookIds(): Promise<string[]> {
-  const res = await fetch('/api/board/pinned')
-  if (!res.ok) return []
-  const data = await res.json()
-  return data.guestbookIds || []
+  try {
+    const res = await fetch('/api/board/pinned')
+    if (!res.ok) {
+      console.error('Pinned API 응답 실패:', res.status)
+      return []
+    }
+    const data = await res.json()
+    return data.guestbookIds || []
+  } catch (error) {
+    console.error('Pinned API 호출 실패:', error)
+    return []
+  }
 }
 
 // 상단 고정 Guestbook id 목록 설정 (관리자만)
@@ -46,4 +54,16 @@ export async function setPinnedGuestbookIds(guestbookIds: string[]): Promise<boo
     body: JSON.stringify({ guestbookIds })
   })
   return res.ok
+}
+
+// 특정 ID의 게시물 조회
+export async function fetchBoardById(id: string): Promise<Board | null> {
+  try {
+    const res = await fetch(`/api/board/${id}`)
+    if (!res.ok) return null
+    return res.json()
+  } catch (error) {
+    console.error('게시물 조회 실패:', error)
+    return null
+  }
 } 

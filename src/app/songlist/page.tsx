@@ -354,7 +354,7 @@ function SongListContent() {
                     <span className="text-green-600 text-2xl font-black">✓</span>
                   )}
                 </td>
-                <td className="px-6 py-1">
+                <td className="px-2 py-1">
                   <input
                     id={`artist-${request.id}`}
                     type="text"
@@ -404,7 +404,7 @@ function SongListContent() {
                   <span className="text-green-600 text-lg font-bold">✓</span>
                 )}
               </td>
-              <td className="px-6 py-1">
+              <td className="px-2 py-1">
                 <input
                   id="artist-title"
                   type="text"
@@ -430,14 +430,7 @@ function SongListContent() {
                 {requests.length + 1}
               </td>
               <td className="px-2 py-1">
-                <Button 
-                  variant={newIsNotice ? "default" : "outline"} 
-                  size="sm" 
-                  className="h-7 px-2 text-xs"
-                  onClick={() => setNewIsNotice(!newIsNotice)}
-                >
-                  {newIsNotice ? '완료' : '대기'}
-                </Button>
+                {/* 새 행에서는 대기 버튼 제거 */}
               </td>
             </tr>
           </tbody>
