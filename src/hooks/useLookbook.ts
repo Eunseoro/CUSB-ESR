@@ -89,7 +89,24 @@ export function useLookbook() {
     setLoading(true)
     try {
       const res = await fetch(`/api/lookbook?page=${page}&limit=10`)
-      const data = await res.json()
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+      
+      const text = await res.text()
+      if (!text) {
+        throw new Error('Empty response from server')
+      }
+      
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch (parseError) {
+        console.error('JSON 파싱 실패:', parseError)
+        console.error('응답 텍스트:', text)
+        throw new Error('Invalid JSON response from server')
+      }
       
       if (isInitial) {
         setPosts(data.posts || [])   
@@ -105,6 +122,10 @@ export function useLookbook() {
       setCurrentPage(page)
     } catch (error) {
       console.error('게시물 로드 실패:', error)
+      // 에러 발생 시 빈 배열로 초기화
+      if (isInitial) {
+        setPosts([])
+      }
     } finally {
       setLoading(false)
     }
