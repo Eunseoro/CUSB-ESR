@@ -121,7 +121,7 @@ export function MiniPlayer({
                         {playerState.currentTrack.tags.slice(0, 2).map((tag) => (
                           <span
                             key={tag}
-                            className={`inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium ${getBgmTagColor(tag)}`}
+                            className={`inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium ${getBgmTagColor(tag as any)}`}
                           >
                             {tag}
                           </span>

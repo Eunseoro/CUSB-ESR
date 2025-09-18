@@ -92,7 +92,16 @@ export function PostForm({
                 fileName: file.file.name,
                 order: file.order
               }))}
-              onItemsChange={onImageFilesChange}
+              onItemsChange={(items) => {
+                const updatedFiles = items.map(item => {
+                  const originalFile = imageFiles.find(f => f.id === item.id)
+                  return {
+                    ...originalFile!,
+                    order: item.order
+                  }
+                })
+                onImageFilesChange(updatedFiles)
+              }}
               onOrderChange={onImageOrderChange}
               onRemove={onImageRemove}
             />

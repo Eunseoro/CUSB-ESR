@@ -314,27 +314,13 @@ export function useLookbook() {
   }, [editImageFiles, editForm.files])
 
   // 이미지 파일 변경
-  const handleImageFilesChange = useCallback((newItems: { id: string; imageUrl: string; fileName?: string; order: number }[]) => {
-    const updatedFiles = newItems.map(item => {
-      const originalFile = imageFiles.find(f => f.id === item.id)
-      return {
-        ...originalFile!,
-        order: item.order
-      }
-    })
-    setImageFiles(updatedFiles)
-  }, [imageFiles])
+  const handleImageFilesChange = useCallback((newItems: ImageFile[]) => {
+    setImageFiles(newItems)
+  }, [])
 
-  const handleEditImageFilesChange = useCallback((newItems: { id: string; imageUrl: string; fileName?: string; order: number }[]) => {
-    const updatedFiles = newItems.map(item => {
-      const originalFile = editImageFiles.find(f => f.id === item.id)
-      return {
-        ...originalFile!,
-        order: item.order
-      }
-    })
-    setEditImageFiles(updatedFiles)
-  }, [editImageFiles])
+  const handleEditImageFilesChange = useCallback((newItems: ImageFile[]) => {
+    setEditImageFiles(newItems)
+  }, [])
 
   const handleEditExistingImagesChange = useCallback((newItems: { id: string; imageUrl: string; fileName?: string; order: number }[]) => {
     const updatedImages = newItems.map(item => ({

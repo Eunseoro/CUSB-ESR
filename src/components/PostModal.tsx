@@ -16,7 +16,7 @@ interface PostModalProps {
   onClose: () => void
   onEdit: (post: LookBookPost) => void
   onDelete: (postId: string) => void
-  onSave: (formData: { title: string; content: string; files: File[] }) => void
+  onSave: () => void
   editForm: {
     title: string
     content: string
@@ -123,7 +123,14 @@ export function PostModal({
                     fileName: `기존 이미지`,
                     order: img.order
                   }))}
-                  onItemsChange={onEditExistingImagesChange}
+                  onItemsChange={(items) => {
+                    const updatedImages = items.map(item => ({
+                      id: item.id,
+                      imageUrl: item.imageUrl,
+                      order: item.order
+                    }))
+                    onEditExistingImagesChange(updatedImages)
+                  }}
                   onOrderChange={onEditImageOrderChange}
                   onRemove={onEditImageRemove}
                 />
@@ -141,7 +148,16 @@ export function PostModal({
                     fileName: file.file.name,
                     order: file.order
                   }))}
-                  onItemsChange={onEditImageFilesChange}
+                  onItemsChange={(items) => {
+                    const updatedFiles = items.map(item => {
+                      const originalFile = editImageFiles.find(f => f.id === item.id)
+                      return {
+                        ...originalFile!,
+                        order: item.order
+                      }
+                    })
+                    onEditImageFilesChange(updatedFiles)
+                  }}
                   onOrderChange={onEditImageOrderChange}
                   onRemove={onEditImageRemove}
                 />
