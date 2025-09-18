@@ -13,7 +13,7 @@ import { useSearchParams } from 'next/navigation'
 
 export function Header() {
   const [dark, setDark] = useState<boolean>(false)
-  const { isAdmin, role, isStaff, isVisitor, refreshAdmin } = useAdminAuth();
+  const { isAdmin, isStaff, isVisitor, refreshAdmin } = useAdminAuth();
   const searchParams = useSearchParams()
   const isPopup = searchParams?.get('popup') === 'true'
 
@@ -67,7 +67,7 @@ export function Header() {
     // 선곡표 창을 더 넓게 설정 (현재 창 너비의 1.1배)
     const songListWidth = Math.floor(currentWidth * 1.1);
     
-    const newWindow = window.open(
+    window.open(
       '/songlist?popup=true',
       'songRequests',
       `width=${songListWidth},height=${currentHeight},left=${currentX},top=${currentY},scrollbars=yes,resizable=yes`

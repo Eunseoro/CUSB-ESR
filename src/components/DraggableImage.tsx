@@ -1,7 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
-import { LazyImage } from '@/components/LazyImage';
 import Image from 'next/image';
 
 interface DraggableImageProps {
@@ -22,7 +21,6 @@ export function DraggableImage({
   order,
   onOrderChange,
   onRemove,
-  isDragging = false,
   className = ""
 }: DraggableImageProps) {
   const {

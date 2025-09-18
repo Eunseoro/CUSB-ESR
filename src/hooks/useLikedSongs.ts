@@ -75,7 +75,7 @@ export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: 
     setLikedSongs(optimisticLikedSongs)
     
     // 스크롤 위치 저장 (my-likes 정렬일 때만)
-    const currentSort = (window as any).currentSort || ''
+    const currentSort = (window as { currentSort?: string }).currentSort || ''
     const shouldPreserveScroll = currentSort === 'my-likes'
     let savedScrollTop = 0
     if (shouldPreserveScroll && listRef?.current) {
@@ -201,7 +201,7 @@ export const useLikedSongs = (songs: Song[], setSongs: (songs: Song[] | ((prev: 
       })
       likeRequestTimeouts.current.clear()
     }
-  }, [likeRequestTimeouts])
+  }, [])
 
   return {
     likedSongs,

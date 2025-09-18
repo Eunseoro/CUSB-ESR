@@ -14,7 +14,7 @@ import { BgmTrack, BgmGenre, BgmTag } from '@/types/bgm'
 import { triggerSongListRefresh, triggerSongUpdate } from '@/lib/song-events'
 import { addSongApi, updateSongApi } from '@/lib/song-api'
 import { addBgmApi } from '@/lib/bgm-api'
-import { getCategoryLabel, FirstVerseIcon, HighDifficultyIcon, LoopStationIcon, MrIcon } from '@/lib/song-utils'
+import { FirstVerseIcon, HighDifficultyIcon, LoopStationIcon, MrIcon } from '@/lib/song-utils'
 import { TagSelector } from '@/components/ui/tag-selector'
 import { CategorySelector } from '@/components/ui/category-selector'
 

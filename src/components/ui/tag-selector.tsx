@@ -1,7 +1,7 @@
 // BGM 태그 선택 컴포넌트
 'use client'
 
-import { useState } from 'react'
+// useState는 사용하지 않으므로 제거
 import { BgmTag, BGM_TAGS } from '@/types/bgm'
 import { getBgmTagColor, getBgmTagUnselectedColor } from '@/lib/song-utils'
 

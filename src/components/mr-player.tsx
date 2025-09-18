@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { Play, Pause, Volume2, VolumeX, Music, Square } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Play, Pause, Volume2, VolumeX, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { getMRFileUrl, getMRMemo } from '@/lib/mr-api'
@@ -12,9 +12,8 @@ interface MRPlayerProps {
   refreshTrigger?: number
 }
 
-export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
+export function MRPlayer({ songId, refreshTrigger }: MRPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(1)
@@ -26,24 +25,7 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
 
-  // MR 파일 로드
-  useEffect(() => {
-    loadMRAudio()
-  }, [songId, refreshTrigger])
-
-  // 메모 로드 (별도 useEffect로 분리)
-  useEffect(() => {
-    loadMRMemo()
-  }, [songId, refreshTrigger])
-
-  // 컴포넌트 언마운트 시 cleanup
-  useEffect(() => {
-    return () => {
-      // Signed URL은 자동으로 만료되므로 별도 cleanup 불필요
-    }
-  }, [])
-
-  const loadMRAudio = async () => {
+  const loadMRAudio = useCallback(async () => {
     if (!songId) return
     
     console.log('MR 파일 로드 시작:', songId)
@@ -68,9 +50,9 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [songId])
 
-  const loadMRMemo = async () => {
+  const loadMRMemo = useCallback(async () => {
     if (!songId) return
     
     try {
@@ -80,7 +62,24 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
       console.error('메모 로드 실패:', error)
       setMemo(null)
     }
-  }
+  }, [songId])
+
+  // MR 파일 로드
+  useEffect(() => {
+    loadMRAudio()
+  }, [songId, refreshTrigger, loadMRAudio])
+
+  // 메모 로드 (별도 useEffect로 분리)
+  useEffect(() => {
+    loadMRMemo()
+  }, [songId, refreshTrigger, loadMRMemo])
+
+  // 컴포넌트 언마운트 시 cleanup
+  useEffect(() => {
+    return () => {
+      // Signed URL은 자동으로 만료되므로 별도 cleanup 불필요
+    }
+  }, [])
 
   // 오디오 이벤트 핸들러
   useEffect(() => {
@@ -130,12 +129,10 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
     if (isPlaying) {
       audio.pause()
       setIsPlaying(false)
-      setIsPaused(true)
     } else {
       try {
         await audio.play()
         setIsPlaying(true)
-        setIsPaused(false)
       } catch (error) {
         console.error('오디오 재생 실패:', error)
         alert('오디오 재생에 실패했습니다.')
@@ -151,7 +148,6 @@ export function MRPlayer({ songId, songTitle, refreshTrigger }: MRPlayerProps) {
     audio.pause()
     audio.currentTime = 0
     setIsPlaying(false)
-    setIsPaused(false)
     setCurrentTime(0)
   }
 

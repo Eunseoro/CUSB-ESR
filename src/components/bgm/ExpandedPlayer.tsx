@@ -2,17 +2,16 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Play, Trash2, Edit2, GripVertical } from 'lucide-react'
+import { Trash2, GripVertical, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BgmPlayerState, BgmTrack, PlaybackMode, BgmGenre } from '@/types/bgm'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
-import { deleteBgmApi, updateBgmApi, updateBgmOrderApi } from '@/lib/bgm-api'
+import { deleteBgmApi, updateBgmOrderApi } from '@/lib/bgm-api'
 import { getBgmTagColor } from '@/lib/song-utils'
 import { BgmEditDialog } from './BgmEditDialog'
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -21,7 +20,6 @@ import {
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import {
@@ -40,7 +38,7 @@ interface ExpandedPlayerProps {
   onSetQueue: (tracks: BgmTrack[]) => void
   onClose: () => void
   onInitializePlayer: (iframeElement: HTMLIFrameElement) => void
-  youtubePlayer: any
+  youtubePlayer: YT.Player | null
   isPlayerReady: boolean
 }
 
@@ -159,9 +157,6 @@ export function ExpandedPlayer({
   playerState,
   library,
   onPlayTrack,
-  onTogglePlayPause,
-  onNextTrack,
-  onPreviousTrack,
   onSetPlaybackMode,
   onSetQueue,
   onClose,
@@ -270,17 +265,21 @@ export function ExpandedPlayer({
     }
   }, [playerState.currentTrack])
 
+  // onPlayTrack 함수를 ref로 저장하여 안정적인 참조 유지
+  const onPlayTrackRef = useRef(onPlayTrack)
+  onPlayTrackRef.current = onPlayTrack
+
   // YouTube Player 상태 변경 감지 (자동 재생)
   useEffect(() => {
     if (youtubePlayer && isPlayerReady) {
-      const handleStateChange = (event: any) => {
+      const handleStateChange = (event: YT.OnStateChangeEvent) => {
         // 영상이 끝났을 때 (ended = 0)이고 큐에 곡이 있을 때만 다음 곡 재생
         if (event.data === 0 && playerState.queue.length > 1) {
           const currentIndex = playerState.queue.findIndex(track => track.id === playerState.currentTrack?.id)
           if (currentIndex !== -1 && currentIndex < playerState.queue.length - 1) {
             // 다음 곡으로 자동 재생
             const nextTrack = playerState.queue[currentIndex + 1]
-            onPlayTrack(nextTrack)
+            onPlayTrackRef.current(nextTrack)
           }
         }
       }
@@ -292,7 +291,7 @@ export function ExpandedPlayer({
         youtubePlayer.removeEventListener('onStateChange', handleStateChange)
       }
     }
-  }, [youtubePlayer, isPlayerReady])
+  }, [youtubePlayer, isPlayerReady, playerState.currentTrack?.id, playerState.queue])
 
   // 드래그 종료 핸들러
   const handleDragEnd = async (event: DragEndEvent) => {

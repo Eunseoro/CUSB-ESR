@@ -47,7 +47,7 @@ export async function PUT(
     
     // 관리자 인증 확인 (쿠키 기반)
     const cookie = request.cookies.get('admin_session')
-    const isAdmin = cookie && cookie.value === '1'
+    const isAdmin = cookie && cookie.value === 'admin'
     if (!isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -116,7 +116,7 @@ export async function DELETE(
     
     // 관리자 인증 확인 (쿠키 기반)
     const cookie = request.cookies.get('admin_session')
-    const isAdmin = cookie && cookie.value === '1'
+    const isAdmin = cookie && cookie.value === 'admin'
     if (!isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },

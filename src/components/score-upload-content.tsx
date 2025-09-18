@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Upload, Trash2 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
+import Image from 'next/image'
 
 interface ScoreImage {
   id: string
@@ -215,7 +216,7 @@ export function ScoreUploadContent() {
               .sort((a, b) => a.order - b.order)
               .map((image) => (
                 <div key={image.id} className="relative group w-full h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-                  <img
+                  <Image
                     src={image.imageUrl}
                     alt={`악보 ${image.order + 1}`}
                     className="max-w-full max-h-full object-contain"
@@ -224,6 +225,8 @@ export function ScoreUploadContent() {
                       height: '100%',
                       objectFit: 'contain'
                     }}
+                    width={800}
+                    height={600}
                   />
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button

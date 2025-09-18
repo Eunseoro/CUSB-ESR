@@ -74,13 +74,13 @@ export function useLookbook() {
       const documentHeight = document.documentElement.scrollHeight
       
       if (scrollTop + windowHeight >= documentHeight * 0.8) {
-        loadMorePosts()
+        fetchPosts(currentPage + 1, false)
       }
     }
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [loading, hasMore])
+  }, [loading, hasMore, currentPage])
 
   // API 함수들
   const fetchPosts = useCallback(async (page: number = 1, isInitial: boolean = false) => {
@@ -110,10 +110,6 @@ export function useLookbook() {
     }
   }, [loading])
 
-  const loadMorePosts = useCallback(() => {
-    if (loading || !hasMore) return
-    fetchPosts(currentPage + 1, false)
-  }, [loading, hasMore, currentPage, fetchPosts])
 
   const incrementViewCount = useCallback(async (postId: string) => {
     try {

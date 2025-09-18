@@ -2,7 +2,8 @@
 // 페이지를 물리적으로 분할하여 상단 영역과 하단 영역이 독립적인 공간으로 존재합니다.
 'use client'
 
-import { ReactNode, useRef, useState, useEffect } from 'react'
+import { ReactNode, useRef, useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 
 interface SplitLayoutProps {
   leftPanel: ReactNode
@@ -37,7 +38,7 @@ export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayo
   // requestAnimationFrame으로 부드럽게
   const rafRef = useRef<number | null>(null)
   const lastRatio = useRef(ratio)
-  const onDragMove = (e: MouseEvent | TouchEvent) => {
+  const onDragMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!dragging || !layoutRef.current) return
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(() => {
@@ -54,7 +55,7 @@ export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayo
         lastRatio.current = newRatio
       }
     })
-  }
+  }, [dragging, isPc])
 
   // 드래그 끝
   const onDragEnd = () => {
@@ -66,7 +67,7 @@ export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayo
   // 이벤트 등록/해제
   useEffect(() => {
     if (!dragging) return
-    const move = (e: any) => onDragMove(e)
+    const move = (e: MouseEvent | TouchEvent) => onDragMove(e)
     const up = () => onDragEnd()
     window.addEventListener('mousemove', move)
     window.addEventListener('mouseup', up)
@@ -78,7 +79,7 @@ export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayo
       window.removeEventListener('touchmove', move)
       window.removeEventListener('touchend', up)
     }
-  }, [dragging])
+  }, [dragging, onDragMove])
 
   useEffect(() => {
     const check = () => {
@@ -137,7 +138,7 @@ export function SplitLayout({ leftPanel, rightPanel, className = '' }: SplitLayo
           {rightPanel}
         </div>
         {isPc && (
-          <img src="/video_player_org.png" className="absolute right-4 bottom-12 w-60 h-60 opacity-60 pointer-events-none z-10" />
+          <Image src="/video_player_org.png" alt="비디오 플레이어" className="absolute right-4 bottom-12 w-60 h-60 opacity-60 pointer-events-none z-10" width={240} height={240} />
         )}
       </div>
     </div>

@@ -26,7 +26,7 @@ export const useInfiniteScroll = ({
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [allSongs, setAllSongs] = useState<Song[]>([]) // 모든 곡을 저장
+  const [, setAllSongs] = useState<Song[]>([]) // 모든 곡을 저장
   const [sortedSongs, setSortedSongs] = useState<Song[]>([]) // 정렬된 곡들 저장
   const [displayedCount, setDisplayedCount] = useState(songsPerPage) // 현재 표시된 곡 수
 
@@ -63,7 +63,7 @@ export const useInfiniteScroll = ({
         // 카테고리 필터링 적용 (검색 시에는 카테고리 제한 없음)
         let filteredSongs = data.songs
         if (category && !search) {
-          filteredSongs = filterSongsByCategory(data.songs, category as any)
+          filteredSongs = filterSongsByCategory(data.songs, category as 'KPOP' | 'POP' | 'MISSION' | 'NEWSONG')
         }
 
         // 클라이언트 사이드 정렬이 필요한 경우 정렬 적용

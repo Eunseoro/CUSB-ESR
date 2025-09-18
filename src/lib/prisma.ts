@@ -5,27 +5,22 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// 단순한 Prisma 설정
-const prismaConfig = {
-  log: ['error'] as any,
-  errorFormat: (process.env.NODE_ENV === 'production' ? 'minimal' : 'pretty') as any,
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL
-    }
-  }
-}
-
 // 개발 환경에서만 전역 인스턴스 유지 (Hot Reload 대응)
 let prisma: PrismaClient
 
 if (process.env.NODE_ENV === 'production') {
   // 프로덕션: 매번 새 인스턴스 생성
-  prisma = new PrismaClient(prismaConfig)
+  prisma = new PrismaClient({
+    log: ['error'],
+    errorFormat: 'minimal'
+  })
 } else {
   // 개발: 전역 인스턴스 재사용
   if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = new PrismaClient(prismaConfig)
+    globalForPrisma.prisma = new PrismaClient({
+      log: ['error'],
+      errorFormat: 'pretty'
+    })
   }
   prisma = globalForPrisma.prisma
 }

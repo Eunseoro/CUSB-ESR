@@ -19,7 +19,7 @@ interface PostFormProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onImageOrderChange: (id: string, newOrder: number) => void
   onImageRemove: (id: string) => void
-  onImageFilesChange: (items: any[]) => void
+  onImageFilesChange: (items: ImageFile[]) => void
   onUpload: () => void
 }
 

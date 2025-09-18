@@ -1,5 +1,6 @@
 // 이 파일은 가로형 ON/OFF 스위치 UI 컴포넌트입니다.
 import * as React from "react"
+import Image from "next/image"
 
 export interface SwitchProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   checked?: boolean
@@ -28,11 +29,13 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
             (checked ? " translate-x-5" : " translate-x-1")
           }
         >
-          <img
+          <Image
             src="/icons/button.webp"
             alt="button icon"
             className={`absolute inset-0 w-full h-full object-contain ${checked ? '' : 'grayscale brightness-75'}`}
             draggable={false}
+            width={20}
+            height={20}
           />
         </span>
       </button>

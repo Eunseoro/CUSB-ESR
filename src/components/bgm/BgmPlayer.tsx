@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX } from 'lucide-react'
+// 아이콘들은 사용하지 않으므로 제거
 import { BgmTrack, PlaybackMode, BgmPlayerState } from '@/types/bgm'
 import { getBgmLibraryApi } from '@/lib/bgm-api'
 import { MiniPlayer } from './MiniPlayer'
@@ -26,7 +26,7 @@ export function BgmPlayer() {
   const [library, setLibrary] = useState<{ [genre: string]: BgmTrack[] } | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null)
-  const [youtubePlayer, setYoutubePlayer] = useState<any>(null)
+  const [youtubePlayer, setYoutubePlayer] = useState<YT.Player | null>(null)
   const [isPlayerReady, setIsPlayerReady] = useState(false)
 
   // YouTube URL에서 비디오 ID 추출
@@ -156,7 +156,7 @@ export function BgmPlayer() {
   const initializeYouTubePlayer = (iframeElement: HTMLIFrameElement) => {
     if (!window.YT || !currentVideoId) return
 
-    const player = new window.YT.Player(iframeElement, {
+    new window.YT.Player(iframeElement, {
       height: '100%',
       width: '100%',
       videoId: currentVideoId,
@@ -175,14 +175,14 @@ export function BgmPlayer() {
         playsinline: 1
       },
       events: {
-        onReady: (event: any) => {
+        onReady: (event: YT.PlayerEvent) => {
           console.log('YouTube player ready')
           setYoutubePlayer(event.target)
           setIsPlayerReady(true)
           // 초기 볼륨 설정
           event.target.setVolume(playerState.volume * 100)
         },
-        onStateChange: (event: any) => {
+        onStateChange: (event: YT.OnStateChangeEvent) => {
           console.log('Player state changed:', event.data)
           // 재생 상태 동기화
           if (event.data === window.YT.PlayerState.PLAYING) {
@@ -191,7 +191,7 @@ export function BgmPlayer() {
             setPlayerState(prev => ({ ...prev, isPlaying: false }))
           }
         },
-        onError: (event: any) => {
+        onError: (event: YT.OnErrorEvent) => {
           console.error('YouTube player error:', event.data)
         }
       }

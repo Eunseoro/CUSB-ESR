@@ -193,13 +193,13 @@ export function Sidebar() {
             {/* 하단 아이콘 영역 */}
             <div className="flex flex-row gap-4 mb-4 justify-center md:opacity-0 md:group-hover/sidebar:opacity-100 transition-opacity">
               <a href="https://chzzk.naver.com/2c0c0ff859f6cb8045a3cdf99b3b9b54" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors">
-                <img src="/icons/chzzk.webp" className="h-7 w-7" />
+                <Image src="/icons/chzzk.webp" alt="치지직" className="h-7 w-7" width={28} height={28} />
               </a>
               <a href="https://youtube.com/@u_grandmother?si=XOVQqg6fS8yMOcpX" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors">
-                <img src="/icons/youtube.webp" className="h-7 w-7" />
+                <Image src="/icons/youtube.webp" alt="유튜브" className="h-7 w-7" width={28} height={28} />
               </a>
               <a href="https://cafe.naver.com/ugrandmother" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors">
-                <img src="/icons/cafe.webp" className="h-7 w-7" />
+                <Image src="/icons/cafe.webp" alt="팬카페" className="h-7 w-7" width={28} height={28} />
               </a>
             </div>
             <div className="border-t pt-4 mt-auto">

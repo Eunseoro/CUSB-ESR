@@ -40,7 +40,7 @@ export const SongItem = React.memo<SongItemProps>(({
   isUpdatingLike
 }) => {
   const [localProgress, setLocalProgress] = useState<number>(song.progress ?? 0)
-  const [isDragging, setIsDragging] = useState(false)
+  const [, setIsDragging] = useState(false)
 
   // 그룹 구분선 로직
   const shouldShowDivider = (): string | null => {
@@ -116,7 +116,7 @@ export const SongItem = React.memo<SongItemProps>(({
     try {
       await handleProgressChangeApi(song.id, value)
       setSongs((prev: Song[]) => prev.map((s) => s.id === song.id ? { ...s, progress: value } : s))
-    } catch (e) {
+    } catch {
       // 실패 시 무시
     }
   }, [song.id, isAdmin, setSongs])
@@ -230,3 +230,5 @@ export const SongItem = React.memo<SongItemProps>(({
     </div>
   )
 })
+
+SongItem.displayName = 'SongItem'

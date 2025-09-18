@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2, Shield } from 'lucide-react'
-import { verifyAdminPassword } from '@/lib/auth'
+// verifyAdminPassword는 사용하지 않으므로 제거
 
 interface LoginDialogProps {
   children?: React.ReactNode
@@ -48,10 +48,7 @@ export function LoginDialog({ children, onSuccess }: LoginDialogProps) {
     }
   };
 
-  const handleSuccess = () => {
-    if (onSuccess) onSuccess();
-    window.location.reload(); // 인증 성공 시 전체 새로고침
-  };
+  // handleSuccess 함수는 사용하지 않으므로 제거
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);

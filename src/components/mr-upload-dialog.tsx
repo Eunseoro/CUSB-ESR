@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { useState, useEffect, useCallback } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Upload, Music, Trash2 } from 'lucide-react'
+import { Upload, Trash2 } from 'lucide-react'
 import { uploadMRFile, deleteMRFile, checkMRFileExists, saveMRMemo, getMRMemo } from '@/lib/mr-api'
 import { Song } from '@/types/song'
 
@@ -26,7 +26,7 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
   const [isSavingMemo, setIsSavingMemo] = useState(false)
 
   // MR 파일 존재 여부 확인
-  const checkMRExists = async () => {
+  const checkMRExists = useCallback(async () => {
     setIsChecking(true)
     try {
       const exists = await checkMRFileExists(song.id)
@@ -37,10 +37,10 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
     } finally {
       setIsChecking(false)
     }
-  }
+  }, [song.id])
 
   // 메모 불러오기
-  const loadMRMemo = async () => {
+  const loadMRMemo = useCallback(async () => {
     try {
       const savedMemo = await getMRMemo(song.id)
       setMemo(savedMemo || '')
@@ -48,7 +48,7 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
       console.error('메모 불러오기 실패:', error)
       setMemo('')
     }
-  }
+  }, [song.id])
 
   // 다이얼로그 열릴 때 MR 파일 존재 여부와 메모 확인
   useEffect(() => {
@@ -63,7 +63,7 @@ export function MRUploadDialog({ song, open, onOpenChange, onUploadSuccess }: MR
         console.error('초기화 중 오류:', error)
       })
     }
-  }, [open, song.id])
+  }, [open, song.id, checkMRExists, loadMRMemo])
 
   // 파일 선택 핸들러
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

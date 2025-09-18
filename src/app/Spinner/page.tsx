@@ -172,7 +172,7 @@ export default function SpinnerPage() {
       requestId = requestAnimationFrame(animate);
       return () => cancelAnimationFrame(requestId);
     }
-  }, [spinning, isSlowingDown, spinSpeed, stopStartTime, initialSpeed]);
+  }, [spinning, isSlowingDown, spinSpeed, stopStartTime, initialSpeed, angle, getPointerItemNameByAngle]);
 
   // 항목/각도 변경 시 버퍼에 섹터/텍스트만 그림
   useEffect(() => {

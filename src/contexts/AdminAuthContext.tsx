@@ -1,6 +1,6 @@
 // 관리자 인증 상태를 전역으로 관리하는 Context
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { isAdminAuthenticated, AdminRole } from '@/lib/auth';
+import { AdminRole } from '@/lib/auth';
 
 interface AdminAuthContextType {
   isAdmin: boolean;
@@ -16,7 +16,7 @@ interface AdminAuthContextType {
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [, setIsAdmin] = useState(false);
   const [role, setRole] = useState(AdminRole.GUEST);
 
   // 최초 마운트 시 API 기반 인증 상태 확인

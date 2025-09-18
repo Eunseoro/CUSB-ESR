@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, CheckCircle, XCircle, Info, HelpCircle, AlignJustify } from 'lucide-react'
 import NoticeBox from '@/components/notice-box'
 import { useEffect } from 'react'
+import Image from 'next/image'
 
 export default function HomePage() {
   // 페이지 진입 시 방문자 카운트 증가 (1일 1회)
@@ -20,12 +21,12 @@ export default function HomePage() {
     <div className="w-full p-6 max-w-4xl mx-auto pb-20">
       <div className="space-y-6">
         <div className="relative flex items-center justify-center text-center">
-          <img src="/icons/ugm.webp" className="hidden sm:block absolute left-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" />
+          <Image src="/icons/ugm.webp" alt="" className="hidden sm:block absolute left-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" width={120} height={120} />
           <div className="w-full">
             <h1 className="text-3xl font-bold mb-2">유할매 노래책 이용안내</h1>
             <p className="text-muted-foreground">이용 시 꼭 확인해주세요</p>
           </div>
-          <img src="/icons/ugm.webp" className="hidden sm:block absolute right-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" />
+          <Image src="/icons/ugm.webp" alt="" className="hidden sm:block absolute right-1/8 top-1/2 -translate-y-1/2 w-30 h-30 opacity-0" width={120} height={120} />
         </div>
         <NoticeBox />
 
@@ -101,8 +102,8 @@ export default function HomePage() {
               <div>
                 <h4 className="font-semibold mb-1"><strong>10,000🧀</strong> ▶ 일반 신청곡 </h4>
                 <ul className="space-y-1 text-sm">
-                  <li className="break-words">• 후원 채팅 '가수명 - 제목'으로 신청곡을 지정할 수 있어요</li>
-                  <li className="break-words mb-8">• 지정곡이 없다면, 후원 채팅 '일반신청'으로 랜덤 룰렛이 돌아가요</li>
+                  <li className="break-words">• 후원 채팅 &apos;가수명 - 제목&apos;으로 신청곡을 지정할 수 있어요</li>
+                  <li className="break-words mb-8">• 지정곡이 없다면, 후원 채팅 &apos;일반신청&apos;으로 랜덤 룰렛이 돌아가요</li>
                   </ul>
               </div>
               <div>
@@ -167,7 +168,7 @@ export default function HomePage() {
               <div className="flex items-start gap-4">
                 <div>
                   <h4 className="font-semibold flex items-center gap-2">
-                    <img src="/icons/1st-verse.webp" className="h-5 w-5" />
+                    <Image src="/icons/1st-verse.webp" alt="1절만 아이콘" className="h-5 w-5" width={20} height={20} />
                     아이콘을 확인해 주세요
                   </h4>
                   <p className="text-sm text-muted-foreground">
@@ -178,7 +179,7 @@ export default function HomePage() {
               <div className="flex items-start gap-4">
                 <div>
                   <h4 className="font-semibold flex items-center gap-2">
-                    <img src="/icons/mr.webp" className="h-5 w-5" />
+                    <Image src="/icons/mr.webp" alt="MR 아이콘" className="h-5 w-5" width={20} height={20} />
                     아이콘이 붙어 있다면
                   </h4>
                   <p className="text-sm text-muted-foreground">

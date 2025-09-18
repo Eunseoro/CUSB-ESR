@@ -72,6 +72,7 @@ export async function addSongApi(formData: Record<string, unknown>) {
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
     body: JSON.stringify(formData)
   })
   if (!response.ok) {
@@ -88,6 +89,7 @@ export async function updateSongApi(songId: string, formData: Record<string, unk
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
     body: JSON.stringify(formData)
   })
   if (!response.ok) {
@@ -103,7 +105,8 @@ export async function deleteSongApi(songId: string) {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-    }
+    },
+    credentials: 'include'
   })
   if (!response.ok) {
     const errorData = await response.json()

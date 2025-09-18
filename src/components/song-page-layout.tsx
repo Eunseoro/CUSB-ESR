@@ -13,7 +13,7 @@ interface SongPageLayoutProps {
 export function SongPageLayout({ category }: SongPageLayoutProps) {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
-  const [isLargeScreen, setIsLargeScreen] = useState(false)
+  const [, setIsLargeScreen] = useState(false)
   const songListRef = useRef<SongListRef>(null)
 
   // 화면 크기 감지
@@ -34,7 +34,7 @@ export function SongPageLayout({ category }: SongPageLayoutProps) {
     songListRef.current?.refresh()
   }
   
-  const handleSongDelete = (id: string) => {
+  const handleSongDelete = () => {
     setSelectedSong(null)
     songListRef.current?.refresh()
   }

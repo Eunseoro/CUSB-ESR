@@ -1,6 +1,6 @@
 "use client"
 // 이 파일은 게시판(Board) 페이지입니다.
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { Board } from '@/types/board'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -44,7 +44,7 @@ export default function BoardPage() {
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
 
-  const fetchList = async (page: number = 1, isInitial: boolean = false, retryCount: number = 0) => {
+  const fetchList = async (page: number = 1, isInitial: boolean = false) => {
     if (loading) return
     
     setLoading(true)
@@ -82,17 +82,6 @@ export default function BoardPage() {
       setCurrentPage(page)
     } catch (e) {
       console.error('게시물 로드 실패:', e)
-      
-      // 재시도 로직 (최대 1회로 제한)
-      if (retryCount < 1) {
-        console.log(`재시도 중... (${retryCount + 1}/1)`)
-        setTimeout(() => {
-          fetchList(page, isInitial, retryCount + 1)
-        }, 3000) // 3초 간격으로 재시도
-        return
-      }
-      
-      // 최대 재시도 횟수 초과 시 hasMore를 false로 설정하여 무한 로딩 방지
       setHasMore(false)
       
       // 초기 로딩 실패 시 빈 배열 설정
@@ -104,7 +93,7 @@ export default function BoardPage() {
     }
   }
 
-  const fetchPinned = async (retryCount: number = 0) => {
+  const fetchPinned = async () => {
     try {
       const ids = await getPinnedGuestbookIds()
       
@@ -118,31 +107,23 @@ export default function BoardPage() {
       setPinnedIds(ids)
       
       // pinned 게시물들을 개별적으로 로드하여 별도 상태에 저장
-      const pinnedBoards = await Promise.all(
-        ids.map(async (id) => {
-          try {
-            return await fetchBoardById(id)
-          } catch (error) {
-            console.error(`Pinned 게시물 ${id} 로드 실패:`, error)
-            return null
+      // 동시 요청 수를 제한하여 서버 부하 감소
+      const pinnedBoards: Board[] = []
+      for (const id of ids) {
+        try {
+          const board = await fetchBoardById(id)
+          if (board) {
+            pinnedBoards.push(board)
           }
-        })
-      )
-      
-      const validPinnedBoards = pinnedBoards.filter(board => board !== null) as Board[]
-      setPinnedBoards(validPinnedBoards)
-    } catch (e) {
-      console.error('고정 게시물 로드 실패:', e)
-      
-      // 재시도 로직 (최대 1회로 제한)
-      if (retryCount < 1) {
-        console.log(`고정 게시물 재시도 중... (${retryCount + 1}/1)`)
-        setTimeout(() => {
-          fetchPinned(retryCount + 1)
-        }, 3000) // 3초 간격으로 재시도
-        return
+        } catch (error) {
+          console.error(`Pinned 게시물 ${id} 로드 실패:`, error)
+          // 개별 실패는 무시하고 계속 진행
+        }
       }
       
+      setPinnedBoards(pinnedBoards)
+    } catch (e) {
+      console.error('고정 게시물 로드 실패:', e)
       setPinnedIds([])
       setPinnedBoards([])
     }
@@ -165,24 +146,39 @@ export default function BoardPage() {
     initializeBoard()
   }, []) // 의존성 제거
 
-  // 무한스크롤 감지
+  // 무한스크롤 감지 (디바운싱 적용)
   useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout | null = null
+    
     const handleScroll = () => {
       if (loading || !hasMore) return
       
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-      const windowHeight = window.innerHeight
-      const documentHeight = document.documentElement.scrollHeight
-      
-      // 80% 스크롤 시 다음 페이지 로드
-      if (scrollTop + windowHeight >= documentHeight * 0.8) {
-        fetchList(currentPage + 1, false)
+      // 이전 타이머 취소
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
       }
+      
+      // 200ms 디바운싱 적용
+      scrollTimeout = setTimeout(() => {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+        const windowHeight = window.innerHeight
+        const documentHeight = document.documentElement.scrollHeight
+        
+        // 80% 스크롤 시 다음 페이지 로드
+        if (scrollTop + windowHeight >= documentHeight * 0.8) {
+          fetchList(currentPage + 1, false)
+        }
+      }, 200)
     }
 
     window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [loading, hasMore, currentPage]) // fetchList 의존성 제거
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
+      }
+    }
+  }, [loading, hasMore, currentPage])
 
   async function handlePin(id: string, checked: boolean) {
     let newIds: string[]
@@ -404,7 +400,7 @@ export default function BoardPage() {
         {/* 더 이상 로드할 게시물이 없을 때 */}
         {!hasMore && list.length > 0 && (
           <div className="text-center text-muted-foreground py-4">
-            모든 게시물을 불러왔습니다.
+            모든 게시물을 표시했습니다.
           </div>
         )}
       </div>

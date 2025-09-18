@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 
 interface LazyImageProps {
@@ -46,14 +46,14 @@ export function LazyImage({
     return () => observer.disconnect()
   }, [])
 
-  const handleLoad = () => {
+  const handleLoad = useCallback(() => {
     setIsLoaded(true)
-  }
+  }, [])
 
-  const handleError = () => {
+  const handleError = useCallback(() => {
     setHasError(true)
     setIsLoaded(true)
-  }
+  }, [])
 
   // 이미지 로드 최적화를 위한 preload
   useEffect(() => {

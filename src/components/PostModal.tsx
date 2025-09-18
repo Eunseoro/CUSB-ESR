@@ -16,7 +16,7 @@ interface PostModalProps {
   onClose: () => void
   onEdit: (post: LookBookPost) => void
   onDelete: (postId: string) => void
-  onSave: (formData: any) => void
+  onSave: (formData: { title: string; content: string; files: File[] }) => void
   editForm: {
     title: string
     content: string
@@ -28,8 +28,8 @@ interface PostModalProps {
   onEditFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onEditImageOrderChange: (id: string, newOrder: number) => void
   onEditImageRemove: (id: string) => void
-  onEditImageFilesChange: (items: any[]) => void
-  onEditExistingImagesChange: (items: any[]) => void
+  onEditImageFilesChange: (items: ImageFile[]) => void
+  onEditExistingImagesChange: (items: { id: string; imageUrl: string; order: number }[]) => void
   saving: boolean
 }
 
@@ -41,7 +41,6 @@ export function PostModal({
   modalClosing,
   onClose,
   onEdit,
-  onDelete,
   onSave,
   editForm,
   editImageFiles,
@@ -54,8 +53,6 @@ export function PostModal({
   onEditExistingImagesChange,
   saving
 }: PostModalProps) {
-  const [useAltUrl, setUseAltUrl] = useState(false)
-  const [showLyrics, setShowLyrics] = useState(true)
 
   if (!isOpen || !post) return null
 
@@ -204,7 +201,7 @@ export function PostModal({
               {post.content}
             </div>
             <div className="mb-4">
-              {post.images.map((img: { id: string; imageUrl: string; order: number }, index: number) => (
+              {post.images.map((img: { id: string; imageUrl: string; order: number }) => (
                 <LazyImage 
                   key={img.id} 
                   src={img.imageUrl} 
