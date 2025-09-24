@@ -163,9 +163,9 @@ export function ScoreUploadContent() {
   }
 
   return (
-    <div className={`min-h-screen bg-background ${isPopup ? 'w-full h-screen flex flex-col' : ''}`}>
+    <div className={`min-h-screen bg-background ${isPopup ? 'w-full h-screen flex flex-col -ml-16' : ''}`} style={isPopup ? { margin: 0, padding: 0 } : {}}>
       {/* 헤더 - 축소된 크기 */}
-      <div className="border-b border-border p-2 flex-shrink-0">
+      <div className={`border-b border-border p-2 flex-shrink-0 ${isPopup ? '-ml-16' : ''}`} style={isPopup ? { width: 'calc(100% + 4rem)' } : {}}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-base font-bold text-foreground">
@@ -201,7 +201,7 @@ export function ScoreUploadContent() {
       </div>
 
       {/* 메인 컨텐츠 - 전체 화면 이미지 표시 */}
-      <div className="flex-1 overflow-hidden">
+      <div className={`flex-1 overflow-hidden ${isPopup ? 'w-full -ml-16' : ''}`} style={isPopup ? { margin: 0, padding: 0, marginLeft: '-4rem', width: 'calc(100% + 4rem)' } : {}}>
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-muted-foreground">로딩 중...</div>
@@ -211,11 +211,11 @@ export function ScoreUploadContent() {
             <div className="text-muted-foreground">등록된 악보가 없습니다.</div>
           </div>
         ) : (
-          <div className="h-full overflow-auto">
+          <div className="h-full overflow-auto" style={isPopup ? { margin: 0, padding: 0 } : {}}>
             {images
               .sort((a, b) => a.order - b.order)
               .map((image) => (
-                <div key={image.id} className="relative group w-full h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+                <div key={image.id} className="relative group w-full h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900" style={isPopup ? { margin: 0, padding: 0 } : {}}>
                   <Image
                     src={image.imageUrl}
                     alt={`악보 ${image.order + 1}`}

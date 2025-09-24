@@ -64,12 +64,6 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
   
   // 커스텀 훅 사용
   const debouncedSearch = useDebouncedValue(search, DEBOUNCE_DELAY)
-  const {
-    likedSongs,
-    isUpdatingLike,
-    handleLike,
-    initializeLikedSongs
-  } = useLikedSongs(songs, setSongs)
   
   const {
     page,
@@ -77,16 +71,26 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
     loadingMore,
     fetchSongs,
     loadMoreSongs,
-    resetPagination
+    resetPagination,
+    allSongs,
+    setAllSongs,
+    sortedSongs,
+    setSortedSongs
   } = useInfiniteScroll({
         category,
         search: debouncedSearch,
     sort,
     setSongs,
     setLoading,
-    songsPerPage: SONGS_PER_PAGE,
-    likedSongs
+    songsPerPage: SONGS_PER_PAGE
   })
+  
+  const {
+    likedSongs,
+    isUpdatingLike,
+    handleLike,
+    initializeLikedSongs
+  } = useLikedSongs(songs, setSongs, listRef, allSongs, setAllSongs, sortedSongs, setSortedSongs, sort)
   
   // 메인 데이터 관리 훅
   const { displaySongs, refresh } = useSongData({
