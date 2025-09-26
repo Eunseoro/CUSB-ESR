@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
     console.log('BGM POST request received')
     
     const cookie = request.cookies.get('admin_session')
-    const isAdmin = cookie && cookie.value === '1'
+    const isAdmin = cookie && cookie.value === 'admin'
     
     console.log('Admin session check:', { cookie: cookie?.value, isAdmin })
     

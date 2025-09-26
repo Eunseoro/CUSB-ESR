@@ -15,7 +15,11 @@ export async function updateNotice(content: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content })
   })
-  if (!res.ok) throw new Error('공지사항 수정 실패')
+  if (!res.ok) {
+    const errorData = await res.text()
+    console.error('공지사항 수정 API 에러:', res.status, errorData)
+    throw new Error(`공지사항 수정 실패: ${res.status} ${errorData}`)
+  }
   return res.json()
 }
 
@@ -26,6 +30,10 @@ export async function toggleNotice(isVisible: boolean) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ isVisible })
   })
-  if (!res.ok) throw new Error('공지사항 ON/OFF 실패')
+  if (!res.ok) {
+    const errorData = await res.text()
+    console.error('공지사항 ON/OFF API 에러:', res.status, errorData)
+    throw new Error(`공지사항 ON/OFF 실패: ${res.status} ${errorData}`)
+  }
   return res.json()
 } 

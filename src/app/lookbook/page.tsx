@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
+import { Suspense } from "react"
 import { useAdminAuth } from "@/contexts/AdminAuthContext"
 import { PostForm } from "@/components/PostForm"
 import { PostList } from "@/components/PostList"
@@ -46,11 +46,6 @@ function LookBookContent() {
     handleUpload,
     handleEditSave
   } = useLookbook()
-
-  // 브라우저 창 제목 설정
-  useEffect(() => {
-    document.title = '유할매 악보'
-  }, [])
 
   return (
     <div className="flex flex-col items-center max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto min-h-[60vh] px-0 pb-20">

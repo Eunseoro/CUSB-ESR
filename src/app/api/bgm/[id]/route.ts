@@ -32,7 +32,7 @@ export async function PUT(
     console.log('BGM PUT request received for ID:', id)
     
     const cookie = request.cookies.get('admin_session')
-    const isAdmin = cookie && cookie.value === '1'
+    const isAdmin = cookie && cookie.value === 'admin'
     
     console.log('Admin session check:', { cookie: cookie?.value, isAdmin })
     
@@ -109,7 +109,7 @@ export async function DELETE(
     console.log('BGM DELETE request received for ID:', id)
     
     const cookie = request.cookies.get('admin_session')
-    const isAdmin = cookie && cookie.value === '1'
+    const isAdmin = cookie && cookie.value === 'admin'
     
     console.log('Admin session check:', { cookie: cookie?.value, isAdmin })
     

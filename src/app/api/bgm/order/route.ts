@@ -5,7 +5,7 @@ export async function PUT(req: NextRequest) {
   try {
     // 서버 사이드에서 관리자 인증 확인
     const cookie = req.cookies.get('admin_session')
-    const isAdmin = cookie && cookie.value === '1'
+    const isAdmin = cookie && cookie.value === 'admin'
     
     if (!isAdmin) {
       return NextResponse.json({ error: '관리자 인증이 필요합니다.' }, { status: 401 })
