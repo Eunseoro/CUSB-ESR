@@ -2,6 +2,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
 interface DraggableImageProps {
   id: string;
@@ -14,6 +15,10 @@ interface DraggableImageProps {
   className?: string;
 }
 
+// 이미지 캐시를 위한 전역 Map (LazyImage와 동일)
+const imageCache = new Map<string, boolean>()
+const loadingImages = new Set<string>() // 현재 로딩 중인 이미지 추적
+
 export function DraggableImage({
   id,
   imageUrl,
@@ -23,6 +28,7 @@ export function DraggableImage({
   onRemove,
   className = ""
 }: DraggableImageProps) {
+  const [isLoaded, setIsLoaded] = useState(false)
   const {
     attributes,
     listeners,
@@ -31,6 +37,21 @@ export function DraggableImage({
     transition,
     isDragging: isDraggingState,
   } = useSortable({ id });
+
+  // 이미지 캐시 확인 및 중복 로드 방지
+  useEffect(() => {
+    if (imageCache.has(imageUrl)) {
+      setIsLoaded(true)
+      return
+    }
+    
+    // 현재 로딩 중인 이미지는 중복 로드 방지
+    if (loadingImages.has(imageUrl)) {
+      return
+    }
+    
+    loadingImages.add(imageUrl)
+  }, [imageUrl])
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -65,12 +86,29 @@ export function DraggableImage({
           <Image 
             src={imageUrl} 
             alt="이미지" 
-            className="w-12 h-12 object-cover rounded"
+            className={`w-12 h-12 object-cover rounded transition-opacity duration-200 ${
+              isLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
             draggable={false}
             onContextMenu={handleImageContextMenu}
+            onLoad={() => {
+              imageCache.set(imageUrl, true)
+              loadingImages.delete(imageUrl)
+              setIsLoaded(true)
+            }}
+            onError={() => {
+              loadingImages.delete(imageUrl)
+            }}
             width={48}
             height={48}
+            quality={75} // 품질 통일
+            sizes="48px" // 고정 크기
           />
+          {!isLoaded && (
+            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 animate-pulse rounded flex items-center justify-center">
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm truncate">{fileName || `이미지 ${order + 1}`}</p>

@@ -12,6 +12,10 @@ interface LazyImageProps {
   [key: string]: unknown
 }
 
+// 이미지 캐시를 위한 전역 Map (URL별 로드 상태 추적)
+const imageCache = new Map<string, boolean>()
+const loadingImages = new Set<string>() // 현재 로딩 중인 이미지 추적
+
 export function LazyImage({ 
   src, 
   alt, 
@@ -55,12 +59,31 @@ export function LazyImage({
     setIsLoaded(true)
   }, [])
 
-  // 이미지 로드 최적화를 위한 preload
+  // 이미지 로드 최적화를 위한 preload - 중복 로드 방지
   useEffect(() => {
     if (isInView && !isLoaded && !hasError) {
+      // 이미 캐시된 이미지는 preload 생략
+      if (imageCache.has(src)) {
+        setIsLoaded(true)
+        return
+      }
+      
+      // 현재 로딩 중인 이미지는 중복 로드 방지
+      if (loadingImages.has(src)) {
+        return
+      }
+      
+      loadingImages.add(src)
       const img = new window.Image()
-      img.onload = handleLoad
-      img.onerror = handleError
+      img.onload = () => {
+        imageCache.set(src, true)
+        loadingImages.delete(src)
+        handleLoad()
+      }
+      img.onerror = () => {
+        loadingImages.delete(src)
+        handleError()
+      }
       img.src = src
     }
   }, [isInView, isLoaded, hasError, src, handleLoad, handleError])
@@ -73,7 +96,10 @@ export function LazyImage({
             <Image
               src={src}
               alt={alt}
-              onLoad={handleLoad}
+              onLoad={() => {
+                imageCache.set(src, true)
+                handleLoad()
+              }}
               onError={handleError}
               onContextMenu={onContextMenu}
               draggable={draggable}
@@ -82,6 +108,10 @@ export function LazyImage({
               } ${className}`}
               width={500}
               height={500}
+              priority={false} // 우선순위 로딩 비활성화
+              unoptimized={false} // Next.js 최적화 유지
+              quality={75} // 품질 통일
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // 반응형 크기 통일
               {...props}
             />
           ) : (

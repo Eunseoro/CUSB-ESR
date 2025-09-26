@@ -64,22 +64,37 @@ export function useLookbook() {
     fetchPosts(1, true)
   }, [])
 
-  // 무한스크롤 감지
+  // 무한스크롤 감지 - 디바운스 적용
   useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout | null = null
+    
     const handleScroll = () => {
       if (loading || !hasMore) return
       
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-      const windowHeight = window.innerHeight
-      const documentHeight = document.documentElement.scrollHeight
-      
-      if (scrollTop + windowHeight >= documentHeight * 0.8) {
-        fetchPosts(currentPage + 1, false)
+      // 기존 타이머 클리어
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
       }
+      
+      // 디바운스 적용 (200ms)
+      scrollTimeout = setTimeout(() => {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+        const windowHeight = window.innerHeight
+        const documentHeight = document.documentElement.scrollHeight
+        
+        if (scrollTop + windowHeight >= documentHeight * 0.8) {
+          fetchPosts(currentPage + 1, false)
+        }
+      }, 200)
     }
 
     window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
+      }
+    }
   }, [loading, hasMore, currentPage])
 
   // API 함수들
@@ -133,27 +148,45 @@ export function useLookbook() {
 
 
   const incrementViewCount = useCallback(async (postId: string) => {
+    // 로컬 스토리지 기반 중복 방지 (기기별)
+    const viewedKey = `viewed_${postId}`
+    const hasViewed = localStorage.getItem(viewedKey)
+    
+    if (hasViewed) {
+      console.log('이미 조회한 게시물')
+      return
+    }
+    
     try {
+      console.log('조회수 증가 요청 시작:', postId)
       const response = await fetch(`/api/lookbook?id=${postId}&action=view`, {
-        method: 'GET',
+        method: 'GET'
       })
       
       if (response.ok) {
         const data = await response.json()
+        console.log('조회수 증가 응답:', data)
+        
         if (!data.alreadyViewed) {
-          setPosts(prevPosts => 
-            prevPosts.map(post => 
-              post.id === postId 
-                ? { ...post, viewCount: data.viewCount }
-                : post
-            )
-          )
-          setSelected(prevSelected => 
-            prevSelected && prevSelected.id === postId
-              ? { ...prevSelected, viewCount: data.viewCount }
-              : prevSelected
-          )
+          // 로컬 스토리지에 조회 기록 저장 (기기별 영구 저장)
+          localStorage.setItem(viewedKey, 'true')
         }
+        
+        // 조회수 업데이트
+        setPosts(prevPosts => 
+          prevPosts.map(post => 
+            post.id === postId 
+              ? { ...post, viewCount: data.viewCount }
+              : post
+          )
+        )
+        setSelected(prevSelected => 
+          prevSelected && prevSelected.id === postId
+            ? { ...prevSelected, viewCount: data.viewCount }
+            : prevSelected
+        )
+      } else {
+        console.error('조회수 증가 실패:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Failed to increment view count:', error)

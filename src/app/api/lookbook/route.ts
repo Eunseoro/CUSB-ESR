@@ -19,6 +19,63 @@ export async function GET(req: NextRequest) {
     const action = searchParams.get('action'); // 조회수 증가
     const skip = (page - 1) * limit;
     
+    // 조회수 증가 (기기별 중복 방지) - action=view가 있을 때 우선 실행
+    if (action === 'view' && id) {
+      console.log('조회수 증가 요청:', { id, action })
+      
+      // 기기별 중복 방지를 위한 고유 식별자 생성
+      const userAgent = req.headers.get('user-agent') || 'unknown'
+      const acceptLanguage = req.headers.get('accept-language') || 'unknown'
+      const acceptEncoding = req.headers.get('accept-encoding') || 'unknown'
+      
+      // 기기 식별을 위한 해시 생성 (간단한 문자열 조합)
+      const deviceFingerprint = `${userAgent.slice(0, 50)}_${acceptLanguage.slice(0, 20)}_${acceptEncoding.slice(0, 20)}`
+      const deviceKey = `viewed_${id}_${deviceFingerprint}`
+      
+      // 쿠키 기반 중복 방지 (30일 유지)
+      const hasViewed = req.cookies.get(deviceKey)
+      
+      if (hasViewed) {
+        console.log('이미 조회한 기기 - 조회수 증가 안함')
+        // 이미 조회한 경우 현재 조회수만 반환
+        const currentPost = await prisma.lookBookPost.findUnique({
+          where: { id },
+          select: { viewCount: true }
+        })
+        
+        return NextResponse.json({
+          viewCount: currentPost?.viewCount || 0,
+          alreadyViewed: true
+        });
+      }
+      
+      // 현재 조회수 확인
+      const currentPost = await prisma.lookBookPost.findUnique({
+        where: { id },
+        select: { viewCount: true }
+      })
+      console.log('현재 조회수:', currentPost?.viewCount)
+      
+      const updatedPost = await prisma.lookBookPost.update({
+        where: { id },
+        data: {
+          viewCount: {
+            increment: 1
+          }
+        }
+      });
+      console.log('업데이트된 조회수:', updatedPost.viewCount)
+
+      return NextResponse.json({
+        viewCount: updatedPost.viewCount,
+        alreadyViewed: false
+      }, {
+        headers: {
+          'Set-Cookie': `${deviceKey}=true; Path=/; Max-Age=2592000; HttpOnly; SameSite=Strict`
+        }
+      });
+    }
+    
     // 개별 게시물 조회
     if (id) {
       const post = await prisma.lookBookPost.findUnique({
@@ -35,23 +92,6 @@ export async function GET(req: NextRequest) {
       }
 
       return NextResponse.json(post);
-    }
-    
-    // 조회수 증가
-    if (action === 'view' && id) {
-      const updatedPost = await prisma.lookBookPost.update({
-        where: { id },
-        data: {
-          viewCount: {
-            increment: 1
-          }
-        }
-      });
-
-      return NextResponse.json({
-        viewCount: updatedPost.viewCount,
-        alreadyViewed: false
-      });
     }
     
     // 전체 게시물 수 조회
