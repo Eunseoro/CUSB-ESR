@@ -130,7 +130,7 @@ export function AddSongDialog({
           // 수정 API 호출
           resultSong = await updateSongApi(song.id, formData)
           onSongUpdated?.(resultSong)
-          triggerSongUpdate(resultSong)
+          triggerSongUpdate(song.id, resultSong)
         } else {
           // 추가 API 호출
           resultSong = await addSongApi(formData)

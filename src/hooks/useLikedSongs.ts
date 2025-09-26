@@ -60,13 +60,13 @@ export const useLikedSongs = (
   // 상태 업데이트 헬퍼 함수
   const updateAllStates = useCallback((updateFn: (prev: Song[]) => Song[]) => {
     setSongs(updateFn)
-    if (setAllSongs && allSongs) {
+    if (setAllSongs) {
       setAllSongs(updateFn)
     }
-    if (setSortedSongs && sortedSongs) {
+    if (setSortedSongs) {
       setSortedSongs(updateFn)
     }
-  }, [setSongs, setAllSongs, allSongs, setSortedSongs, sortedSongs])
+  }, [setSongs, setAllSongs, setSortedSongs])
 
   // 좋아요 토글 핸들러
   const handleLike = async (songId: string) => {
@@ -88,11 +88,10 @@ export const useLikedSongs = (
     }
     setLikedSongs(optimisticLikedSongs)
     
-    // 스크롤 위치 저장 (my-likes 정렬일 때만)
+    // 스크롤 위치 저장 (모든 정렬에서)
     const currentSort = (window as { currentSort?: string }).currentSort || ''
-    const shouldPreserveScroll = currentSort === 'my-likes'
     let savedScrollTop = 0
-    if (shouldPreserveScroll && listRef?.current) {
+    if (listRef?.current) {
       savedScrollTop = listRef.current.scrollTop
     }
 
@@ -113,7 +112,7 @@ export const useLikedSongs = (
     updateAllStates(updateLikeCount)
     
     // 스크롤 위치 복원 (다음 렌더링 사이클에서)
-    if (shouldPreserveScroll && listRef?.current) {
+    if (listRef?.current && currentSort === 'my-likes') {
       setTimeout(() => {
         if (listRef.current) {
           listRef.current.scrollTop = savedScrollTop
@@ -210,6 +209,9 @@ export const useLikedSongs = (
   // '나의 좋아요' 정렬 처리 - 최적화된 전체 정렬
   useEffect(() => {
     if (currentSort === 'my-likes' && allSongs && setSortedSongs && setSongs) {
+      // 스크롤 위치 저장
+      const currentScrollTop = listRef?.current?.scrollTop || 0
+      
       const newSortedSongs = [...allSongs].sort((a, b) => {
         const aIsLiked = likedSongs.has(a.id)
         const bIsLiked = likedSongs.has(b.id)
@@ -225,10 +227,19 @@ export const useLikedSongs = (
       
       setSortedSongs(newSortedSongs)
       setSongs(newSortedSongs.slice(0, songs.length))
+      
+      // 스크롤 위치 복원
+      if (listRef?.current && currentScrollTop > 0) {
+        setTimeout(() => {
+          if (listRef.current) {
+            listRef.current.scrollTop = currentScrollTop
+          }
+        }, 0)
+      }
     }
-  }, [likedSongs, currentSort, allSongs, setSortedSongs, setSongs, songs.length])
+  }, [likedSongs, currentSort, allSongs, setSortedSongs, setSongs, songs.length, listRef])
 
-  // 정렬 필터 변경 시 allSongs의 likeCount 동기화
+  // 정렬 필터 변경 시 allSongs의 likeCount 동기화 - 무한 루프 방지
   useEffect(() => {
     if (allSongs && setAllSongs && songs.length > 0) {
       // songs 배열의 최신 likeCount를 allSongs에 반영

@@ -167,6 +167,8 @@ export default function RoulettePage() {
     const cleanArtist = removeParentheses(result.artist)
     const cleanTitle = removeParentheses(result.title)
     const text = `${cleanArtist} - ${cleanTitle}`
+    
+    // 클립보드에 복사
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text)
     } else {
@@ -177,6 +179,35 @@ export default function RoulettePage() {
       document.execCommand('copy')
       document.body.removeChild(textarea)
     }
+    
+    // 선곡표 팝업 창에 노래 정보 전달
+    try {
+      // 부모 창이 있으면 부모 창에 메시지 전달 (팝업에서 열린 경우)
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({
+          type: 'ADD_TO_SONGLIST',
+          artistTitle: text
+        }, '*')
+      }
+      
+      // localStorage를 통해 간접적으로 통신
+      const songlistData = {
+        type: 'ADD_TO_SONGLIST',
+        artistTitle: text,
+        timestamp: Date.now()
+      }
+      localStorage.setItem('songlist_add_request', JSON.stringify(songlistData))
+      
+      // localStorage 이벤트를 트리거
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'songlist_add_request',
+        newValue: JSON.stringify(songlistData)
+      }))
+      
+    } catch (error) {
+      console.log('선곡표 팝업 창에 메시지 전달 실패:', error)
+    }
+    
     setCopied(true)
   }
   useEffect(() => {

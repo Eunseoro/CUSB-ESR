@@ -90,11 +90,26 @@ export async function PUT(
       where: { id },
       data: updateData,
     })
+    
+    // 데이터베이스 트랜잭션 커밋 강제 실행
+    await prisma.$executeRaw`COMMIT`
+    
+    // 업데이트된 데이터를 다시 조회하여 최신 상태 확인
+    const freshSong = await prisma.song.findUnique({
+      where: { id },
+    })
+
+    if (!freshSong) {
+      return NextResponse.json(
+        { error: 'Song not found after update' },
+        { status: 404 }
+      )
+    }
 
     // 응답에서 카테고리를 배열로 변환
     const songWithCategories = {
-      ...updatedSong,
-      categories: updatedSong.category ? updatedSong.category.split(',').map(cat => cat.trim()) : []
+      ...freshSong,
+      categories: freshSong.category ? freshSong.category.split(',').map(cat => cat.trim()) : []
     }
 
     return NextResponse.json(songWithCategories)

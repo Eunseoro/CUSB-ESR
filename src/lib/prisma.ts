@@ -12,14 +12,24 @@ if (process.env.NODE_ENV === 'production') {
   // 프로덕션: 매번 새 인스턴스 생성
   prisma = new PrismaClient({
     log: ['error'],
-    errorFormat: 'minimal'
+    errorFormat: 'minimal',
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL
+      }
+    }
   })
 } else {
   // 개발: 전역 인스턴스 재사용
   if (!globalForPrisma.prisma) {
     globalForPrisma.prisma = new PrismaClient({
       log: ['error'],
-      errorFormat: 'pretty'
+      errorFormat: 'pretty',
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL
+        }
+      }
     })
   }
   prisma = globalForPrisma.prisma

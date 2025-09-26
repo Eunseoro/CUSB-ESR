@@ -141,7 +141,7 @@ export const useInfiniteScroll = ({
     }
   }, [category, search, sort, songsPerPage])
 
-  // 정렬이 변경될 때마다 모든 곡을 다시 정렬
+  // 정렬이 변경될 때마다 모든 곡을 다시 정렬 - 무한 루프 방지
   useEffect(() => {
     if (allSongs.length === 0) return
     
@@ -188,7 +188,7 @@ export const useInfiniteScroll = ({
     setSortedSongs(newSortedSongs)
     setSongs(newSortedSongs.slice(0, displayedCount))
     setHasMore(displayedCount < newSortedSongs.length)
-  }, [sort, allSongs, displayedCount])
+  }, [sort, allSongs, displayedCount, setSortedSongs, setSongs, setHasMore])
 
   const loadMoreSongs = useCallback(() => {
     if (!hasMore || loadingMore) return
@@ -203,7 +203,7 @@ export const useInfiniteScroll = ({
     setPage(page + 1)
     
     setLoadingMore(false)
-  }, [hasMore, loadingMore, displayedCount, songsPerPage, sortedSongs, page])
+  }, [hasMore, loadingMore, displayedCount, songsPerPage, sortedSongs, page, setSongs])
 
   const resetPagination = useCallback(() => {
     setPage(1)

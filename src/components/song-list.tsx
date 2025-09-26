@@ -140,27 +140,71 @@ export const SongList = forwardRef<SongListRef, SongListProps>(function SongList
     initializeLikedSongs()
   }, [])
 
-  // 이벤트 리스너들
+  // 이벤트 리스너들 - 의존성 배열 최소화
   useEffect(() => {
-    const cleanupFunctions = [
-      onSongListRefresh(() => {
-        if (page === 1) fetchSongs(1, true)
-      }),
-      onSongUpdate((songId, updatedSong) => {
-        setSongs(prev => prev.map(song => 
+    const handleSongListRefresh = () => {
+      resetPagination()
+      fetchSongs(1, true)
+    }
+    
+    const handleSongUpdate = (songId: string, updatedSong?: Song) => {
+      // 모든 관련 상태에서 곡 정보 업데이트
+      setSongs(prev => prev.map(song => 
+        song.id === songId ? (updatedSong as Song) : song
+      ))
+      if (setAllSongs) {
+        setAllSongs(prev => prev.map(song => 
           song.id === songId ? (updatedSong as Song) : song
         ))
-      }),
-      onSongDelete((songId) => {
-        setSongs(prev => prev.filter(song => song.id !== songId))
-      }),
+      }
+      if (setSortedSongs) {
+        setSortedSongs(prev => prev.map(song => 
+          song.id === songId ? (updatedSong as Song) : song
+        ))
+      }
+      
+      // 카테고리가 변경된 경우 전체 새로고침 필요
+      if (updatedSong) {
+        const currentSong = songs.find(s => s.id === songId)
+        if (currentSong) {
+          const originalCategory = currentSong.categories?.[0]
+          const newCategory = (updatedSong as Song).categories?.[0]
+          if (originalCategory !== newCategory) {
+            // 카테고리가 변경된 경우 전체 새로고침
+            resetPagination()
+            fetchSongs(1, true)
+          }
+        }
+      }
+    }
+    
+    const handleSongDelete = (songId: string) => {
+      // 모든 관련 상태에서 삭제된 곡 제거
+      setSongs(prev => prev.filter(song => song.id !== songId))
+      if (setAllSongs) {
+        setAllSongs(prev => prev.filter(song => song.id !== songId))
+      }
+      if (setSortedSongs) {
+        setSortedSongs(prev => prev.filter(song => song.id !== songId))
+      }
+      
+      // 삭제 후 표시된 곡 수가 부족하면 더 로드
+      if (songs.length <= SONGS_PER_PAGE && hasMore) {
+        loadMoreSongs()
+      }
+    }
+    
+    const cleanupFunctions = [
+      onSongListRefresh(handleSongListRefresh),
+      onSongUpdate(handleSongUpdate),
+      onSongDelete(handleSongDelete),
       onAdminAuthChange(() => {
         // Admin auth changes handled by useAdminAuth context
       })
     ]
     
     return () => cleanupFunctions.forEach(cleanup => cleanup())
-  }, [setSongs, page, fetchSongs])
+  }, []) // 의존성 배열을 비워서 한 번만 등록
 
   // 복사 기능
   const handleCopy = useCallback((artist: string, title: string, e: React.MouseEvent, songId: string) => {

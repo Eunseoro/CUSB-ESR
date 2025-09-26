@@ -12,10 +12,11 @@ export async function GET(request: NextRequest) {
     const title = searchParams.get('title') // 제목으로만 검색하는 경우
     const skip = (pageNum - 1) * limit
 
-    // 캐시 헤더 설정 (5분 캐시)
+    // 캐시 헤더 설정 (실시간 데이터를 위해 캐시 비활성화)
     const cacheHeaders = {
-      'Cache-Control': 'public, max-age=300, s-maxage=300',
-      'CDN-Cache-Control': 'public, max-age=300'
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     }
 
     const where: Record<string, unknown> = {
