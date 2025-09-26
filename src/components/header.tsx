@@ -69,7 +69,7 @@ export function Header() {
     
     window.open(
       '/songlist?popup=true',
-      'songRequests',
+      '유할매 선곡표',
       `width=${songListWidth},height=${currentHeight},left=${currentX},top=${currentY},scrollbars=yes,resizable=yes`
     );
   };

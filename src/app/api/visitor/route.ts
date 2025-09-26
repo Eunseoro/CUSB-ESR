@@ -5,13 +5,18 @@ import { getKoreanTodayDate, getKoreanWeekStartDate, getKoreanMonthStartDate } f
 
 // 관리자 인증 헤더
 
-// 방문 시: 오늘 카운트 upsert
+// 방문 시: 오늘 카운트 upsert (15시 기준 집계)
 export async function POST() {
   const today = getKoreanTodayDate()
+  // 한국 시간대 기준으로 15시 설정하여 저장
+  const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 15, 0, 0, 0)
+  // 한국 시간대 오프셋 적용
+  targetDate.setHours(targetDate.getHours() - 9) // UTC로 변환
+  
   await prisma.visitorCount.upsert({
-    where: { date: today },
+    where: { date: targetDate },
     update: { count: { increment: 1 } },
-    create: { date: today, count: 1 },
+    create: { date: targetDate, count: 1 },
   })
   return NextResponse.json({ ok: true })
 }
@@ -40,8 +45,15 @@ export async function GET(req: NextRequest) {
   
   // 특정 날짜 조회 요청인 경우
   if (specificDate) {
-    const targetDate = new Date(specificDate)
+    // 한국 시간대 기준으로 15시 데이터 조회
+    const targetDate = new Date(specificDate + 'T15:00:00+09:00')
+    
+    console.log('조회 요청:', { specificDate, targetDate: targetDate.toISOString() })
+    
     const count = await prisma.visitorCount.findUnique({ where: { date: targetDate } })
+    
+    console.log('조회 결과:', { count: count?.count || 0 })
+    
     return NextResponse.json({
       date: specificDate,
       count: count?.count || 0

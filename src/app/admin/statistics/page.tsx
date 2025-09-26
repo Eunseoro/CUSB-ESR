@@ -95,7 +95,7 @@ function VisitorStatisticsContent() {
       month: `${formatDate(monthStart)} ~ ${formatDate(today)}`
     })
     
-    // 오늘 날짜를 자동으로 선택하고 조회
+    // 오늘 날짜를 자동으로 선택하고 조회 (15시 기준 집계 유지)
     const todayString = today.toISOString().split('T')[0]
     setSelectedDate(todayString)
     handleDateQuery(todayString)

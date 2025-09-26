@@ -1,6 +1,9 @@
 // Prisma 클라이언트를 생성 및 export합니다.
 import { PrismaClient } from '@prisma/client'
 
+// 한국 시간대 설정
+process.env.TZ = 'Asia/Seoul'
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }

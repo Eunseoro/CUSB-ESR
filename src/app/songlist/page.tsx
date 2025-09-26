@@ -317,6 +317,11 @@ function SongListContent() {
     }
   }
 
+  // 브라우저 창 제목 설정
+  useEffect(() => {
+    document.title = '유할매 선곡표'
+  }, [])
+
   return (
     <div className={`min-h-screen bg-background text-foreground font-mono ${isPopup ? 'w-full -ml-16' : ''}`} style={isPopup ? { margin: 0, padding: 0 } : {}}>
       {/* 메뉴 표시줄 */}
