@@ -2,7 +2,28 @@
 import { PrismaClient } from '@prisma/client'
 
 // 한국 시간대 설정
-process.env.TZ = 'Asia/Seoul'
+const KOREA_TIMEZONE = 'Asia/Seoul'
+
+// 한국 시간대 설정 함수
+function setKoreaTimezone() {
+  try {
+    // Intl.DateTimeFormat을 사용한 시간대 검증
+    const now = new Date()
+    const koreaTime = new Intl.DateTimeFormat('ko-KR', {
+      timeZone: KOREA_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).format(now)
+    
+    console.log(`한국 시간대 설정 완료: ${koreaTime}`)
+  } catch (error) {
+    console.warn('시간대 설정 중 오류 발생:', error)
+  }
+}
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -11,8 +32,11 @@ const globalForPrisma = globalThis as unknown as {
 // 개발 환경에서만 전역 인스턴스 유지 (Hot Reload 대응)
 let prisma: PrismaClient
 
+// 한국 시간대 설정 (초기화 시)
+setKoreaTimezone()
+
 if (process.env.NODE_ENV === 'production') {
-  // 프로덕션: 매번 새 인스턴스 생성
+  // 프로덕션: 매번 새 인스턴스 생성 (한국 시간대 설정)
   prisma = new PrismaClient({
     log: ['error'],
     errorFormat: 'minimal',
@@ -23,7 +47,7 @@ if (process.env.NODE_ENV === 'production') {
     }
   })
 } else {
-  // 개발: 전역 인스턴스 재사용
+  // 개발: 전역 인스턴스 재사용 (한국 시간대 설정)
   if (!globalForPrisma.prisma) {
     globalForPrisma.prisma = new PrismaClient({
       log: ['error'],
@@ -91,6 +115,27 @@ export async function disconnectPrisma() {
   } catch (error) {
     console.error('데이터베이스 연결 해제 실패:', error)
   }
+}
+
+// 한국 시간대 유틸리티 함수들
+export function getKoreaTime(): Date {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: KOREA_TIMEZONE }))
+}
+
+export function formatKoreaTime(date: Date): string {
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: KOREA_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).format(date)
+}
+
+export function getKoreaTimeString(): string {
+  return formatKoreaTime(new Date())
 }
 
 export { prisma }
