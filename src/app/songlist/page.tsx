@@ -317,24 +317,9 @@ function SongListContent() {
     }
   }
 
-  // 브라우저 창 제목 설정 (useLayoutEffect로 더 강력하게)
-  useLayoutEffect(() => {
-    document.title = '유할매 선곡표'
-    // 추가로 head 태그 직접 조작
-    const titleElement = document.querySelector('title')
-    if (titleElement) {
-      titleElement.textContent = '유할매 선곡표'
-    }
-  }, [])
-
-  // 추가로 useEffect로도 설정 (이중 보장)
-  useEffect(() => {
-    document.title = '유할매 선곡표'
-  }, [])
-
   return (
     <div className={`min-h-screen bg-background text-foreground font-mono ${isPopup ? 'w-full -ml-16' : ''}`} style={isPopup ? { margin: 0, padding: 0 } : {}}>
-      {/* 메뉴 표시줄 */}
+        {/* 메뉴 표시줄 */}
       <div className={`flex border-b border-gray-300 dark:border-gray-600 ${isPopup ? '-ml-16' : ''}`} style={isPopup ? { width: 'calc(100% + 4rem)' } : {}}>
         <button 
           onClick={resetAllData}
