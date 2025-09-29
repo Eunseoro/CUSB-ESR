@@ -171,9 +171,9 @@ export function CollaborationMemo() {
             <Card className={`${COLOR_CLASSES.yellow} border-2 shadow-lg`}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-bold">
+                  <CardTitle className="text-sm font-bold text-black">
                     <Select value={newMemo.target} onValueChange={(value) => setNewMemo(prev => ({ ...prev, target: value }))}>
-                      <SelectTrigger className="w-auto h-6 p-1 text-xs border-none bg-transparent">
+                      <SelectTrigger className="w-auto h-6 p-1 text-xs border-none bg-transparent text-black">
                         <SelectValue placeholder="To. 선택" />
                       </SelectTrigger>
                       <SelectContent>
@@ -211,7 +211,7 @@ export function CollaborationMemo() {
                   placeholder="내용을 입력하세요"
                   value={newMemo.content}
                   onChange={(e) => setNewMemo(prev => ({ ...prev, content: e.target.value }))}
-                  className="min-h-[120px] text-sm border-none bg-transparent resize-none focus:ring-0"
+                  className="min-h-[120px] text-sm border-none bg-transparent resize-none focus:ring-0 text-black"
                   autoFocus
                 />
               </CardContent>
@@ -233,7 +233,7 @@ export function CollaborationMemo() {
             >
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-bold">
+                  <CardTitle className="text-sm font-bold text-black">
                     To. {memo.target}
                   </CardTitle>
                   <div className="flex gap-1">
@@ -265,7 +265,7 @@ export function CollaborationMemo() {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <p className="text-sm mb-3 whitespace-pre-wrap">{memo.content}</p>
+                <p className="text-sm mb-3 whitespace-pre-wrap text-black">{memo.content}</p>
                 
                 {/* 댓글 섹션 */}
                 <div className="space-y-2">
@@ -279,7 +279,7 @@ export function CollaborationMemo() {
                   {/* 의견 목록 */}
                   {memo.comments.map((comment) => (
                     <div key={comment.id} className="text-xs bg-white/50 p-2 rounded">
-                      <p>{comment.content}</p>
+                      <p className="text-black">{comment.content}</p>
                       <p className="text-gray-500 mt-1">
                         {new Date(comment.createdAt).toLocaleString('ko-KR')}
                       </p>
@@ -305,7 +305,7 @@ export function CollaborationMemo() {
                       disabled={!newComments[memo.id]?.trim()}
                       className="h-6 w-6 p-0 border border-gray-300 rounded-full hover:bg-gray-50"
                     >
-                      <ArrowUp className="w-4 h-4 text-gray-100" />
+                      <ArrowUp className="w-4 h-4 text-gray-600" />
                     </Button>
                   </div>
                 </div>

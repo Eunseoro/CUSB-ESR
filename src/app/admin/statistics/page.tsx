@@ -60,34 +60,22 @@ function VisitorStatisticsContent() {
     }
   }, [isAdmin])
 
-  // 날짜 기반 기간 텍스트는 클라이언트에서만 계산 (한국 시간대 기준, 15시 기준)
+  // 단순한 날짜 기반 기간 텍스트 계산
   useEffect(() => {
-    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }))
-    const hour = now.getHours()
-    
-    // 15시 기준으로 오늘/어제 계산
-    let today, yesterday
-    if (hour < 15) {
-      // 15시 이전이면 전날이 오늘, 그 전날이 어제
-      today = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
-      yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2)
-    } else {
-      // 15시 이후면 당일이 오늘, 전날이 어제
-      today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
-    }
-    
-    const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay())
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     
     function formatDate(date: Date) {
       return date.toLocaleDateString('ko-KR', { 
-        timeZone: 'Asia/Seoul',
         year: 'numeric', 
         month: '2-digit', 
         day: '2-digit' 
       }).replace(/\. /g, '.').replace(/\.$/, '')
     }
+    
     setPeriods({
       today: formatDate(today),
       yesterday: formatDate(yesterday),
@@ -95,7 +83,7 @@ function VisitorStatisticsContent() {
       month: `${formatDate(monthStart)} ~ ${formatDate(today)}`
     })
     
-    // 오늘 날짜를 자동으로 선택하고 조회 (15시 기준 집계 유지)
+    // 오늘 날짜를 자동으로 선택하고 조회
     const todayString = today.toISOString().split('T')[0]
     setSelectedDate(todayString)
     handleDateQuery(todayString)

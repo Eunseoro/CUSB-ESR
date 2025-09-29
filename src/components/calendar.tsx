@@ -132,11 +132,7 @@ export function Calendar({ selectedDate, onDateSelect }: CalendarProps) {
                 ? 'text-gray-300 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700' 
                 : 'text-gray-900 dark:text-gray-100 hover:bg-blue-100 dark:hover:bg-blue-900'
               }
-              ${day.isToday 
-                ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                : ''
-              }
-              ${day.isSelected && !day.isToday
+              ${day.isSelected
                 ? 'bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100' 
                 : ''
               }

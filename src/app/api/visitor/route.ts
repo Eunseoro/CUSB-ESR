@@ -1,17 +1,14 @@
 // 방문자 집계 API: 방문 시 카운트 증가(POST), 관리자 인증 시 통계 반환(GET)
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getKoreanTodayDate, getKoreanWeekStartDate, getKoreanMonthStartDate } from '@/lib/timezone'
 
-// 관리자 인증 헤더
-
-// 방문 시: 오늘 카운트 upsert (15시 기준 집계)
+// 방문 시: 오늘 카운트 upsert (단순한 날짜 기준)
 export async function POST() {
-  const today = getKoreanTodayDate()
-  // 한국 시간대 기준으로 15시 설정하여 저장
-  const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 15, 0, 0, 0)
-  // 한국 시간대 오프셋 적용
-  targetDate.setHours(targetDate.getHours() - 9) // UTC로 변환
+  // 오늘 날짜를 00시 00분으로 설정 (단순화)
+  const today = new Date()
+  const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0)
+  
+  console.log('방문자 카운트:', { targetDate: targetDate.toISOString() })
   
   await prisma.visitorCount.upsert({
     where: { date: targetDate },
@@ -45,46 +42,95 @@ export async function GET(req: NextRequest) {
   
   // 특정 날짜 조회 요청인 경우
   if (specificDate) {
-    // 한국 시간대 기준으로 15시 데이터 조회
-    const targetDate = new Date(specificDate + 'T15:00:00+09:00')
+    // 해당 날짜의 모든 행을 조회하여 합계 계산
+    const startDate = new Date(specificDate + 'T00:00:00.000Z')
+    const endDate = new Date(specificDate + 'T23:59:59.999Z')
     
-    console.log('조회 요청:', { specificDate, targetDate: targetDate.toISOString() })
+    console.log('조회 요청:', { specificDate, startDate: startDate.toISOString(), endDate: endDate.toISOString() })
     
-    const count = await prisma.visitorCount.findUnique({ where: { date: targetDate } })
+    const counts = await prisma.visitorCount.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate
+        }
+      }
+    })
     
-    console.log('조회 결과:', { count: count?.count || 0 })
+    const totalCount = counts.reduce((sum, record) => sum + record.count, 0)
+    
+    console.log('조회 결과:', { 
+      foundRecords: counts.length, 
+      totalCount,
+      records: counts.map(r => ({ date: r.date.toISOString(), count: r.count }))
+    })
     
     return NextResponse.json({
       date: specificDate,
-      count: count?.count || 0
+      count: totalCount
     })
   }
 
-  const today = getKoreanTodayDate()
+  // 단순한 날짜 기준 통계 조회
+  const today = new Date()
+  const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0)
+  
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
-  const weekStart = getKoreanWeekStartDate()
-  const monthStart = getKoreanMonthStartDate()
+  const yesterdayDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0)
+  
+  // 이번 주 시작 (일요일)
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - today.getDay())
+  const weekStartDate = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate(), 0, 0, 0, 0)
+  
+  // 이번 달 시작
+  const monthStartDate = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0)
 
-  // 오늘 방문자 수
-  const todayCount = await prisma.visitorCount.findUnique({ where: { date: today } })
-  // 어제 방문자 수
-  const yesterdayCount = await prisma.visitorCount.findUnique({ where: { date: yesterday } })
+  // 오늘 방문자 수 (해당 날짜의 모든 행 합계)
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0)
+  const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999)
+  const todayCounts = await prisma.visitorCount.findMany({
+    where: {
+      date: {
+        gte: todayStart,
+        lte: todayEnd
+      }
+    }
+  })
+  const todayTotal = todayCounts.reduce((sum, record) => sum + record.count, 0)
+  
+  // 어제 방문자 수 (해당 날짜의 모든 행 합계)
+  const yesterdayStart = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0)
+  const yesterdayEnd = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999)
+  const yesterdayCounts = await prisma.visitorCount.findMany({
+    where: {
+      date: {
+        gte: yesterdayStart,
+        lte: yesterdayEnd
+      }
+    }
+  })
+  const yesterdayTotal = yesterdayCounts.reduce((sum, record) => sum + record.count, 0)
+  
   // 이번 주 방문자 수
-  const weekCounts = await prisma.visitorCount.findMany({ where: { date: { gte: weekStart } } })
+  const weekCounts = await prisma.visitorCount.findMany({ where: { date: { gte: weekStartDate } } })
   const weekTotal = weekCounts.reduce((sum: number, v: { count: number }) => sum + v.count, 0)
+  
   // 이번 달 방문자 수
-  const monthCounts = await prisma.visitorCount.findMany({ where: { date: { gte: monthStart } } })
+  const monthCounts = await prisma.visitorCount.findMany({ where: { date: { gte: monthStartDate } } })
   const monthTotal = monthCounts.reduce((sum: number, v: { count: number }) => sum + v.count, 0)
+  
   // 전체 방문자 수
   const allCounts = await prisma.visitorCount.findMany()
   const total = allCounts.reduce((sum: number, v: { count: number }) => sum + v.count, 0)
+  
   // 평균(전체 일수 기준)
   const avg = allCounts.length > 0 ? Math.round(total / allCounts.length) : 0
 
   return NextResponse.json({
-    today: todayCount?.count || 0,
-    yesterday: yesterdayCount?.count || 0,
+    today: todayTotal,
+    yesterday: yesterdayTotal,
     week: weekTotal,
     month: monthTotal,
     total,

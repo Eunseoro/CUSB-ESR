@@ -7,13 +7,28 @@ import { useEffect } from 'react'
 import Image from 'next/image'
 
 export default function HomePage() {
-  // 페이지 진입 시 방문자 카운트 증가 (1일 1회)
+  // 페이지 진입 시 방문자 카운트 증가 (1일 1회, 기기별 중복 방지)
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10)
     const key = `visited_${today}`
+    
+    // 오늘 이미 방문했는지 확인
     if (!localStorage.getItem(key)) {
-      fetch('/api/visitor', { method: 'POST' })
-      localStorage.setItem(key, '1')
+      // 방문자 수 증가 요청
+      fetch('/api/visitor', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+        .then(response => {
+          if (response.ok) {
+            // 성공 시 로컬 스토리지에 기록
+            localStorage.setItem(key, '1')
+            console.log('방문자 수 증가 완료')
+          }
+        })
+        .catch(error => {
+          console.error('방문자 수 증가 실패:', error)
+        })
     }
   }, [])
 
