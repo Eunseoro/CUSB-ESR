@@ -185,3 +185,95 @@ model ScoreImage {
   @@index([songId])
   @@index([order])
 }
+
+// ===== 봇 관련 모델들 =====
+
+// 봇 설정 (유멜론 봇 전용)
+model BotConfig {
+  id                    String   @id @default(cuid())
+  channelId             String   @unique  // 치지직 채널 ID
+  channelName           String
+  isActive              Boolean  @default(false)
+  isLive                Boolean  @default(false)
+  
+  // 봇 계정 연결
+  botAccountId          String?  // 연결된 봇 계정 ID
+  
+  // WebSocket 연결 정보
+  chatChannelId         String?
+  accessToken           String?  @db.Text
+  refreshToken          String?  @db.Text
+  tokenExpiry           DateTime?
+  
+  // 봇 설정
+  welcomeMessage        String?  @db.Text
+  autoReplyEnabled      Boolean  @default(true)
+  moderationEnabled     Boolean  @default(false)
+  donationAlertEnabled  Boolean  @default(true)
+  
+  // 금지어 필터
+  bannedWords           String[] @default([])
+  bannedWordsAction     String   @default("timeout") // timeout, delete, warn
+  
+  lastConnected         DateTime?
+  lastDisconnected      DateTime?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  commands              BotCommand[]
+  chatLogs              BotChatLog[]
+  
+  @@index([channelId])
+  @@index([isActive])
+}
+
+// 봇 명령어
+model BotCommand {
+  id          String   @id @default(cuid())
+  configId    String
+  trigger     String   // 명령어 트리거 (예: "!공지")
+  response    String   @db.Text
+  permission  String   @default("everyone") // everyone, subscriber, moderator, streamer
+  cooldown    Int      @default(0) // 초 단위
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  config      BotConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  
+  @@unique([configId, trigger])
+  @@index([configId])
+}
+
+// 채팅 로그 (선택 사항, 대용량 처리 주의)
+model BotChatLog {
+  id          String   @id @default(cuid())
+  configId    String
+  username    String
+  message     String   @db.Text
+  messageType String   // chat, donation, subscription, system
+  timestamp   DateTime @default(now())
+  
+  config      BotConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  
+  @@index([configId, timestamp])
+  @@index([timestamp])
+}
+
+// 봇 계정 (서비스가 관리하는 봇들)
+model BotAccount {
+  id           String   @id @default(cuid())
+  accountName  String   @unique
+  nidAuth      String   @db.Text // NID_AUT 쿠키 (암호화 필수)
+  nidSession   String   @db.Text // NID_SES 쿠키 (암호화 필수)
+  isActive     Boolean  @default(true)
+  channelCount Int      @default(0) // 현재 관리 중인 채널 수
+  maxChannels  Int      @default(10) // 최대 관리 가능 채널 수
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([isActive])
+}
