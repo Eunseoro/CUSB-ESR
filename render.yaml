@@ -1,0 +1,32 @@
+# Render 배포 설정 (유멜론 봇 워커)
+services:
+  - type: web
+    name: ugmsong-bot-worker
+    env: node
+    plan: free
+    buildCommand: npm install && npm run bot:build
+    startCommand: npm run bot:start
+    dockerfilePath: ./Dockerfile.bot
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WORKER_MODE
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ugmsong-bot-db
+          property: connectionString
+      - key: BOT_ENCRYPTION_KEY
+        sync: false
+      - key: BOT_WORKER_API_KEY
+        sync: false
+      - key: DASHBOARD_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+
+databases:
+  - name: ugmsong-bot-db
+    plan: free
+    databaseName: ugmsong_bot
+    user: ugmsong_bot_user
