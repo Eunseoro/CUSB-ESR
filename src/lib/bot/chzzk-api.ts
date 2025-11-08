@@ -39,6 +39,10 @@ export interface ChzzkDonation {
 
 // 치지직 채널 정보 조회
 export async function getChzzkChannelInfo(channelId: string): Promise<ChzzkChannelInfo> {
+  // AbortController를 사용한 타임아웃 구현
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+  
   try {
     const response = await fetch(`https://api.chzzk.naver.com/service/v2/channels/${channelId}/live-detail`, {
       method: 'GET',
@@ -46,20 +50,20 @@ export async function getChzzkChannelInfo(channelId: string): Promise<ChzzkChann
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json',
       },
-      timeout: 10000, // 10초 타임아웃
+      signal: controller.signal,
     });
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
     
-      const data = await response.json();
-      
-      // 치지직 API는 success 필드가 없고, code: 200이 성공을 의미
-      if (data.code !== 200) {
-        console.log('치지직 API 응답:', JSON.stringify(data, null, 2));
-        throw new Error(`Failed to fetch channel info: API returned code=${data.code}. Response: ${JSON.stringify(data)}`);
-      }
+    const data = await response.json();
+    
+    // 치지직 API는 success 필드가 없고, code: 200이 성공을 의미
+    if (data.code !== 200) {
+      console.log('치지직 API 응답:', JSON.stringify(data, null, 2));
+      throw new Error(`Failed to fetch channel info: API returned code=${data.code}. Response: ${JSON.stringify(data)}`);
+    }
     
     const content = data.content;
     return {
@@ -78,6 +82,8 @@ export async function getChzzkChannelInfo(channelId: string): Promise<ChzzkChann
       channelName: 'Unknown',
       isLive: false,
     };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

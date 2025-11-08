@@ -10,18 +10,19 @@ interface BotConfig {
   channelName: string;
   isActive: boolean;
   isLive: boolean;
-  chatChannelId?: string;
-  accessToken?: string;
-  refreshToken?: string;
-  tokenExpiry?: Date;
-  welcomeMessage?: string;
+  botAccountId?: string | null;
+  chatChannelId?: string | null;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  tokenExpiry?: Date | null;
+  welcomeMessage?: string | null;
   autoReplyEnabled: boolean;
   moderationEnabled: boolean;
   donationAlertEnabled: boolean;
   bannedWords: string[];
   bannedWordsAction: string;
-  lastConnected?: Date;
-  lastDisconnected?: Date;
+  lastConnected?: Date | null;
+  lastDisconnected?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
