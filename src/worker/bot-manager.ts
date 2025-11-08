@@ -42,8 +42,16 @@ export class BotManager {
     this.commandExecutor = new BotCommandExecutor(this.prisma);
     
     // API 클라이언트 초기화 (관리 대시보드와 통신)
-    const dashboardUrl = process.env.DASHBOARD_URL || 'http://localhost:3000';
+    // 기본값은 프로덕션 서버 (Vercel 배포 URL)
+    // 주의: /bot을 포함하지 않음! API는 /api/bot/... 경로를 사용하므로 루트 도메인만 필요
+    const dashboardUrl = process.env.DASHBOARD_URL || 'https://ugmsong.vercel.app';
     const apiKey = process.env.BOT_WORKER_API_KEY || 'default-api-key';
+    
+    if (!process.env.DASHBOARD_URL) {
+      console.warn('⚠️ DASHBOARD_URL 환경 변수가 설정되지 않았습니다. 기본값(https://ugmsong.vercel.app)을 사용합니다.');
+    }
+    
+    console.log(`📡 대시보드 URL: ${dashboardUrl}`);
     this.apiClient = new BotApiClient(dashboardUrl, apiKey);
   }
 
@@ -52,17 +60,25 @@ export class BotManager {
 
     console.log('🤖 유멜론 봇 매니저 초기화 중...');
 
-    // 활성화된 모든 채널 조회 (API를 통해)
-    const configs = await this.apiClient.getActiveConfigs();
+    try {
+      // 활성화된 모든 채널 조회 (API를 통해)
+      const configs = await this.apiClient.getActiveConfigs();
 
-    console.log(`활성화된 채널 ${configs.length}개 발견`);
+      console.log(`활성화된 채널 ${configs.length}개 발견`);
 
-    for (const config of configs) {
-      await this.connectChannel(config);
+      for (const config of configs) {
+        await this.connectChannel(config);
+      }
+
+      this.isInitialized = true;
+      console.log(`✅ 유멜론 봇 매니저 초기화 완료 (${this.clients.size}개 채널 연결)`);
+    } catch (error) {
+      console.error('❌ 봇 매니저 초기화 실패:', error);
+      console.log('⚠️ 대시보드 연결 실패. 재시도는 계속 진행됩니다.');
+      // 초기화 실패해도 프로세스는 계속 실행 (재시도 가능)
+      this.isInitialized = false;
+      throw error; // 호출자에게 에러 전달 (재시도 로직에서 처리)
     }
-
-    this.isInitialized = true;
-    console.log(`✅ 유멜론 봇 매니저 초기화 완료 (${this.clients.size}개 채널 연결)`);
   }
 
   async connectChannel(config: BotConfig): Promise<void> {

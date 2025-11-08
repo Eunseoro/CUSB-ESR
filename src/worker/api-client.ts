@@ -12,21 +12,41 @@ export class BotApiClient {
 
   // 활성화된 봇 설정 조회
   async getActiveConfigs(): Promise<BotConfig[]> {
+    // AbortController를 사용한 타임아웃 구현
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+    
     try {
+      console.log(`📡 대시보드 API 호출: ${this.baseUrl}/api/bot/configs/active`);
+      
       const response = await fetch(`${this.baseUrl}/api/bot/configs/active`, {
         headers: {
           'X-API-Key': this.apiKey,
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch configs: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch configs: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching active configs:', error);
+      const configs = await response.json();
+      console.log(`✅ 활성화된 설정 ${configs.length}개 조회 성공`);
+      return configs;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError' || error.code === 'ECONNREFUSED' || error.cause?.code === 'ECONNREFUSED') {
+        console.error(`❌ 대시보드 연결 실패 (${this.baseUrl}):`, error.message || error.cause?.message);
+        console.error('💡 DASHBOARD_URL 환경 변수를 확인하세요.');
+        console.error('💡 Vercel 배포 URL이 올바르게 설정되었는지 확인하세요.');
+      } else {
+        console.error('Error fetching active configs:', error);
+      }
       throw error;
     }
   }
