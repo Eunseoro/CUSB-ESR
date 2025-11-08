@@ -47,11 +47,24 @@ export class BotManager {
     const dashboardUrl = process.env.DASHBOARD_URL || 'https://ugmsong.vercel.app';
     const apiKey = process.env.BOT_WORKER_API_KEY || 'default-api-key';
     
+    // 환경 변수 디버깅 정보 출력
+    console.log('🔍 환경 변수 확인:');
+    console.log(`  DASHBOARD_URL: ${process.env.DASHBOARD_URL ? `설정됨 (${process.env.DASHBOARD_URL})` : '미설정 (기본값 사용)'}`);
+    console.log(`  BOT_WORKER_API_KEY: ${process.env.BOT_WORKER_API_KEY ? `설정됨 (${process.env.BOT_WORKER_API_KEY.length}자)` : '미설정 (기본값 사용)'}`);
+    console.log(`  NODE_ENV: ${process.env.NODE_ENV || '미설정'}`);
+    console.log(`  DATABASE_URL: ${process.env.DATABASE_URL ? '설정됨' : '미설정'}`);
+    
     if (!process.env.DASHBOARD_URL) {
       console.warn('⚠️ DASHBOARD_URL 환경 변수가 설정되지 않았습니다. 기본값(https://ugmsong.vercel.app)을 사용합니다.');
     }
     
-    console.log(`📡 대시보드 URL: ${dashboardUrl}`);
+    if (!process.env.BOT_WORKER_API_KEY) {
+      console.warn('⚠️ BOT_WORKER_API_KEY 환경 변수가 설정되지 않았습니다. 기본값을 사용합니다.');
+      console.warn('⚠️ Vercel의 BOT_WORKER_API_KEY와 일치하지 않으면 인증이 실패합니다!');
+    }
+    
+    console.log(`📡 최종 대시보드 URL: ${dashboardUrl}`);
+    console.log(`🔑 최종 API Key: ${apiKey.substring(0, 8)}... (${apiKey.length}자)`);
     this.apiClient = new BotApiClient(dashboardUrl, apiKey);
   }
 

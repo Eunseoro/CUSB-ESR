@@ -154,17 +154,27 @@ async function shutdown() {
 // 에러 핸들링
 process.on('uncaughtException', (error) => {
   console.error('❌ 처리되지 않은 예외:', error);
-  shutdown();
+  // 프로세스를 종료하지 않고 로그만 남김 (봇 워커는 계속 실행되어야 함)
+  console.log('⚠️ 예외가 발생했지만 프로세스는 계속 실행됩니다.');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ 처리되지 않은 Promise 거부:', reason);
-  shutdown();
+  // 프로세스를 종료하지 않고 로그만 남김 (봇 워커는 계속 실행되어야 함)
+  console.log('⚠️ Promise 거부가 발생했지만 프로세스는 계속 실행됩니다.');
 });
 
 main().catch((error) => {
   console.error('❌ 메인 프로세스 실패:', error);
   // 프로세스를 종료하지 않고 계속 실행 (재시도 가능)
   console.log('⚠️ 프로세스는 계속 실행됩니다. 문제가 지속되면 수동으로 재시작하세요.');
+  
+  // 무한 루프 방지를 위해 일정 시간 후 재시도
+  setTimeout(() => {
+    console.log('🔄 메인 프로세스 재시도...');
+    main().catch((err) => {
+      console.error('❌ 재시도 실패:', err);
+    });
+  }, 60000); // 1분 후 재시도
 });
 
