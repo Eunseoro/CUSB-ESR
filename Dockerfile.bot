@@ -10,15 +10,19 @@ COPY prisma ./prisma/
 # 개발 의존성 포함하여 설치 (TypeScript 컴파일을 위해)
 RUN npm ci
 
+# Prisma 클라이언트 생성
+RUN npx prisma generate
+
 # 소스 코드 복사
 COPY src/worker ./src/worker/
 COPY src/lib/bot ./src/lib/bot/
 COPY tsconfig.json ./
+COPY tsconfig.worker.json ./
 
-# TypeScript 컴파일
-RUN npx tsc src/worker/index.ts --outDir dist/worker --target es2020 --module commonjs
+# TypeScript 컴파일 (전체 프로젝트)
+RUN npx tsc --project tsconfig.worker.json
 
-# 프로덕션 의존성만 재설치
+# 프로덕션 의존성만 재설치 (tsx는 dependencies에 있으므로 유지됨)
 RUN npm ci --only=production
 
 # 환경 변수 설정
@@ -28,7 +32,7 @@ ENV WORKER_MODE=true
 # 포트 설정 (Render 요구사항)
 EXPOSE 10000
 
-# 봇 워커 실행
-CMD ["node", "dist/worker/index.js"]
+# 봇 워커 실행 (tsx 사용 - paths alias 자동 해결, TypeScript 직접 실행)
+CMD ["npx", "tsx", "src/worker/index.ts"]
 
 
