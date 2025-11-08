@@ -3,10 +3,35 @@ import { BotManager } from './bot-manager';
 import { LiveMonitor } from './live-monitor';
 import { subscribeBotControl } from '@/lib/bot/redis';
 import { PrismaClient } from '@prisma/client';
+import http from 'http';
 
 const prisma = new PrismaClient();
 const botManager = new BotManager();
 const liveMonitor = new LiveMonitor(prisma);
+
+// Render가 포트를 감지할 수 있도록 간단한 HTTP 서버 시작
+function startHealthCheckServer() {
+  const port = process.env.PORT || 10000;
+  const server = http.createServer((req, res) => {
+    if (req.url === '/health' || req.url === '/') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        status: 'ok', 
+        service: 'chzzk-bot-worker',
+        timestamp: new Date().toISOString()
+      }));
+    } else {
+      res.writeHead(404);
+      res.end('Not Found');
+    }
+  });
+
+  server.listen(port, () => {
+    console.log(`🏥 헬스체크 서버 시작: 포트 ${port}`);
+  });
+
+  return server;
+}
 
 async function initializeBotManager() {
   const maxRetries = 5;
@@ -35,6 +60,9 @@ async function initializeBotManager() {
 
 async function main() {
   console.log('🤖 유멜론 봇 워커 시작...');
+
+  // 헬스체크 서버 시작 (Render 포트 감지용)
+  const healthServer = startHealthCheckServer();
 
   // Bot Manager 초기화 (재시도 로직 포함)
   const initialized = await initializeBotManager();

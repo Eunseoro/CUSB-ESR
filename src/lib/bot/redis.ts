@@ -1,9 +1,38 @@
 // Redis 클라이언트 (봇 제어용)
 import Redis from 'ioredis';
 
-const redis = process.env.REDIS_URL ? 
-  new Redis(process.env.REDIS_URL) : 
-  null;
+let redis: Redis | null = null;
+
+if (process.env.REDIS_URL) {
+  try {
+    redis = new Redis(process.env.REDIS_URL, {
+      retryStrategy: (times) => {
+        // 최대 3번 재시도 후 포기
+        if (times > 3) {
+          console.warn('⚠️ Redis 연결 실패. Redis 없이 계속 실행합니다.');
+          return null; // 재시도 중단
+        }
+        return Math.min(times * 50, 2000);
+      },
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+    });
+
+    // 에러 핸들러 추가
+    redis.on('error', (error) => {
+      console.warn('⚠️ Redis 연결 오류:', error.message);
+      console.warn('⚠️ Redis 없이 계속 실행합니다.');
+    });
+
+    redis.on('connect', () => {
+      console.log('✅ Redis 연결 성공');
+    });
+  } catch (error) {
+    console.warn('⚠️ Redis 초기화 실패:', error);
+    console.warn('⚠️ Redis 없이 계속 실행합니다.');
+    redis = null;
+  }
+}
 
 export async function publishBotControl(action: string, channelId: string, data?: any) {
   if (!redis) {

@@ -49,8 +49,14 @@ export class LiveMonitor {
       for (const config of configs) {
         await this.checkChannel(config.channelId, config.isLive);
       }
-    } catch (error) {
-      console.error('Error checking channels:', error);
+    } catch (error: any) {
+      // 데이터베이스 연결 오류는 로그만 남기고 계속 실행
+      if (error.code === 'P1001' || error.message?.includes('Can\'t reach database')) {
+        console.warn('⚠️ 데이터베이스 연결 실패. 잠시 후 재시도합니다.');
+        console.warn('💡 DATABASE_URL 환경 변수를 확인하세요.');
+      } else {
+        console.error('Error checking channels:', error);
+      }
     }
   }
 
