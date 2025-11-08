@@ -19,59 +19,9 @@ export async function GET(req: NextRequest) {
     const action = searchParams.get('action'); // 조회수 증가
     const skip = (page - 1) * limit;
     
-    // 조회수 증가 (기기별 중복 방지) - action=view가 있을 때 우선 실행
+    // 조회수 증가 (중복 방지 없음) - action=view가 있을 때 우선 실행
     if (action === 'view' && id) {
       console.log('조회수 증가 요청:', { id, action })
-      
-      // 더 간단하고 안정적인 기기 식별 방법 사용
-      const userAgent = req.headers.get('user-agent') || 'unknown'
-      const acceptLanguage = req.headers.get('accept-language') || 'unknown'
-      const xForwardedFor = req.headers.get('x-forwarded-for') || ''
-      
-      // 간소화된 기기 식별 (더 안정적)
-      const deviceFingerprint = `${userAgent.slice(0, 50)}_${acceptLanguage.slice(0, 20)}_${xForwardedFor.slice(0, 15)}`
-      const deviceKey = `viewed_${id}_${Buffer.from(deviceFingerprint).toString('base64').slice(0, 30)}`
-      
-      // 다중 중복 방지 체크
-      const hasViewed = req.cookies.get(deviceKey)
-      
-      // 1. 쿠키 기반 체크
-      if (hasViewed) {
-        console.log('이미 조회한 기기 (쿠키) - 조회수 증가 안함')
-        const currentPost = await prisma.lookBookPost.findUnique({
-          where: { id },
-          select: { viewCount: true }
-        })
-        
-        return NextResponse.json({
-          viewCount: currentPost?.viewCount || 0,
-          alreadyViewed: true
-        });
-      }
-      
-      // 2. 데이터베이스 레벨 중복 방지 (LookBookPostView 테이블 활용)
-      const deviceId = Buffer.from(deviceFingerprint).toString('base64').slice(0, 30)
-      const existingView = await prisma.lookBookPostView.findUnique({
-        where: {
-          postId_deviceId: {
-            postId: id,
-            deviceId: deviceId
-          }
-        }
-      })
-      
-      if (existingView) {
-        console.log('이미 조회한 기기 (DB) - 조회수 증가 안함')
-        const currentPost = await prisma.lookBookPost.findUnique({
-          where: { id },
-          select: { viewCount: true }
-        })
-        
-        return NextResponse.json({
-          viewCount: currentPost?.viewCount || 0,
-          alreadyViewed: true
-        });
-      }
       
       // 현재 조회수 확인
       const currentPost = await prisma.lookBookPost.findUnique({
@@ -80,39 +30,21 @@ export async function GET(req: NextRequest) {
       })
       console.log('현재 조회수:', currentPost?.viewCount)
       
-      // 트랜잭션으로 조회수 증가와 조회 기록 저장을 동시에 처리
-      const result = await prisma.$transaction(async (tx) => {
-        // 조회수 증가
-        const updatedPost = await tx.lookBookPost.update({
-          where: { id },
-          data: {
-            viewCount: {
-              increment: 1
-            }
+      // 조회수 증가
+      const result = await prisma.lookBookPost.update({
+        where: { id },
+        data: {
+          viewCount: {
+            increment: 1
           }
-        });
-        
-        // 조회 기록 저장 (중복 방지)
-        await tx.lookBookPostView.create({
-          data: {
-            postId: id,
-            deviceId: deviceId
-          }
-        });
-        
-        return updatedPost;
+        }
       });
       
       console.log('업데이트된 조회수:', result.viewCount)
 
-      // 모바일 환경을 고려한 쿠키 설정 개선 (HTTP 환경에서도 작동하도록 Secure 플래그 제거)
       return NextResponse.json({
         viewCount: result.viewCount,
         alreadyViewed: false
-      }, {
-        headers: {
-          'Set-Cookie': `${deviceKey}=true; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax`
-        }
       });
     }
     
