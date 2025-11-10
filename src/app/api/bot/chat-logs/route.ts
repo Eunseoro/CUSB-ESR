@@ -5,10 +5,9 @@ import { prisma } from '@/lib/prisma';
 export async function POST(request: NextRequest) {
   try {
     // API 키 인증 (봇 워커에서만 접근 가능)
-    const authHeader = request.headers.get('authorization');
-    const apiKey = process.env.BOT_WORKER_API_KEY;
-    
-    if (!authHeader || !apiKey || authHeader !== `Bearer ${apiKey}`) {
+    // X-API-Key 헤더 사용 (다른 봇 API와 일관성 유지)
+    const { verifyBotApiKey } = await import('@/lib/bot/auth');
+    if (!verifyBotApiKey(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

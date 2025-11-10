@@ -203,10 +203,11 @@ export class BotManager {
       const username = data.username;
       const userRole = data.userRole;
 
-      console.log(`[${configId}] ${username}: ${message}`);
+      console.log(`💬 [${configId}] ${username}: ${message}`);
 
       // 명령어 감지 및 실행
       if (message.startsWith('!')) {
+        console.log(`🔍 명령어 감지: ${message}`);
         // 기본 명령어 먼저 확인
         await this.commandExecutor.executeBuiltinCommand(configId, message, { username, userRole });
         
@@ -215,14 +216,19 @@ export class BotManager {
       }
 
       // 채팅 로그 저장 (API를 통해)
-      await this.apiClient.sendChatLog({
-        configId,
-        username,
-        message,
-        messageType: 'chat',
-      });
+      try {
+        await this.apiClient.sendChatLog({
+          configId,
+          username,
+          message,
+          messageType: 'chat',
+        });
+        console.log(`✅ 채팅 로그 저장 완료: ${username}`);
+      } catch (logError) {
+        console.error('⚠️ 채팅 로그 저장 실패 (봇 작동에는 영향 없음):', logError);
+      }
     } catch (error) {
-      console.error('Error handling chat:', error);
+      console.error('❌ 채팅 처리 오류:', error);
     }
   }
 

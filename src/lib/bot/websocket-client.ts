@@ -172,7 +172,16 @@ export class ChzzkChatClient extends EventEmitter {
 
   private onMessage(data: WebSocket.Data): void {
     try {
-      const message = JSON.parse(data.toString());
+      const rawData = data.toString();
+      const message = JSON.parse(rawData);
+      
+      // 디버깅: 수신된 메시지 로그 (Ping 응답 제외)
+      if (message.cmd !== 0) {
+        console.log(`📨 WebSocket 메시지 수신: cmd=${message.cmd}`, {
+          hasBdy: !!message.bdy,
+          bdyKeys: message.bdy ? Object.keys(message.bdy) : [],
+        });
+      }
       
       switch (message.cmd) {
         case 0: // Ping response
@@ -190,23 +199,29 @@ export class ChzzkChatClient extends EventEmitter {
           this.handleSystemMessage(message.bdy);
           break;
         default:
-          console.log('Unknown message type:', message.cmd);
+          console.log(`⚠️ 알 수 없는 메시지 타입: cmd=${message.cmd}`, message);
       }
     } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
+      console.error('❌ WebSocket 메시지 파싱 오류:', error);
+      console.error('원본 데이터:', data.toString());
     }
   }
 
   private handleChat(body: any): void {
-    const chatMessage: ChatMessage = {
-      username: body.profile?.nickname || 'Unknown',
-      message: body.msg || '',
-      userRole: body.profile?.userRole || 'viewer',
-      timestamp: new Date(),
-    };
+    try {
+      const chatMessage: ChatMessage = {
+        username: body.profile?.nickname || body.nickname || 'Unknown',
+        message: body.msg || body.message || '',
+        userRole: body.profile?.userRole || body.userRole || 'viewer',
+        timestamp: new Date(),
+      };
 
-    console.log(`[${this.config.channelId}] ${chatMessage.username}: ${chatMessage.message}`);
-    this.emit('chat', chatMessage);
+      console.log(`💬 [${this.config.channelId}] ${chatMessage.username}: ${chatMessage.message}`);
+      this.emit('chat', chatMessage);
+    } catch (error) {
+      console.error('❌ 채팅 메시지 처리 오류:', error);
+      console.error('원본 body:', JSON.stringify(body, null, 2));
+    }
   }
 
   private handleDonation(body: any): void {
