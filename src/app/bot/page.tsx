@@ -32,9 +32,18 @@ interface BotCommand {
   isActive: boolean;
 }
 
+interface ChatLog {
+  id: string;
+  username: string;
+  message: string;
+  messageType: string;
+  timestamp: string;
+}
+
 export default function BotDashboard() {
   const [config, setConfig] = useState<BotConfig | null>(null);
   const [commands, setCommands] = useState<BotCommand[]>([]);
+  const [chatLogs, setChatLogs] = useState<ChatLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -61,6 +70,30 @@ export default function BotDashboard() {
     // 초기 로딩 시에는 빈 상태로 시작
     setLoading(false);
   }, []);
+
+  // 채팅 로그 자동 갱신 (20초마다)
+  useEffect(() => {
+    if (!config?.id) return;
+
+    const loadChatLogs = async () => {
+      try {
+        const response = await fetch(`/api/bot/chat-logs/recent?configId=${config.id}&limit=30`);
+        if (response.ok) {
+          const data = await response.json();
+          setChatLogs(data.logs || []);
+        }
+      } catch (error) {
+        console.error('채팅 로그 로딩 실패:', error);
+      }
+    };
+
+    // 즉시 로드
+    loadChatLogs();
+
+    // 20초마다 자동 갱신
+    const interval = setInterval(loadChatLogs, 20000);
+    return () => clearInterval(interval);
+  }, [config?.id]);
 
   // 채널 ID가 변경되면 해당 설정 로드 (무한 루프 방지)
   useEffect(() => {
@@ -466,6 +499,65 @@ export default function BotDashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* 채팅 모니터링 */}
+        {config && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                채팅 모니터링
+              </CardTitle>
+              <CardDescription>
+                최근 채팅 및 후원 내역입니다. (20초마다 자동 갱신)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {chatLogs.length > 0 ? (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {chatLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="p-2 border rounded text-sm"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge
+                          variant={
+                            log.messageType === 'donation'
+                              ? 'default'
+                              : log.messageType === 'subscription'
+                              ? 'secondary'
+                              : 'outline'
+                          }
+                          className="text-xs"
+                        >
+                          {log.messageType === 'chat'
+                            ? '채팅'
+                            : log.messageType === 'donation'
+                            ? '후원'
+                            : log.messageType === 'subscription'
+                            ? '구독'
+                            : '시스템'}
+                        </Badge>
+                        <span className="font-medium text-blue-600">{log.username}</span>
+                        <span className="text-gray-500 text-xs">
+                          {new Date(log.timestamp).toLocaleTimeString('ko-KR')}
+                        </span>
+                      </div>
+                      <p className="text-gray-700">{log.message}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>아직 채팅 로그가 없습니다.</p>
+                  <p className="text-sm mt-1">봇이 연결되고 채팅이 수신되면 여기에 표시됩니다.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* 명령어 관리 */}

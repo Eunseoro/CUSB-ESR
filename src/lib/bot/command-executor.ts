@@ -132,14 +132,23 @@ export class BotCommandExecutor {
 
     // 채팅 메시지 전송
     try {
+      if (!config.accessToken) {
+        console.error(`❌ accessToken이 없습니다. 채널 ${config.channelId}의 봇이 연결되지 않았거나 accessToken이 저장되지 않았습니다.`);
+        return;
+      }
+      
       await sendChzzkChatMessage(
         config.channelId,
         response,
         config.accessToken
       );
-      console.log(`Command executed: ${command.trigger} -> ${response}`);
-    } catch (error) {
-      console.error(`Failed to send command response:`, error);
+      console.log(`✅ 명령어 실행 완료: ${command.trigger} -> ${response.substring(0, 50)}${response.length > 50 ? '...' : ''}`);
+    } catch (error: any) {
+      console.error(`❌ 명령어 응답 전송 실패 (${command.trigger}):`, error.message || error);
+      // accessToken 만료 등의 경우를 대비한 에러 처리
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        console.error(`💡 accessToken이 만료되었을 수 있습니다. 봇을 재연결해주세요.`);
+      }
     }
   }
 
@@ -253,12 +262,20 @@ export class BotCommandExecutor {
   }
 
   private async sendMessage(config: BotConfig, message: string): Promise<void> {
-    if (!config.accessToken) return;
+    if (!config.accessToken) {
+      console.error(`❌ accessToken이 없습니다. 채널 ${config.channelId}의 봇이 연결되지 않았거나 accessToken이 저장되지 않았습니다.`);
+      return;
+    }
 
     try {
       await sendChzzkChatMessage(config.channelId, message, config.accessToken);
-    } catch (error) {
-      console.error('Failed to send message:', error);
+      console.log(`✅ 메시지 전송 완료: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    } catch (error: any) {
+      console.error(`❌ 메시지 전송 실패:`, error.message || error);
+      // accessToken 만료 등의 경우를 대비한 에러 처리
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        console.error(`💡 accessToken이 만료되었을 수 있습니다. 봇을 재연결해주세요.`);
+      }
     }
   }
 }

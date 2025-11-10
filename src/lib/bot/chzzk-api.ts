@@ -107,10 +107,14 @@ export async function sendChzzkChatMessage(
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to send chat message: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`❌ 채팅 메시지 전송 실패 (${response.status}):`, errorText);
+      throw new Error(`Failed to send chat message: ${response.status} ${response.statusText} - ${errorText}`);
     }
+    
+    console.log(`✅ 채팅 메시지 전송 성공 (채널 ${channelId})`);
   } catch (error) {
-    console.error('Error sending chat message:', error);
+    console.error('❌ 채팅 메시지 전송 오류:', error);
     throw error;
   }
 }
@@ -174,13 +178,25 @@ export async function getChatChannelInfo(
       throw new Error(`Failed to get chat channel info: ${JSON.stringify(data)}`);
     }
     
+    // 응답 형식 확인 (content 필드 또는 직접 필드)
+    const content = data.content || data;
+    
     const result = {
-      chatChannelId: data.content.chatChannelId || '',
-      accessToken: data.content.accessToken || '',
-      extraToken: data.content.extraToken || '',
+      chatChannelId: content.chatChannelId || content.chatChannelId || '',
+      accessToken: content.accessToken || content.accessToken || '',
+      extraToken: content.extraToken || content.extraToken || '',
     };
 
-    console.log(`✅ 채팅 정보 조회 성공:`, result);
+    if (!result.chatChannelId || !result.accessToken) {
+      console.error('❌ 채팅 채널 정보가 불완전합니다:', result);
+      throw new Error(`채팅 채널 정보가 불완전합니다: chatChannelId=${result.chatChannelId}, accessToken=${result.accessToken ? '있음' : '없음'}`);
+    }
+
+    console.log(`✅ 채팅 정보 조회 성공:`, {
+      chatChannelId: result.chatChannelId.substring(0, 20) + '...',
+      accessToken: result.accessToken.substring(0, 20) + '...',
+      hasExtraToken: !!result.extraToken,
+    });
     return result;
   } catch (error) {
     console.error('❌ 채팅 채널 정보 조회 실패:', error);

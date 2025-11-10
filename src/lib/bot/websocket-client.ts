@@ -49,6 +49,11 @@ export class ChzzkChatClient extends EventEmitter {
   private chatChannelId: string = '';
   private accessToken: string = '';
   private pingInterval: NodeJS.Timeout | null = null;
+  
+  // accessToken을 외부에서 가져올 수 있도록 getter 추가
+  getAccessToken(): string {
+    return this.accessToken;
+  }
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
@@ -73,14 +78,38 @@ export class ChzzkChatClient extends EventEmitter {
 
       // 치지직 WebSocket URL (실제 URL 사용)
       const wsUrl = `wss://kr-ss1.chat.naver.com/chat?cid=${this.chatChannelId}`;
-      this.ws = new WebSocket(wsUrl);
+      console.log(`🌐 WebSocket 연결 시도: ${wsUrl}`);
+      
+      this.ws = new WebSocket(wsUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
+      });
 
-      this.ws.on('open', () => this.onOpen());
+      // 연결 타임아웃 설정 (30초)
+      const connectTimeout = setTimeout(() => {
+        if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
+          console.error('❌ WebSocket 연결 타임아웃 (30초)');
+          this.ws.close();
+          this.emit('error', new Error('WebSocket connection timeout'));
+        }
+      }, 30000);
+
+      this.ws.on('open', () => {
+        clearTimeout(connectTimeout);
+        this.onOpen();
+      });
+      
       this.ws.on('message', (data) => this.onMessage(data));
-      this.ws.on('error', (error) => this.onError(error));
-      this.ws.on('close', () => this.onClose());
-
-      console.log(`🌐 WebSocket URL: ${wsUrl}`);
+      this.ws.on('error', (error) => {
+        clearTimeout(connectTimeout);
+        this.onError(error);
+      });
+      this.ws.on('close', (code, reason) => {
+        clearTimeout(connectTimeout);
+        console.log(`🔌 WebSocket 연결 종료: code=${code}, reason=${reason?.toString() || 'N/A'}`);
+        this.onClose();
+      });
     } catch (error) {
       console.error('❌ WebSocket 연결 실패:', error);
       throw error;
@@ -108,9 +137,12 @@ export class ChzzkChatClient extends EventEmitter {
   }
 
   private onOpen(): void {
-    console.log(`WebSocket connected to channel: ${this.config.channelId}`);
+    console.log(`✅ WebSocket connected to channel: ${this.config.channelId}`);
+    console.log(`📊 채팅 채널 ID: ${this.chatChannelId}`);
+    console.log(`🔑 액세스 토큰: ${this.accessToken ? '있음' : '없음'}`);
     
-    // 연결 초기화 메시지 전송
+    // 연결 초기화 메시지 전송 (WebSocket 프로토콜용, 채팅창에 표시되지 않음)
+    // 이 메시지는 WebSocket 연결을 위한 프로토콜 메시지이며, 실제 채팅창에는 표시되지 않습니다.
     this.send({
       ver: '2',
       cmd: 100,
@@ -124,6 +156,8 @@ export class ChzzkChatClient extends EventEmitter {
       },
       tid: 1,
     });
+    
+    console.log(`📤 WebSocket 연결 초기화 메시지 전송 완료 (프로토콜용, 채팅창에 표시되지 않음)`);
 
     // Ping 메시지 주기적 전송 (10초마다)
     this.pingInterval = setInterval(() => {

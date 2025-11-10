@@ -107,9 +107,31 @@ async function main() {
 
   // 3단계: Live Monitor 시작 (데이터베이스 연결 성공 시에만)
   if (dbConnected) {
-    liveMonitor.setLiveStartCallback((channelId) => {
+    liveMonitor.setLiveStartCallback(async (channelId) => {
       console.log(`📺 채널 ${channelId} 방송 시작 - 봇 연결 시도`);
-      // TODO: 봇 연결 로직
+      
+      try {
+        // 데이터베이스에서 해당 채널의 설정 조회
+        const config = await (prisma as any).botConfig.findUnique({
+          where: { channelId },
+        });
+        
+        if (!config) {
+          console.warn(`⚠️ 채널 ${channelId}의 봇 설정을 찾을 수 없습니다.`);
+          return;
+        }
+        
+        // 봇이 활성화되어 있고, 봇 계정이 연결되어 있는 경우에만 연결
+        if (config.isActive && config.botAccountId) {
+          console.log(`🔌 채널 ${channelId} 봇 연결 시도 (방송 시작 감지)`);
+          await botManager.connectChannel(config);
+        } else {
+          console.log(`ℹ️ 채널 ${channelId}는 봇이 비활성화되었거나 봇 계정이 연결되지 않았습니다.`);
+          console.log(`ℹ️ 대시보드에서 봇을 활성화하고 봇 계정을 연결해주세요.`);
+        }
+      } catch (error) {
+        console.error(`❌ 채널 ${channelId} 봇 연결 실패:`, error);
+      }
     });
 
     liveMonitor.setLiveEndCallback((channelId) => {
@@ -128,8 +150,28 @@ async function main() {
       if (connected) {
         clearInterval(dbRetryInterval);
         console.log('✅ 데이터베이스 연결 복구됨. Live Monitor 시작...');
-        liveMonitor.setLiveStartCallback((channelId) => {
+        liveMonitor.setLiveStartCallback(async (channelId) => {
           console.log(`📺 채널 ${channelId} 방송 시작 - 봇 연결 시도`);
+          
+          try {
+            const config = await (prisma as any).botConfig.findUnique({
+              where: { channelId },
+            });
+            
+            if (!config) {
+              console.warn(`⚠️ 채널 ${channelId}의 봇 설정을 찾을 수 없습니다.`);
+              return;
+            }
+            
+            if (config.isActive && config.botAccountId) {
+              console.log(`🔌 채널 ${channelId} 봇 연결 시도 (방송 시작 감지)`);
+              await botManager.connectChannel(config);
+            } else {
+              console.log(`ℹ️ 채널 ${channelId}는 봇이 비활성화되었거나 봇 계정이 연결되지 않았습니다.`);
+            }
+          } catch (error) {
+            console.error(`❌ 채널 ${channelId} 봇 연결 실패:`, error);
+          }
         });
         liveMonitor.setLiveEndCallback((channelId) => {
           console.log(`📺 채널 ${channelId} 방송 종료 - 봇 연결 해제`);

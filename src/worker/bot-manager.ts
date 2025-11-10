@@ -153,6 +153,22 @@ export class BotManager {
       await client.connect();
       this.clients.set(config.channelId, client);
 
+      // WebSocket 연결 시 받은 accessToken을 데이터베이스에 저장
+      const accessToken = client.getAccessToken();
+      if (accessToken) {
+        try {
+          await (this.prisma as any).botConfig.update({
+            where: { id: config.id },
+            data: { accessToken },
+          });
+          console.log(`✅ accessToken 저장 완료 (채널 ${config.channelId})`);
+        } catch (error) {
+          console.error(`⚠️ accessToken 저장 실패:`, error);
+        }
+      } else {
+        console.warn(`⚠️ accessToken을 받지 못했습니다 (채널 ${config.channelId})`);
+      }
+
       // 상태 업데이트 (API를 통해)
       await this.apiClient.updateBotStatus(config.channelId, {
         isConnected: true,

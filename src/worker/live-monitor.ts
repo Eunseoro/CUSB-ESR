@@ -40,11 +40,13 @@ export class LiveMonitor {
 
   private async checkAllChannels(): Promise<void> {
     try {
-      // 활성화된 모든 채널 조회
+      // 모든 봇 설정 조회 (활성화 여부와 관계없이)
+      // LiveMonitor는 방송 상태만 모니터링하고, 봇 연결은 isActive와 botAccountId를 확인한 후 결정
       const configs = await (this.prisma as any).botConfig.findMany({
-        where: { isActive: true },
-        select: { channelId: true, isLive: true },
+        select: { channelId: true, isLive: true, isActive: true, botAccountId: true },
       });
+
+      console.log(`🔍 ${configs.length}개 채널 상태 확인 중...`);
 
       for (const config of configs) {
         await this.checkChannel(config.channelId, config.isLive);
