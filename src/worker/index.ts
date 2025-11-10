@@ -58,13 +58,36 @@ async function initializeBotManager() {
   return false;
 }
 
+// 데이터베이스 연결 확인
+async function checkDatabaseConnection(): Promise<boolean> {
+  try {
+    console.log('🔍 데이터베이스 연결 확인 중...');
+    await prisma.$connect();
+    console.log('✅ 데이터베이스 연결 성공');
+    return true;
+  } catch (error: any) {
+    console.error('❌ 데이터베이스 연결 실패:', error.message);
+    console.error('💡 DATABASE_URL 환경 변수를 확인하세요.');
+    console.error('💡 데이터베이스가 외부 연결을 허용하는지 확인하세요.');
+    return false;
+  }
+}
+
 async function main() {
   console.log('🤖 유멜론 봇 워커 시작...');
 
   // 헬스체크 서버 시작 (Render 포트 감지용)
   const healthServer = startHealthCheckServer();
 
-  // Bot Manager 초기화 (재시도 로직 포함)
+  // 1단계: 데이터베이스 연결 확인
+  const dbConnected = await checkDatabaseConnection();
+  
+  if (!dbConnected) {
+    console.warn('⚠️ 데이터베이스 연결 실패. LiveMonitor는 시작하지 않습니다.');
+    console.warn('⚠️ 데이터베이스 연결이 복구되면 수동으로 재시작하세요.');
+  }
+
+  // 2단계: Bot Manager 초기화 (재시도 로직 포함)
   const initialized = await initializeBotManager();
 
   if (!initialized) {
@@ -82,18 +105,40 @@ async function main() {
     }, 1800000); // 30분마다
   }
 
-  // Live Monitor 시작
-  liveMonitor.setLiveStartCallback((channelId) => {
-    console.log(`📺 채널 ${channelId} 방송 시작 - 봇 연결 시도`);
-    // TODO: 봇 연결 로직
-  });
+  // 3단계: Live Monitor 시작 (데이터베이스 연결 성공 시에만)
+  if (dbConnected) {
+    liveMonitor.setLiveStartCallback((channelId) => {
+      console.log(`📺 채널 ${channelId} 방송 시작 - 봇 연결 시도`);
+      // TODO: 봇 연결 로직
+    });
 
-  liveMonitor.setLiveEndCallback((channelId) => {
-    console.log(`📺 채널 ${channelId} 방송 종료 - 봇 연결 해제`);
-    botManager.disconnectChannel(channelId);
-  });
+    liveMonitor.setLiveEndCallback((channelId) => {
+      console.log(`📺 채널 ${channelId} 방송 종료 - 봇 연결 해제`);
+      botManager.disconnectChannel(channelId);
+    });
 
-  liveMonitor.start(30000); // 30초마다 확인
+    liveMonitor.start(30000); // 30초마다 확인
+    console.log('✅ Live Monitor 시작됨');
+  } else {
+    console.warn('⚠️ Live Monitor는 데이터베이스 연결 후에 시작됩니다.');
+    
+    // 데이터베이스 연결 재시도 (5분마다)
+    const dbRetryInterval = setInterval(async () => {
+      const connected = await checkDatabaseConnection();
+      if (connected) {
+        clearInterval(dbRetryInterval);
+        console.log('✅ 데이터베이스 연결 복구됨. Live Monitor 시작...');
+        liveMonitor.setLiveStartCallback((channelId) => {
+          console.log(`📺 채널 ${channelId} 방송 시작 - 봇 연결 시도`);
+        });
+        liveMonitor.setLiveEndCallback((channelId) => {
+          console.log(`📺 채널 ${channelId} 방송 종료 - 봇 연결 해제`);
+          botManager.disconnectChannel(channelId);
+        });
+        liveMonitor.start(30000);
+      }
+    }, 300000); // 5분마다
+  }
 
   // Redis Pub/Sub으로 실시간 제어
   try {

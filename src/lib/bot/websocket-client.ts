@@ -89,9 +89,9 @@ export class ChzzkChatClient extends EventEmitter {
 
   private async getChatChannelInfo(): Promise<{ chatChannelId: string; accessToken: string; extraToken: string }> {
     // 봇 계정 정보를 사용하여 채팅 채널 정보 조회
-    const { decryptBotData } = await import('./encryption');
+    // API에서 이미 복호화된 값을 받아오므로, 여기서는 복호화하지 않음
     
-    console.log(`🔍 봇 계정 쿠키 복호화 시도:`, {
+    console.log(`🔍 봇 계정 쿠키 확인:`, {
       hasNidAuth: !!this.botAccount.nidAuth,
       hasNidSession: !!this.botAccount.nidSession,
       nidAuthLength: this.botAccount.nidAuth?.length || 0,
@@ -102,16 +102,8 @@ export class ChzzkChatClient extends EventEmitter {
       throw new Error('봇 계정의 NID 쿠키가 없습니다.');
     }
     
-    const credentials = {
-      nidAuth: decryptBotData(this.botAccount.nidAuth),
-      nidSession: decryptBotData(this.botAccount.nidSession),
-    };
-
-    console.log(`✅ 쿠키 복호화 성공:`, {
-      nidAuthLength: credentials.nidAuth.length,
-      nidSessionLength: credentials.nidSession.length,
-    });
-
+    // API에서 이미 복호화된 값을 받아오므로 그대로 사용
+    // getChatChannelInfo 함수가 내부에서 복호화를 처리함
     return await getChatChannelInfo(this.config.channelId, this.botAccount);
   }
 

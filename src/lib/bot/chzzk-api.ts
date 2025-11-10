@@ -117,11 +117,30 @@ export async function sendChzzkChatMessage(
 
 // 봇 계정 인증 헤더 생성
 export function createBotAuthHeaders(botAccount: BotAccount): HeadersInit {
-  // 암호화된 쿠키를 복호화
-  const { decryptBotData } = require('./encryption');
+  // botAccount의 nidAuth와 nidSession이 이미 복호화된 상태인지 확인
+  // API에서 받은 값은 이미 복호화된 상태이므로, 암호화 형식(콜론 2개 포함)인지 확인
+  const isEncrypted = (text: string): boolean => {
+    if (!text) return false;
+    const parts = text.split(':');
+    return parts.length === 3 && parts[0].length === 32 && parts[1].length === 32; // IV와 AuthTag는 각각 32자 hex
+  };
+  
+  let nidAuth = botAccount.nidAuth;
+  let nidSession = botAccount.nidSession;
+  
+  // 암호화된 형식이면 복호화, 아니면 그대로 사용
+  if (isEncrypted(nidAuth)) {
+    const { decryptBotData } = require('./encryption');
+    nidAuth = decryptBotData(nidAuth);
+  }
+  
+  if (isEncrypted(nidSession)) {
+    const { decryptBotData } = require('./encryption');
+    nidSession = decryptBotData(nidSession);
+  }
   
   return {
-    'Cookie': `NID_AUT=${decryptBotData(botAccount.nidAuth)}; NID_SES=${decryptBotData(botAccount.nidSession)}`,
+    'Cookie': `NID_AUT=${nidAuth}; NID_SES=${nidSession}`,
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
   };
 }
@@ -146,7 +165,12 @@ export async function getChatChannelInfo(
     const data = await response.json();
     console.log(`📋 채팅 정보 응답:`, JSON.stringify(data, null, 2));
     
-    if (!data.success) {
+    // 치지직 API 응답 형식 확인 (success 필드 또는 code 필드)
+    if (data.code !== undefined && data.code !== 200) {
+      throw new Error(`Failed to get chat channel info: code=${data.code}, message=${data.message || 'Unknown error'}`);
+    }
+    
+    if (data.success === false) {
       throw new Error(`Failed to get chat channel info: ${JSON.stringify(data)}`);
     }
     
