@@ -148,24 +148,6 @@ export function useLookbook() {
 
 
   const incrementViewCount = useCallback(async (postId: string) => {
-    // 간소화된 중복 방지 체크
-    const viewedKey = `viewed_${postId}`
-    const sessionKey = `viewed_${postId}_session`
-    
-    // 1. 세션 스토리지 체크 (페이지 새로고침 시에도 유지)
-    const currentSession = sessionStorage.getItem(sessionKey)
-    if (currentSession) {
-      console.log('이미 이 세션에서 조회한 게시물')
-      return
-    }
-    
-    // 2. 로컬 스토리지 체크 (영구 저장)
-    const hasViewed = localStorage.getItem(viewedKey)
-    if (hasViewed) {
-      console.log('이미 조회한 게시물 (로컬 스토리지)')
-      return
-    }
-    
     try {
       console.log('조회수 증가 요청 시작:', postId)
       const response = await fetch(`/api/lookbook?id=${postId}&action=view`, {
@@ -176,12 +158,6 @@ export function useLookbook() {
       if (response.ok) {
         const data = await response.json()
         console.log('조회수 증가 응답:', data)
-        
-        if (!data.alreadyViewed) {
-          // 간소화된 중복 방지 저장
-          localStorage.setItem(viewedKey, 'true')
-          sessionStorage.setItem(sessionKey, 'true')
-        }
         
         // 조회수 업데이트
         setPosts(prevPosts => 
@@ -198,13 +174,9 @@ export function useLookbook() {
         )
       } else {
         console.error('조회수 증가 실패:', response.status, response.statusText)
-        // 실패 시에도 중복 방지를 위해 세션 스토리지에 기록
-        sessionStorage.setItem(sessionKey, 'true')
       }
     } catch (error) {
       console.error('Failed to increment view count:', error)
-      // 에러 발생 시에도 중복 방지를 위해 세션 스토리지에 기록
-      sessionStorage.setItem(sessionKey, 'true')
     }
   }, [])
 
